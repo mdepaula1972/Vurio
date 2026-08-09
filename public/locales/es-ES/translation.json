@@ -1,0 +1,61 @@
+{
+  "app": {
+    "title": "Vurio",
+    "tagline": "Inteligencia para hacer avanzar los procesos",
+    "subtitle": "Vurio entiende el proceso, identifica dependencias, explica bloqueos y orienta decisiones."
+  },
+  "nav": {
+    "home": "Inicio",
+    "processes": "Procesos",
+    "newProcess": "Nuevo Proceso",
+    "analytics": "Análisis y Riesgos",
+    "partners": "Socios",
+    "freePlan": "Plan Gratuito"
+  },
+  "hero": {
+    "questionPrompt": "¿Qué quieres organizar hoy?",
+    "placeholder": "Ej: 'Quiero contratar a un empleado', 'Abrir una sucursal', 'Implementar nuevo cliente'...",
+    "voiceButton": "Hablar por Voz",
+    "voiceListening": "Escuchando tu voz...",
+    "generateButton": "Estructurar con IA",
+    "examplesTitle": "Ejemplos populares:"
+  },
+  "process": {
+    "status": {
+      "not_started": "No Iniciado",
+      "in_progress": "En Progreso",
+      "blocked": "Bloqueado",
+      "completed": "Completado"
+    },
+    "dependencyTypes": {
+      "sequential": "Secuencial (A → B)",
+      "parallel": "Paralela (Simultáneas)",
+      "convergent": "Convergente (B + C → D)",
+      "conditional": "Condicional (Si X...)",
+      "hierarchical": "Jerárquica (Fases / Subetapas)",
+      "external": "Externa (Terceros / Clientes)",
+      "financial": "Financiera (Presupuesto / Caja)"
+    },
+    "blockade": {
+      "title": "Diagnóstico de Bloqueo Explicable",
+      "reason": "Motivo del Impedimento",
+      "responsible": "Quién debe actuar",
+      "pendingCondition": "Condición Faltante",
+      "since": "Bloqueado desde",
+      "impact": "Impacto en el Proceso",
+      "aiSuggestion": "Guía de IA para Desbloquear"
+    },
+    "actions": {
+      "advance": "Avanzar Etapa",
+      "approve": "Aprobar",
+      "reject": "Solicitar Ajuste",
+      "viewDetails": "Ver Detalles y Árbol",
+      "addStep": "Agregar Etapa",
+      "simulate": "Simular Retraso"
+    }
+  },
+  "freemium": {
+    "banner": "Estás en el Plan Gratuito (3/3 procesos activos).",
+    "upgrade": "Actualizar a Ilimitado"
+  }
+}

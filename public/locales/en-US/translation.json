@@ -1,0 +1,61 @@
+{
+  "app": {
+    "title": "Vurio",
+    "tagline": "Intelligence to make processes move forward",
+    "subtitle": "Vurio understands your process, identifies dependencies, explains blockades, and guides decisions."
+  },
+  "nav": {
+    "home": "Home",
+    "processes": "Processes",
+    "newProcess": "New Process",
+    "analytics": "Analytics & Risks",
+    "partners": "Partners",
+    "freePlan": "Free Plan"
+  },
+  "hero": {
+    "questionPrompt": "What do you want to organize today?",
+    "placeholder": "e.g. 'I want to hire an employee', 'Open a new branch', 'Onboard a new client'...",
+    "voiceButton": "Speak with Voice",
+    "voiceListening": "Listening to your voice...",
+    "generateButton": "Structure with AI",
+    "examplesTitle": "Popular examples:"
+  },
+  "process": {
+    "status": {
+      "not_started": "Not Started",
+      "in_progress": "In Progress",
+      "blocked": "Blocked",
+      "completed": "Completed"
+    },
+    "dependencyTypes": {
+      "sequential": "Sequential (A → B)",
+      "parallel": "Parallel (Simultaneous)",
+      "convergent": "Convergent (B + C → D)",
+      "conditional": "Conditional (If X...)",
+      "hierarchical": "Hierarchical (Phases / Sub-steps)",
+      "external": "External (Third-party / Clients)",
+      "financial": "Financial (Budget / Cashflow)"
+    },
+    "blockade": {
+      "title": "Explainable Blockade Diagnosis",
+      "reason": "Reason for Impediment",
+      "responsible": "Who needs to act",
+      "pendingCondition": "Missing Condition",
+      "since": "Blocked since",
+      "impact": "Process Impact",
+      "aiSuggestion": "AI Guidance to Unblock"
+    },
+    "actions": {
+      "advance": "Advance Step",
+      "approve": "Approve",
+      "reject": "Request Changes",
+      "viewDetails": "View Details & Tree",
+      "addStep": "Add Step",
+      "simulate": "Simulate Delay"
+    }
+  },
+  "freemium": {
+    "banner": "You are on the Free Plan (3/3 active processes).",
+    "upgrade": "Upgrade to Unlimited"
+  }
+}

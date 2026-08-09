@@ -1,0 +1,61 @@
+{
+  "app": {
+    "title": "Vurio",
+    "tagline": "Inteligência para fazer processos avançarem",
+    "subtitle": "O Vurio entende o processo, identifica dependências, explica bloqueios e orienta decisões."
+  },
+  "nav": {
+    "home": "Início",
+    "processes": "Processos",
+    "newProcess": "Novo Processo",
+    "analytics": "Análises & Riscos",
+    "partners": "Parceiros",
+    "freePlan": "Plano Gratuito"
+  },
+  "hero": {
+    "questionPrompt": "O que você quer organizar hoje?",
+    "placeholder": "Ex: 'Quero contratar um funcionário', 'Quero abrir uma filial', 'Implantação de novo cliente'...",
+    "voiceButton": "Falar por Voz",
+    "voiceListening": "Ouvindo sua voz...",
+    "generateButton": "Estruturar com IA",
+    "examplesTitle": "Exemplos frequentes:"
+  },
+  "process": {
+    "status": {
+      "not_started": "Não Iniciado",
+      "in_progress": "Em Progresso",
+      "blocked": "Bloqueado",
+      "completed": "Concluído"
+    },
+    "dependencyTypes": {
+      "sequential": "Sequencial (A → B)",
+      "parallel": "Paralela (Simultâneas)",
+      "convergent": "Convergente (B + C → D)",
+      "conditional": "Condicional (Se X...)",
+      "hierarchical": "Hierárquica (Fases / Subetapas)",
+      "external": "Externa (Terceiros / Clientes)",
+      "financial": "Financeira (Orçamento / Caixa)"
+    },
+    "blockade": {
+      "title": "Diagnóstico de Bloqueio Explicável",
+      "reason": "Motivo do Impedimento",
+      "responsible": "Quem precisa agir",
+      "pendingCondition": "Condição Ausente",
+      "since": "Bloqueado desde",
+      "impact": "Impacto no Processo",
+      "aiSuggestion": "Orientação da IA para Desbloquear"
+    },
+    "actions": {
+      "advance": "Avançar Etapa",
+      "approve": "Aprovar",
+      "reject": "Solicitar Ajuste",
+      "viewDetails": "Ver Detalhes & Árvore",
+      "addStep": "Adicionar Etapa",
+      "simulate": "Simular Atraso"
+    }
+  },
+  "freemium": {
+    "banner": "Você está usando o Plano Gratuito (3/3 processos ativos).",
+    "upgrade": "Fazer Upgrade para Ilimitado"
+  }
+}

@@ -1,0 +1,14 @@
+# Vurio — .gitignore
+node_modules/
+dist/
+dist-ssr/
+*.local
+.env
+.env.*
+!.env.example
+.vscode/
+.DS_Store
+*.log
+coverage/
+.vercel/
+Vurio/
