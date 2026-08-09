@@ -1,5 +1,5 @@
 /**
- * Vurio v1.1.0 — Gestor Inteligente de Processos com IA
+ * Vurio v1.2.0 — Gestor Inteligente de Processos com IA
  * Componente principal da aplicação
  */
 import React, { useState, useEffect } from 'react';
@@ -10,12 +10,12 @@ import { HeroPrompt } from './components/hero/HeroPrompt';
 import { ProcessTreeView } from './components/process/ProcessTreeView';
 import { SimulationModal } from './components/process/SimulationModal';
 import { PartnerSection } from './components/partners/PartnerSection';
-import { Process, CompanyOptions } from './engine/types';
-import { generateProcessFromPrompt } from './services/aiService';
+import { Process, CompanyOptions, DocumentUploadData } from './engine/types';
+import { generateProcessFromPrompt, generateProcessFromDocument } from './services/aiService';
 import { resolveProcessState } from './engine/dependencyResolver';
 import { ShieldAlert, Plus, Sparkles, FolderGit2, AlertTriangle, Layers } from 'lucide-react';
 
-export const APP_VERSION = '1.1.0';
+export const APP_VERSION = '1.2.0';
 
 export default function App() {
   const { i18n, t } = useTranslation();
@@ -54,6 +54,20 @@ export default function App() {
       setActiveTab('processes');
     } catch (err) {
       console.error('Erro ao gerar processo:', err);
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleGenerateFromDocument = async (docData: DocumentUploadData) => {
+    setIsGenerating(true);
+    try {
+      const newProcess = generateProcessFromDocument(docData);
+      setProcesses(prev => [newProcess, ...prev]);
+      setSelectedProcessId(newProcess.id);
+      setActiveTab('processes');
+    } catch (err) {
+      console.error('Erro ao gerar processo a partir do documento:', err);
     } finally {
       setIsGenerating(false);
     }
@@ -149,6 +163,7 @@ export default function App() {
           <div className="space-y-8">
             <HeroPrompt
               onGenerateProcess={handleGenerateProcess}
+              onGenerateFromDocument={handleGenerateFromDocument}
               isGenerating={isGenerating}
             />
 

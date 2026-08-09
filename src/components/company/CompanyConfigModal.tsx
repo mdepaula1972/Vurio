@@ -1,9 +1,9 @@
 /**
- * Vurio v1.1.0 — Gestor Inteligente de Processos com IA
- * CompanyConfigModal — Modal interativo de seleção de regime tributário e sociedade existente
+ * Vurio v1.2.0 — Gestor Inteligente de Processos com IA
+ * CompanyConfigModal — Modal interativo de seleção de regime tributário com bloqueio estrito para MEI
  */
 import React, { useState } from 'react';
-import { X, Building2, ShieldAlert, CheckCircle2, ArrowRight, AlertTriangle, Sparkles } from 'lucide-react';
+import { X, Building2, ShieldAlert, CheckCircle2, ArrowRight, AlertTriangle, Sparkles, Lock } from 'lucide-react';
 import { CompanyTaxRegime, CompanyOptions } from '../../engine/types';
 
 interface CompanyConfigModalProps {
@@ -63,6 +63,8 @@ export const CompanyConfigModal: React.FC<CompanyConfigModalProps> = ({
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isMeiConflict) return; // Trava estrita de segurança
+
     onConfirm({
       regime: selectedRegime,
       hasExistingCompany,
@@ -70,7 +72,7 @@ export const CompanyConfigModal: React.FC<CompanyConfigModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
       <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl space-y-6 relative overflow-hidden max-h-[90vh] overflow-y-auto">
         
         {/* Background Glow */}
@@ -95,7 +97,7 @@ export const CompanyConfigModal: React.FC<CompanyConfigModalProps> = ({
                 Estruturação de Abertura de Empresa
               </h3>
               <span className="px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-bold uppercase border border-indigo-500/30">
-                v1.1.0
+                v1.2.0
               </span>
             </div>
             <p className="text-xs text-slate-400">
@@ -150,12 +152,18 @@ export const CompanyConfigModal: React.FC<CompanyConfigModalProps> = ({
             <div className="space-y-2.5">
               {regimes.map((r) => {
                 const isSelected = selectedRegime === r.id;
+                const isBlockedOption = r.id === 'mei' && hasExistingCompany;
+
                 return (
                   <div
                     key={r.id}
-                    onClick={() => setSelectedRegime(r.id)}
+                    onClick={() => {
+                      setSelectedRegime(r.id);
+                    }}
                     className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-1.5 ${
-                      isSelected
+                      isBlockedOption
+                        ? 'bg-red-950/30 border-red-800/80'
+                        : isSelected
                         ? 'bg-indigo-950/40 border-indigo-500 shadow-lg shadow-indigo-950/40'
                         : 'bg-slate-950/60 border-slate-800 hover:border-slate-700'
                     }`}
@@ -163,21 +171,27 @@ export const CompanyConfigModal: React.FC<CompanyConfigModalProps> = ({
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                         <span className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center ${
-                          isSelected ? 'border-indigo-400 bg-indigo-500' : 'border-slate-600'
+                          isBlockedOption
+                            ? 'border-red-500 bg-red-600'
+                            : isSelected
+                            ? 'border-indigo-400 bg-indigo-500'
+                            : 'border-slate-600'
                         }`}>
                           {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-white"></span>}
                         </span>
-                        <h4 className="text-sm font-bold text-white">
+                        <h4 className={`text-sm font-bold ${isBlockedOption ? 'text-red-300' : 'text-white'}`}>
                           {r.title}
                         </h4>
                       </div>
 
                       <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                        r.dispensesViability
+                        isBlockedOption
+                          ? 'bg-red-500/20 text-red-300 border-red-500/40'
+                          : r.dispensesViability
                           ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
                           : 'bg-slate-800 text-slate-400 border-slate-700'
                       }`}>
-                        {r.badge}
+                        {isBlockedOption ? 'Bloqueio Legal' : r.badge}
                       </span>
                     </div>
 
@@ -190,16 +204,20 @@ export const CompanyConfigModal: React.FC<CompanyConfigModalProps> = ({
             </div>
           </div>
 
-          {/* Alerta de Impedimento Legal do MEI se Houver Conflito */}
+          {/* Alerta Estrito de Impedimento Legal do MEI */}
           {isMeiConflict && (
-            <div className="p-4 rounded-2xl bg-red-950/50 border border-red-800/80 text-red-200 text-xs space-y-2 animate-pulse">
+            <div className="p-4 rounded-2xl bg-red-950/60 border border-red-700 text-red-200 text-xs space-y-2.5 shadow-lg shadow-red-950/50">
               <div className="flex items-center space-x-2 font-bold text-red-300">
-                <ShieldAlert className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <span>Impedimento Legal Detectado (LC nº 123/2006)</span>
+                <ShieldAlert className="w-5 h-5 text-red-400 flex-shrink-0 animate-bounce" />
+                <span>BLOQUEIO LEGAL (Lei Complementar nº 123/2006):</span>
               </div>
-              <p className="text-slate-300 leading-relaxed">
-                A legislação brasileira proíbe estritamente que titulares de MEI possuam participação em outra empresa ativa. O motor Vurio criará o processo já com o <strong>alerta de impedimento travando a execução do MEI</strong> e orientando a migração para Simples Nacional.
+              <p className="text-slate-200 leading-relaxed font-medium">
+                Você marcou que <strong>já possui participação em outra empresa ativa</strong>. A legislação brasileira proíbe estritamente a opção pelo MEI nessa condição.
               </p>
+              <div className="p-2.5 rounded-xl bg-slate-950/80 border border-red-500/30 text-amber-300 font-semibold flex items-center space-x-2">
+                <Lock className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <span>Por favor, selecione <strong>Simples Nacional</strong>, <strong>Lucro Presumido</strong> ou <strong>Lucro Real</strong> para prosseguir.</span>
+              </div>
             </div>
           )}
 
@@ -207,7 +225,7 @@ export const CompanyConfigModal: React.FC<CompanyConfigModalProps> = ({
           {selectedRegime === 'mei' && !hasExistingCompany && (
             <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center space-x-2 font-semibold">
               <Sparkles className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-              <span>Vantagem MEI: A pesquisa prévia de viabilidade de nome e endereço é <strong>dispensada</strong>! O fluxo iniciará direto na emissão do CCMEI.</span>
+              <span>Vantagem MEI: A pesquisa prévia de viabilidade de nome e endereço é <strong>dispensada</strong> por lei! O fluxo iniciará direto na emissão do CCMEI.</span>
             </div>
           )}
 
@@ -215,10 +233,24 @@ export const CompanyConfigModal: React.FC<CompanyConfigModalProps> = ({
           <div className="pt-2 flex justify-end">
             <button
               type="submit"
-              className="w-full sm:w-auto px-6 py-3 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/30 flex items-center justify-center space-x-2 transition-all transform active:scale-95"
+              disabled={isMeiConflict}
+              className={`w-full sm:w-auto px-6 py-3 rounded-2xl font-bold text-xs shadow-lg flex items-center justify-center space-x-2 transition-all transform active:scale-95 ${
+                isMeiConflict
+                  ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed shadow-none'
+                  : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white shadow-indigo-500/30'
+              }`}
             >
-              <span>Gerar Processo Personalizado</span>
-              <ArrowRight className="w-4 h-4" />
+              {isMeiConflict ? (
+                <>
+                  <Lock className="w-4 h-4 text-red-400" />
+                  <span>Seleção Bloqueada por Lei — Escolha outro Regime</span>
+                </>
+              ) : (
+                <>
+                  <span>Gerar Processo Personalizado</span>
+                  <ArrowRight className="w-4 h-4" />
+                </>
+              )}
             </button>
           </div>
 

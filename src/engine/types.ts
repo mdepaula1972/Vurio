@@ -1,5 +1,5 @@
 /**
- * Vurio v1.1.0 — Gestor Inteligente de Processos com IA
+ * Vurio v1.2.0 — Gestor Inteligente de Processos com IA
  * Definições de tipos e interfaces do motor Vurio
  */
 export type DependencyType = 
@@ -20,6 +20,15 @@ export interface CompanyOptions {
   regime: CompanyTaxRegime;
   hasExistingCompany: boolean;
 }
+
+export type CreationMode = 'company' | 'process_ai' | 'process_document' | 'process_manual';
+
+export interface DocumentUploadData {
+  fileName: string;
+  fileType: string;
+  extractedText: string;
+}
+
 
 export type ApprovalType = 
   | 'individual' 

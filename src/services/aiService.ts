@@ -1,8 +1,8 @@
 /**
- * Vurio v1.1.0 — Gestor Inteligente de Processos com IA
- * Serviço de IA — Templates de processos e geração via linguagem natural com suporte a MEI, Simples, Presumido e Real
+ * Vurio v1.2.0 — Gestor Inteligente de Processos com IA
+ * Serviço de IA — Templates de processos, suporte a MEI/Simples/Presumido/Real e Ingestão de Documentos (POPs/Manuais)
  */
-import { Process, Step, CompanyOptions } from '../engine/types';
+import { Process, Step, CompanyOptions, DocumentUploadData } from '../engine/types';
 import { resolveProcessState } from '../engine/dependencyResolver';
 
 // Processos pré-estruturados modelo (Templates Prontos)
@@ -343,6 +343,61 @@ export function buildCompanyOpeningProcess(options?: CompanyOptions): Partial<Pr
       }
     ]
   };
+}
+
+/**
+ * Converte um Documento (POP / Manual) em Etapas Distribuídas Inteligentes
+ */
+export function generateProcessFromDocument(docData: DocumentUploadData): Process {
+  const lines = docData.extractedText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+
+  const steps: Step[] = [];
+  let currentLayer = 1;
+
+  if (lines.length === 0) {
+    lines.push("Planejamento Inicial do Documento");
+    lines.push("Execução das Etapas Operacionais");
+    lines.push("Validação e Encerramento");
+  }
+
+  // Divide as linhas em blocos de etapas
+  const chunkSize = Math.max(1, Math.ceil(lines.length / 5));
+
+  for (let i = 0; i < lines.length && steps.length < 7; i += chunkSize) {
+    const chunkLines = lines.slice(i, i + chunkSize);
+    const titleLine = chunkLines[0].replace(/^[\d\.\-\*\#\s]+/, '');
+    const desc = chunkLines.slice(1).join(' ') || `Execução e acompanhamento detalhado da etapa conforme documentação em ${docData.fileName}.`;
+
+    const stepId = `doc-step-${steps.length + 1}`;
+    const prevStepId = steps.length > 0 ? steps[steps.length - 1].id : null;
+
+    steps.push({
+      id: stepId,
+      title: titleLine.length > 60 ? titleLine.substring(0, 57) + '...' : titleLine,
+      description: desc.length > 180 ? desc.substring(0, 177) + '...' : desc,
+      layer: currentLayer,
+      status: steps.length === 0 ? 'in_progress' : 'blocked',
+      responsible: steps.length === 0 ? ['Liderança / Gestor'] : ['Equipe Operacional / Responsável'],
+      dependencies: prevStepId ? [{ dependsOnStepId: prevStepId, type: 'sequential' }] : [],
+    });
+
+    currentLayer++;
+  }
+
+  const rawProcess: Process = {
+    id: `proc-doc-${Date.now()}`,
+    name: `Processo extraído de: ${docData.fileName}`,
+    category: 'Processos Internos / POP',
+    description: `Workflow gerado automaticamente pela IA a partir do documento '${docData.fileName}'.`,
+    isActive: true,
+    steps,
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+    participants: ['Você (Gestor)', 'Equipe Operacional'],
+    tags: ['Document IA', 'POP Ingestion']
+  };
+
+  return resolveProcessState(rawProcess);
 }
 
 /**

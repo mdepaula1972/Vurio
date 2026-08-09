@@ -1,11 +1,12 @@
 /**
- * Vurio v1.1.0 — Gestor Inteligente de Processos com IA
+ * Vurio v1.2.0 — Gestor Inteligente de Processos com IA
  * Navbar — Barra de navegação superior
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { ShieldAlert, Globe, Plus, Sparkles, Activity } from 'lucide-react';
 import { APP_VERSION } from '../../App';
+
 
 
 interface NavbarProps {
