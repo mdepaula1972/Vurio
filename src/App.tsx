@@ -1,5 +1,5 @@
 /**
- * Vurio v1.2.0 — Gestor Inteligente de Processos com IA
+ * Vurio v1.3.0 — Gestor Inteligente de Processos com IA
  * Componente principal da aplicação
  */
 import React, { useState, useEffect } from 'react';
@@ -7,15 +7,16 @@ import { useTranslation } from 'react-i18next';
 import { Navbar } from './components/layout/Navbar';
 import { BottomNav } from './components/layout/BottomNav';
 import { HeroPrompt } from './components/hero/HeroPrompt';
-import { ProcessTreeView } from './components/process/ProcessTreeView';
+import { ProcessGraphCanvas } from './components/process/ProcessGraphCanvas';
 import { SimulationModal } from './components/process/SimulationModal';
 import { PartnerSection } from './components/partners/PartnerSection';
+import { AICopilotBar } from './components/copilot/AICopilotBar';
 import { Process, CompanyOptions, DocumentUploadData } from './engine/types';
 import { generateProcessFromPrompt, generateProcessFromDocument } from './services/aiService';
 import { resolveProcessState } from './engine/dependencyResolver';
-import { ShieldAlert, Plus, Sparkles, FolderGit2, AlertTriangle, Layers } from 'lucide-react';
+import { ShieldAlert, Plus, Sparkles, FolderGit2, AlertTriangle, Layers, Activity, Zap, CheckCircle2 } from 'lucide-react';
 
-export const APP_VERSION = '1.2.0';
+export const APP_VERSION = '1.3.0';
 
 export default function App() {
   const { i18n, t } = useTranslation();
@@ -26,7 +27,7 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [simulatingStepId, setSimulatingStepId] = useState<string | null>(null);
 
-  // Inicializa o estado com processos padrão caso esteja vazio
+  // Inicializa o estado com processos padrão modelo
   useEffect(() => {
     async function init() {
       const p1 = await generateProcessFromPrompt('Quero contratar um funcionário');
@@ -128,7 +129,7 @@ export default function App() {
   const selectedProcess = processes.find(p => p.id === selectedProcessId);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-20 sm:pb-8">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-24 sm:pb-12 selection:bg-indigo-500 selection:text-white">
       
       {/* Navbar Superior */}
       <Navbar
@@ -147,12 +148,12 @@ export default function App() {
         
         {/* Banner Freemium se atingir o limite */}
         {processes.length >= 3 && (
-          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold flex items-center justify-between">
+          <div className="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold flex items-center justify-between shadow-lg shadow-amber-950/20">
             <div className="flex items-center space-x-2">
               <ShieldAlert className="w-4 h-4 text-amber-400 flex-shrink-0" />
               <span>{t('freemium.banner')}</span>
             </div>
-            <button className="px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold transition-colors">
+            <button className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-extrabold transition-colors text-xs">
               {t('freemium.upgrade')}
             </button>
           </div>
@@ -167,12 +168,12 @@ export default function App() {
               isGenerating={isGenerating}
             />
 
-            {/* Lista dos Processos Ativos */}
+            {/* Lista dos Processos Ativos com Health Scores */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-extrabold text-white flex items-center space-x-2">
                   <FolderGit2 className="w-5 h-5 text-indigo-400" />
-                  <span>Seus Processos em Andamento</span>
+                  <span>Seus Processos Inteligentes em Andamento</span>
                 </h3>
                 <span className="text-xs text-slate-400 font-medium">
                   {processes.length} de 3 ativos (Plano Gratuito)
@@ -184,6 +185,7 @@ export default function App() {
                   const blockedCount = proc.steps.filter(s => s.status === 'blocked').length;
                   const completedCount = proc.steps.filter(s => s.status === 'completed').length;
                   const progressPct = Math.round((completedCount / (proc.steps.length || 1)) * 100);
+                  const healthScore = proc.metrics?.healthScore || progressPct;
 
                   return (
                     <div
@@ -192,41 +194,57 @@ export default function App() {
                         setSelectedProcessId(proc.id);
                         setActiveTab('processes');
                       }}
-                      className={`p-5 rounded-2xl border transition-all cursor-pointer space-y-3 hover:border-indigo-500/60 ${
+                      className={`p-5 rounded-3xl border transition-all cursor-pointer space-y-4 hover:border-indigo-500/60 shadow-xl group ${
                         selectedProcessId === proc.id
-                          ? 'bg-slate-900 border-indigo-500 shadow-lg shadow-indigo-950/40'
+                          ? 'bg-slate-900 border-indigo-500 ring-1 ring-indigo-500/30 shadow-indigo-950/40'
                           : 'bg-slate-900/60 border-slate-800'
                       }`}
                     >
                       <div className="flex items-start justify-between">
-                        <div>
+                        <div className="space-y-1">
                           <span className="text-[10px] font-bold text-indigo-400 uppercase tracking-wider">
                             {proc.category}
                           </span>
-                          <h4 className="text-base font-bold text-white mt-0.5">
+                          <h4 className="text-base font-extrabold text-white group-hover:text-indigo-300 transition-colors">
                             {proc.name}
                           </h4>
                         </div>
-                        {blockedCount > 0 && (
-                          <span className="px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 text-[10px] font-bold border border-red-500/30 flex items-center space-x-1">
-                            <AlertTriangle className="w-3 h-3" />
-                            <span>{blockedCount} bloqueio(s)</span>
+                        
+                        {/* Health Badge */}
+                        <div className="flex items-center space-x-2">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-black border ${
+                            healthScore >= 70
+                              ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30'
+                              : healthScore >= 40
+                              ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                              : 'bg-red-500/10 text-red-400 border-red-500/30'
+                          }`}>
+                            ⚡ {healthScore}% Saúde
                           </span>
-                        )}
+                        </div>
                       </div>
 
-                      <p className="text-xs text-slate-400 line-clamp-2">
+                      <p className="text-xs text-slate-400 line-clamp-2 leading-relaxed">
                         {proc.description}
                       </p>
 
-                      <div className="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+                      <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
                         <div className="flex items-center space-x-2">
                           <Layers className="w-3.5 h-3.5 text-indigo-400" />
                           <span>{proc.steps.length} etapas</span>
                         </div>
-                        <span className="font-bold text-indigo-300">
-                          {progressPct}% concluído
-                        </span>
+
+                        {blockedCount > 0 ? (
+                          <span className="text-red-400 font-bold flex items-center space-x-1">
+                            <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
+                            <span>{blockedCount} gargalo(s)</span>
+                          </span>
+                        ) : (
+                          <span className="text-emerald-400 font-bold flex items-center space-x-1">
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
+                            <span>Pronto para avançar</span>
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -236,9 +254,9 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab Visualizador de Árvore de Processos */}
+        {/* Tab Visualizador do Mapa de Conexões do Processo (Redesenhado v1.3.0) */}
         {activeTab === 'processes' && selectedProcess && (
-          <ProcessTreeView
+          <ProcessGraphCanvas
             process={selectedProcess}
             onAdvanceStep={handleAdvanceStep}
             onApproveStep={handleApproveStep}
@@ -248,7 +266,7 @@ export default function App() {
 
         {/* Tab Analytics & Riscos */}
         {activeTab === 'analytics' && selectedProcess && (
-          <div className="space-y-6 bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8">
+          <div className="space-y-6 bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
             <h2 className="text-xl font-bold text-white flex items-center space-x-2">
               <Sparkles className="w-5 h-5 text-indigo-400" />
               <span>Análise Preditiva de Riscos & Gargalos (IA Consultiva)</span>
@@ -258,25 +276,25 @@ export default function App() {
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Etapas Críticas</span>
-                <p className="text-2xl font-extrabold text-white">
+              <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Etapas Críticas</span>
+                <p className="text-3xl font-black text-white">
                   {selectedProcess.steps.filter(s => s.dependencies.length > 1).length}
                 </p>
                 <p className="text-[11px] text-slate-400">Possuem múltiplas dependências</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Gargalos Financeiros</span>
-                <p className="text-2xl font-extrabold text-emerald-400">
+              <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gargalos Financeiros</span>
+                <p className="text-3xl font-black text-emerald-400">
                   {selectedProcess.steps.filter(s => s.financialCriteria).length}
                 </p>
                 <p className="text-[11px] text-slate-400">Etapas com validação de orçamento</p>
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Gargalos Externos</span>
-                <p className="text-2xl font-extrabold text-amber-400">
+              <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gargalos Externos</span>
+                <p className="text-3xl font-black text-amber-400">
                   {selectedProcess.steps.filter(s => s.externalCriteria).length}
                 </p>
                 <p className="text-[11px] text-slate-400">Dependem de terceiros ou clientes</p>
@@ -291,6 +309,12 @@ export default function App() {
         )}
 
       </main>
+
+      {/* Floating AI Copilot Assistant */}
+      <AICopilotBar
+        process={selectedProcess}
+        onAdvanceBlockedStep={(stepId) => handleAdvanceStep(stepId)}
+      />
 
       {/* Modal de Simulação de Atraso se acionado */}
       {simulatingStepId && selectedProcess && (

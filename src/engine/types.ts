@@ -1,9 +1,8 @@
 /**
- * Vurio v1.2.0 — Gestor Inteligente de Processos com IA
+ * Vurio v1.3.0 — Gestor Inteligente de Processos com IA
  * Definições de tipos e interfaces do motor Vurio
  */
 export type DependencyType = 
-
   | 'sequential'   // A -> B
   | 'parallel'     // A -> B e A -> C
   | 'convergent'   // B + C -> D
@@ -29,6 +28,7 @@ export interface DocumentUploadData {
   extractedText: string;
 }
 
+export type ProcessViewMode = 'graph' | 'kanban' | 'timeline' | 'list';
 
 export type ApprovalType = 
   | 'individual' 
@@ -57,7 +57,7 @@ export interface BlockadeInfo {
 export interface StepDependency {
   dependsOnStepId: string;
   type: DependencyType;
-  conditionExpression?: string; // ex: "aprovacao_financeira == true"
+  conditionExpression?: string;
   description?: string;
 }
 
@@ -88,6 +88,12 @@ export interface Step {
   completedAt?: string;
 }
 
+export interface ProcessMetrics {
+  healthScore: number; // 0..100%
+  timeSavedHours: number;
+  criticalPathCount: number;
+}
+
 export interface Process {
   id: string;
   name: string;
@@ -100,5 +106,5 @@ export interface Process {
   participants: string[];
   tags: string[];
   companyOptions?: CompanyOptions;
+  metrics?: ProcessMetrics;
 }
-

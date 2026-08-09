@@ -1,16 +1,15 @@
 /**
- * Vurio v1.0.0 — Gestor Inteligente de Processos com IA
- * Motor de Resolução de Dependências e cálculo de estado dos processos
+ * Vurio v1.3.0 — Gestor Inteligente de Processos com IA
+ * Motor de Resolução de Dependências e cálculo de saúde operacional (Health Score)
  */
-import { Process, Step } from './types';
+import { Process, Step, ProcessMetrics } from './types';
 import { analyzeStepBlockade } from './blockadeAnalyzer';
-
 
 /**
  * Executa a atualização completa do motor do Vurio:
  * 1. Recalcula os níveis de camada (layers)
  * 2. Atualiza o status de bloqueio de cada etapa com explicações detalhadas
- * 3. Identifica gargalos globais no processo
+ * 3. Identifica gargalos globais e calcula a Pontuação de Saúde Operacional (Health Score)
  */
 export function resolveProcessState(process: Process): Process {
   const updatedSteps: Step[] = process.steps.map(step => {
@@ -20,10 +19,10 @@ export function resolveProcessState(process: Process): Process {
         ...step,
         blockadeInfo: {
           isBlocked: false,
-          reason: 'Etapa finalizada',
+          reason: 'Etapa finalizada com sucesso.',
           missingCondition: 'Nenhuma',
           responsibleParties: [],
-          processImpact: 'Sem impacto',
+          processImpact: 'Sem impacto negativo.',
           aiRecommendation: 'Avançar para próximas etapas.'
         }
       };
@@ -46,9 +45,26 @@ export function resolveProcessState(process: Process): Process {
     };
   });
 
+  // Cálculo da Saúde Operacional do Processo (Health Score 0-100%)
+  const total = updatedSteps.length || 1;
+  const completed = updatedSteps.filter(s => s.status === 'completed').length;
+  const blocked = updatedSteps.filter(s => s.status === 'blocked').length;
+  const inProgress = updatedSteps.filter(s => s.status === 'in_progress').length;
+
+  // Fórmula de Saúde: (Concluídas * 100 + Em Andamento * 60 - Bloqueadas * 30) / Total
+  const rawScore = Math.round(((completed * 100) + (inProgress * 60) - (blocked * 30)) / total);
+  const healthScore = Math.max(10, Math.min(100, rawScore));
+
+  const metrics: ProcessMetrics = {
+    healthScore,
+    timeSavedHours: completed * 4.5 + (total - blocked) * 2,
+    criticalPathCount: updatedSteps.filter(s => s.dependencies.length > 1).length
+  };
+
   return {
     ...process,
     steps: updatedSteps,
+    metrics,
     updatedAt: new Date().toISOString()
   };
 }
