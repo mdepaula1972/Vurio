@@ -1,15 +1,16 @@
 /**
- * Vurio v1.0.0 — Gestor Inteligente de Processos com IA
- * HeroPrompt — Interface de entrada de intenção com IA e voz
+ * Vurio v1.1.0 — Gestor Inteligente de Processos com IA
+ * HeroPrompt — Interface de entrada de intenção com IA, voz e seletor de empresa
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-
 import { Mic, MicOff, Sparkles, ArrowRight, UserPlus, Building2, ShoppingBag, DollarSign } from 'lucide-react';
 import { voiceService } from '../../services/voiceService';
+import { CompanyConfigModal } from '../company/CompanyConfigModal';
+import { CompanyOptions } from '../../engine/types';
 
 interface HeroPromptProps {
-  onGenerateProcess: (promptText: string) => void;
+  onGenerateProcess: (promptText: string, companyOptions?: CompanyOptions) => void;
   isGenerating: boolean;
 }
 
@@ -17,6 +18,8 @@ export const HeroPrompt: React.FC<HeroPromptProps> = ({ onGenerateProcess, isGen
   const { t } = useTranslation();
   const [promptText, setPromptText] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [isCompanyModalOpen, setIsCompanyModalOpen] = useState(false);
+  const [pendingPrompt, setPendingPrompt] = useState('');
 
   const handleVoiceToggle = () => {
     if (isListening) {
@@ -36,22 +39,44 @@ export const HeroPrompt: React.FC<HeroPromptProps> = ({ onGenerateProcess, isGen
     }
   };
 
+  const handleCheckAndSubmit = (text: string) => {
+    const clean = text.toLowerCase().trim();
+    if (clean.includes('abrir') || clean.includes('empresa') || clean.includes('filial') || clean.includes('loja') || clean.includes('mei') || clean.includes('simples')) {
+      setPendingPrompt(text);
+      setIsCompanyModalOpen(true);
+    } else {
+      onGenerateProcess(text);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!promptText.trim()) return;
-    onGenerateProcess(promptText);
+    handleCheckAndSubmit(promptText);
+  };
+
+  const handleCompanyConfirm = (options: CompanyOptions) => {
+    setIsCompanyModalOpen(false);
+    onGenerateProcess(pendingPrompt || 'Quero abrir uma empresa ou filial', options);
   };
 
   const presetExamples = [
-    { label: 'Quero contratar um funcionário', icon: UserPlus },
-    { label: 'Quero abrir uma empresa ou filial', icon: Building2 },
-    { label: 'Implantação de novo cliente B2B', icon: ShoppingBag },
-    { label: 'Estruturação de BPO financeiro', icon: DollarSign }
+    { label: 'Quero contratar um funcionário', icon: UserPlus, isCompany: false },
+    { label: 'Quero abrir uma empresa ou filial', icon: Building2, isCompany: true },
+    { label: 'Implantação de novo cliente B2B', icon: ShoppingBag, isCompany: false },
+    { label: 'Estruturação de BPO financeiro', icon: DollarSign, isCompany: false }
   ];
 
   return (
     <div className="relative overflow-hidden rounded-3xl bg-slate-900/90 border border-slate-800 p-6 sm:p-10 shadow-2xl shadow-indigo-950/50 mb-10">
       
+      {/* Modal de Configuração de Empresa */}
+      <CompanyConfigModal
+        isOpen={isCompanyModalOpen}
+        onClose={() => setIsCompanyModalOpen(false)}
+        onConfirm={handleCompanyConfirm}
+      />
+
       {/* Background Decorative Glow */}
       <div className="absolute -top-24 -right-24 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-blue-600/15 rounded-full blur-3xl pointer-events-none" />
@@ -136,7 +161,12 @@ export const HeroPrompt: React.FC<HeroPromptProps> = ({ onGenerateProcess, isGen
                   key={idx}
                   onClick={() => {
                     setPromptText(ex.label);
-                    onGenerateProcess(ex.label);
+                    if (ex.isCompany) {
+                      setPendingPrompt(ex.label);
+                      setIsCompanyModalOpen(true);
+                    } else {
+                      onGenerateProcess(ex.label);
+                    }
                   }}
                   className="flex items-center space-x-1.5 px-3 py-1.5 rounded-xl bg-slate-800/60 hover:bg-indigo-600/20 hover:border-indigo-500/40 text-xs font-medium text-slate-300 border border-slate-700/60 transition-all text-left"
                 >

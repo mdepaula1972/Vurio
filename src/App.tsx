@@ -1,5 +1,5 @@
 /**
- * Vurio v1.0.0 — Gestor Inteligente de Processos com IA
+ * Vurio v1.1.0 — Gestor Inteligente de Processos com IA
  * Componente principal da aplicação
  */
 import React, { useState, useEffect } from 'react';
@@ -10,13 +10,12 @@ import { HeroPrompt } from './components/hero/HeroPrompt';
 import { ProcessTreeView } from './components/process/ProcessTreeView';
 import { SimulationModal } from './components/process/SimulationModal';
 import { PartnerSection } from './components/partners/PartnerSection';
-import { Process } from './engine/types';
-import { generateProcessFromPrompt, PRESET_PROCESS_TEMPLATES } from './services/aiService';
+import { Process, CompanyOptions } from './engine/types';
+import { generateProcessFromPrompt } from './services/aiService';
 import { resolveProcessState } from './engine/dependencyResolver';
 import { ShieldAlert, Plus, Sparkles, FolderGit2, AlertTriangle, Layers } from 'lucide-react';
 
-export const APP_VERSION = '1.0.0';
-
+export const APP_VERSION = '1.1.0';
 
 export default function App() {
   const { i18n, t } = useTranslation();
@@ -31,7 +30,10 @@ export default function App() {
   useEffect(() => {
     async function init() {
       const p1 = await generateProcessFromPrompt('Quero contratar um funcionário');
-      const p2 = await generateProcessFromPrompt('Quero abrir uma empresa ou filial');
+      const p2 = await generateProcessFromPrompt('Quero abrir uma empresa ou filial', {
+        regime: 'simples',
+        hasExistingCompany: false,
+      });
       setProcesses([p1, p2]);
       setSelectedProcessId(p1.id);
     }
@@ -43,10 +45,10 @@ export default function App() {
     i18n.changeLanguage(lang);
   };
 
-  const handleGenerateProcess = async (promptText: string) => {
+  const handleGenerateProcess = async (promptText: string, companyOptions?: CompanyOptions) => {
     setIsGenerating(true);
     try {
-      const newProcess = await generateProcessFromPrompt(promptText);
+      const newProcess = await generateProcessFromPrompt(promptText, companyOptions);
       setProcesses(prev => [newProcess, ...prev]);
       setSelectedProcessId(newProcess.id);
       setActiveTab('processes');

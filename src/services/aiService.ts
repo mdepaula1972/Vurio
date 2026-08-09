@@ -1,8 +1,8 @@
-﻿/**
- * Vurio v1.0.0 — Gestor Inteligente de Processos com IA
- * Serviço de IA — Templates de processos e geração via linguagem natural
+/**
+ * Vurio v1.1.0 — Gestor Inteligente de Processos com IA
+ * Serviço de IA — Templates de processos e geração via linguagem natural com suporte a MEI, Simples, Presumido e Real
  */
-import { Process, Step } from '../engine/types';
+import { Process, Step, CompanyOptions } from '../engine/types';
 import { resolveProcessState } from '../engine/dependencyResolver';
 
 // Processos pré-estruturados modelo (Templates Prontos)
@@ -104,67 +104,6 @@ export const PRESET_PROCESS_TEMPLATES: Record<string, Partial<Process>> = {
     ]
   },
 
-  'abertura_empresa': {
-    name: 'Abertura e Estruturação de Nova Empresa / Filial',
-    category: 'Jurídico & Financeiro',
-    description: 'Processo integrado de consulta de viabilidade, elaboração de contrato social, alvará, abertura de conta bancária e BPO financeiro.',
-    steps: [
-      {
-        id: 'step-101',
-        title: 'Consulta Prévia de Viabilidade do Nome e Endereço',
-        description: 'Verificação na Junta Comercial e Prefeitura da possibilidade de instalação.',
-        layer: 1,
-        status: 'in_progress',
-        responsible: ['Contabilidade / Parceiro Vurio'],
-        dependencies: []
-      },
-      {
-        id: 'step-102',
-        title: 'Elaboração e Assinatura do Contrato Social',
-        description: 'Redação das cláusulas societárias e coleta de assinaturas dos sócios.',
-        layer: 2,
-        status: 'blocked',
-        responsible: ['Sócios', 'Jurídico'],
-        dependencies: [
-          { dependsOnStepId: 'step-101', type: 'sequential' }
-        ],
-        approval: {
-          type: 'two_responsible',
-          approvedBy: [],
-          requiredApprovers: ['Sócio 1', 'Sócio 2'],
-          totalRequired: 2
-        }
-      },
-      {
-        id: 'step-103',
-        title: 'Emissão do CNPJ e Inscrição Estadual',
-        description: 'Protocolo na Receita Federal para obtenção do número de cadastro.',
-        layer: 3,
-        status: 'blocked',
-        responsible: ['Contabilidade'],
-        dependencies: [
-          { dependsOnStepId: 'step-102', type: 'sequential' }
-        ]
-      },
-      {
-        id: 'step-104',
-        title: 'Abertura de Conta PJ e Integração com BPO AnalisAí',
-        description: 'Abertura da conta bancária institucional e conexão com os serviços de BPO financeiro da AnalisAí.',
-        layer: 4,
-        status: 'blocked',
-        responsible: ['Equipe AnalisAí / Financeiro'],
-        dependencies: [
-          { dependsOnStepId: 'step-103', type: 'sequential' }
-        ],
-        externalCriteria: {
-          partyName: 'Banco Institucional',
-          actionRequired: 'Aprovação de compliance do cadastro bancário PJ',
-          isFulfilled: false
-        }
-      }
-    ]
-  },
-
   'processo_vendas': {
     name: 'Processo de Vendas B2B',
     category: 'Comercial / Vendas',
@@ -232,209 +171,197 @@ export const PRESET_PROCESS_TEMPLATES: Record<string, Partial<Process>> = {
         responsible: ['Financeiro', 'Operações'],
         dependencies: [
           { dependsOnStepId: 'step-204', type: 'convergent' }
-        ],
-        financialCriteria: {
-          requiredBudget: 0,
-          approvedBudget: 0,
-          currency: 'BRL',
-          isApproved: false
-        }
-      }
-    ]
-  },
-
-  'processo_compras': {
-    name: 'Processo de Compras e Aquisições',
-    category: 'Compras / Suprimentos',
-    description: 'Fluxo estruturado de aquisição desde a requisição interna, cotação, aprovação orçamentária até o recebimento e conferência.',
-    steps: [
-      {
-        id: 'step-301',
-        title: 'Requisição Interna de Compra',
-        description: 'Solicitação formal da área demandante com especificação técnica e justificativa de necessidade.',
-        layer: 1,
-        status: 'in_progress',
-        responsible: ['Área Solicitante'],
-        dependencies: [],
-        approval: {
-          type: 'individual',
-          approvedBy: [],
-          requiredApprovers: ['Gestor da Área'],
-          totalRequired: 1
-        }
-      },
-      {
-        id: 'step-302',
-        title: 'Cotação com Fornecedores (mínimo 3)',
-        description: 'Pesquisa de mercado e coleta de no mínimo 3 propostas de fornecedores diferentes para comparação.',
-        layer: 2,
-        status: 'blocked',
-        responsible: ['Equipe de Compras'],
-        dependencies: [
-          { dependsOnStepId: 'step-301', type: 'sequential' }
-        ],
-        externalCriteria: {
-          partyName: 'Fornecedores',
-          actionRequired: 'Envio das propostas comerciais com preço, prazo e condições',
-          isFulfilled: false
-        }
-      },
-      {
-        id: 'step-303',
-        title: 'Aprovação Orçamentária e Seleção do Fornecedor',
-        description: 'Análise comparativa e aprovação do orçamento pela diretoria financeira.',
-        layer: 3,
-        status: 'blocked',
-        responsible: ['Diretoria Financeira', 'Compras'],
-        dependencies: [
-          { dependsOnStepId: 'step-302', type: 'sequential' }
-        ],
-        financialCriteria: {
-          requiredBudget: 15000,
-          approvedBudget: 0,
-          currency: 'BRL',
-          isApproved: false
-        },
-        approval: {
-          type: 'two_responsible',
-          approvedBy: [],
-          requiredApprovers: ['Financeiro', 'Gestor de Compras'],
-          totalRequired: 2
-        }
-      },
-      {
-        id: 'step-304',
-        title: 'Emissão do Pedido de Compra e Pagamento',
-        description: 'Formalização do pedido ao fornecedor selecionado e processamento do pagamento conforme condições negociadas.',
-        layer: 4,
-        status: 'blocked',
-        responsible: ['Compras', 'Financeiro'],
-        dependencies: [
-          { dependsOnStepId: 'step-303', type: 'sequential' }
         ]
-      },
-      {
-        id: 'step-305',
-        title: 'Recebimento, Conferência e Registro',
-        description: 'Verificação física da entrega contra o pedido, conferência de qualidade e registro no sistema de estoque/patrimônio.',
-        layer: 5,
-        status: 'blocked',
-        responsible: ['Almoxarifado / Área Solicitante'],
-        dependencies: [
-          { dependsOnStepId: 'step-304', type: 'sequential' }
-        ],
-        externalCriteria: {
-          partyName: 'Fornecedor Selecionado',
-          actionRequired: 'Entrega dos produtos/serviços conforme pedido de compra',
-          isFulfilled: false
-        }
-      }
-    ]
-  },
-
-  'implantacao_cliente': {
-    name: 'Implantação de Novo Cliente',
-    category: 'Operações / Customer Success',
-    description: 'Processo completo de onboarding de novo cliente B2B, desde o kickoff até a operação estável e acompanhamento contínuo.',
-    steps: [
-      {
-        id: 'step-401',
-        title: 'Kickoff e Alinhamento de Expectativas',
-        description: 'Reunião inaugural com o cliente para alinhar escopo, cronograma, responsáveis e critérios de sucesso.',
-        layer: 1,
-        status: 'in_progress',
-        responsible: ['Customer Success', 'Gerente de Projeto'],
-        dependencies: []
-      },
-      {
-        id: 'step-402',
-        title: 'Coleta de Dados e Documentação do Cliente',
-        description: 'Recebimento de dados cadastrais, acessos, bases de dados e documentos necessários para a configuração.',
-        layer: 2,
-        status: 'blocked',
-        responsible: ['Customer Success'],
-        dependencies: [
-          { dependsOnStepId: 'step-401', type: 'sequential' }
-        ],
-        externalCriteria: {
-          partyName: 'Novo Cliente',
-          actionRequired: 'Envio de planilhas, acessos a sistemas e documentos internos para migração',
-          isFulfilled: false
-        }
-      },
-      {
-        id: 'step-403',
-        title: 'Configuração do Ambiente e Parametrização',
-        description: 'Setup técnico do ambiente do cliente: criação de tenant, parametrizações, integrações e importação de dados.',
-        layer: 3,
-        status: 'blocked',
-        responsible: ['Equipe Técnica', 'DevOps'],
-        dependencies: [
-          { dependsOnStepId: 'step-402', type: 'sequential' }
-        ]
-      },
-      {
-        id: 'step-404',
-        title: 'Treinamento da Equipe do Cliente',
-        description: 'Capacitação dos usuários-chave do cliente sobre a plataforma, processos e boas práticas.',
-        layer: 3,
-        status: 'blocked',
-        responsible: ['Customer Success', 'Trainer'],
-        dependencies: [
-          { dependsOnStepId: 'step-402', type: 'parallel' }
-        ]
-      },
-      {
-        id: 'step-405',
-        title: 'Go-Live e Acompanhamento Intensivo',
-        description: 'Início da operação real com suporte dedicado durante os primeiros 15 dias para garantir estabilidade.',
-        layer: 4,
-        status: 'blocked',
-        responsible: ['Customer Success', 'Suporte Técnico'],
-        dependencies: [
-          { dependsOnStepId: 'step-403', type: 'convergent' },
-          { dependsOnStepId: 'step-404', type: 'convergent' }
-        ]
-      },
-      {
-        id: 'step-406',
-        title: 'Validação de Sucesso e Passagem para Ongoing',
-        description: 'Avaliação dos KPIs de implantação, pesquisa de satisfação (NPS) e transição para acompanhamento contínuo.',
-        layer: 5,
-        status: 'blocked',
-        responsible: ['Customer Success Manager'],
-        dependencies: [
-          { dependsOnStepId: 'step-405', type: 'sequential' }
-        ],
-        approval: {
-          type: 'two_responsible',
-          approvedBy: [],
-          requiredApprovers: ['CS Manager', 'Cliente'],
-          totalRequired: 2
-        }
       }
     ]
   }
 };
 
 /**
+ * Função geradora de processos de Abertura de Empresa com suporte a regras fiscais (MEI vs Simples/Presumido/Real)
+ */
+export function buildCompanyOpeningProcess(options?: CompanyOptions): Partial<Process> {
+  const regime = options?.regime || 'simples';
+  const hasExistingCompany = options?.hasExistingCompany || false;
+
+  // CASO 1: MEI com conflito de sociedade existente
+  if (regime === 'mei' && hasExistingCompany) {
+    return {
+      name: 'Abertura de Empresa (MEI — Impedimento Legal)',
+      category: 'Jurídico & Fiscal',
+      description: 'Estruturação travada por impedimento legal de sociedade prévia no MEI (LC nº 123/2006).',
+      steps: [
+        {
+          id: 'step-mei-block',
+          title: 'Impedimento Legal: Já possui empresa em seu nome',
+          description: 'A Legislação Brasileira (LC 123/2006) veda expressamente que sócios de outras empresas sejam titulares de MEI.',
+          layer: 1,
+          status: 'blocked',
+          responsible: ['Titular / Contabilidade'],
+          dependencies: [],
+          blockadeInfo: {
+            isBlocked: true,
+            reason: 'Titular já possui participação societária ou empresa individual ativa.',
+            missingCondition: 'Alteração da opção de regime para Simples Nacional / Lucro Presumido ou baixa da empresa anterior.',
+            responsibleParties: ['Titular da Empresa'],
+            processImpact: 'Impossível emitir o CCMEI pela Receita Federal enquanto constar vínculo empresarial.',
+            aiRecommendation: 'Recomendamos alterar o processo para Simples Nacional (ME) ou consultar seu contador no AnalisAí.'
+          }
+        },
+        {
+          id: 'step-mei-resolution',
+          title: 'Ajuste de Enquadramento para Simples Nacional (ME)',
+          description: 'Migração do planejamento para Microempresa (ME) enquadrada no Simples Nacional.',
+          layer: 2,
+          status: 'blocked',
+          responsible: ['Contabilidade / Parceiro Vurio'],
+          dependencies: [
+            { dependsOnStepId: 'step-mei-block', type: 'sequential' }
+          ]
+        }
+      ]
+    };
+  }
+
+  // CASO 2: MEI sem outra empresa (MEI Válido) -> DISPENSA CONSULTA PRÉVIA
+  if (regime === 'mei' && !hasExistingCompany) {
+    return {
+      name: 'Abertura de Empresa (MEI — Registro Simplificado)',
+      category: 'Jurídico & Fiscal',
+      description: 'Processo simplificado de MEI. Consulta prévia de viabilidade de nome e endereço DISPENSADA por lei.',
+      steps: [
+        {
+          id: 'step-mei-1',
+          title: 'Emissão do CCMEI e Cadastro no Portal Gov.br',
+          description: 'Dispensa de viabilidade prévia. Início direto na geração do Certificado da Condição de Microempreendedor Individual e CNPJ.',
+          layer: 1,
+          status: 'in_progress',
+          responsible: ['Empreendedor / Parceiro Vurio'],
+          dependencies: []
+        },
+        {
+          id: 'step-mei-2',
+          title: 'Inscrição Municipal e Emissão de Nota Fiscal',
+          description: 'Solicitação do cadastro na prefeitura local para emissão de NF de serviços (NFS-e) no padrão nacional.',
+          layer: 2,
+          status: 'blocked',
+          responsible: ['Empreendedor'],
+          dependencies: [
+            { dependsOnStepId: 'step-mei-1', type: 'sequential' }
+          ]
+        },
+        {
+          id: 'step-mei-3',
+          title: 'Abertura de Conta Bancária PJ e BPO AnalisAí',
+          description: 'Conexão com a conta jurídica e integração com a gestão financeira do AnalisAí.',
+          layer: 3,
+          status: 'blocked',
+          responsible: ['Equipe AnalisAí / Financeiro'],
+          dependencies: [
+            { dependsOnStepId: 'step-mei-2', type: 'sequential' }
+          ]
+        }
+      ]
+    };
+  }
+
+  // CASO 3: Simples Nacional, Lucro Presumido ou Lucro Real -> EXIGE CONSULTA PRÉVIA DE VIABILIDADE
+  const regimeNames: Record<string, string> = {
+    simples: 'Simples Nacional (ME / EPP)',
+    presumido: 'Lucro Presumido',
+    real: 'Lucro Real'
+  };
+
+  return {
+    name: `Abertura de Empresa (${regimeNames[regime] || 'Simples Nacional'})`,
+    category: 'Jurídico & Financeiro',
+    description: `Processo completo com consulta de viabilidade prévia, contrato social, órgãos de registro e opção pelo ${regimeNames[regime]}.`,
+    steps: [
+      {
+        id: 'step-corp-1',
+        title: 'Consulta Prévia de Viabilidade de Nome e Endereço',
+        description: 'Pesquisa obrigatória na Junta Comercial e Prefeitura para validação de uso do nome empresarial e zoneamento urbano.',
+        layer: 1,
+        status: 'in_progress',
+        responsible: ['Contabilidade / Parceiro Vurio'],
+        dependencies: []
+      },
+      {
+        id: 'step-corp-2',
+        title: 'Elaboração e Assinatura do Contrato Social',
+        description: 'Redação da minuta societária, definição de capital social e coleta de assinaturas digitais (GOV.BR / e-CPF).',
+        layer: 2,
+        status: 'blocked',
+        responsible: ['Sócios', 'Jurídico'],
+        dependencies: [
+          { dependsOnStepId: 'step-corp-1', type: 'sequential' }
+        ],
+        approval: {
+          type: 'two_responsible',
+          approvedBy: [],
+          requiredApprovers: ['Sócio 1', 'Sócio 2'],
+          totalRequired: 2
+        }
+      },
+      {
+        id: 'step-corp-3',
+        title: 'Emissão de CNPJ na Receita Federal e Inscrição Estadual',
+        description: 'DSO/FCPJ aprovado com geração do número do CNPJ e inscrição tributária estadual.',
+        layer: 3,
+        status: 'blocked',
+        responsible: ['Contabilidade'],
+        dependencies: [
+          { dependsOnStepId: 'step-corp-2', type: 'sequential' }
+        ]
+      },
+      {
+        id: 'step-corp-4',
+        title: `Opção Formal pelo Regime: ${regimeNames[regime]}`,
+        description: `Enquadramento oficial no portal da Receita Federal para tributação pelo ${regimeNames[regime]}.`,
+        layer: 4,
+        status: 'blocked',
+        responsible: ['Contabilidade / BPO'],
+        dependencies: [
+          { dependsOnStepId: 'step-corp-3', type: 'sequential' }
+        ]
+      },
+      {
+        id: 'step-corp-5',
+        title: 'Abertura de Conta PJ e Integração com BPO AnalisAí',
+        description: 'Formalização bancária e vinculação com os serviços de inteligência financeira do AnalisAí.',
+        layer: 5,
+        status: 'blocked',
+        responsible: ['Equipe AnalisAí / Financeiro'],
+        dependencies: [
+          { dependsOnStepId: 'step-corp-4', type: 'sequential' }
+        ],
+        externalCriteria: {
+          partyName: 'Banco Institucional',
+          actionRequired: 'Validação de compliance do contrato social e representantes legais',
+          isFulfilled: false
+        }
+      }
+    ]
+  };
+}
+
+/**
  * Converte linguagem natural ou intenção do usuário em um processo estruturado do Vurio com IA.
  */
-export async function generateProcessFromPrompt(prompt: string): Promise<Process> {
+export async function generateProcessFromPrompt(
+  prompt: string,
+  companyOptions?: CompanyOptions
+): Promise<Process> {
   const cleanPrompt = prompt.toLowerCase().trim();
 
   let baseTemplate: Partial<Process>;
 
-  if (cleanPrompt.includes('contratar') || cleanPrompt.includes('funcionário') || cleanPrompt.includes('rh') || cleanPrompt.includes('colaborador')) {
+  if (cleanPrompt.includes('abrir') || cleanPrompt.includes('empresa') || cleanPrompt.includes('filial') || cleanPrompt.includes('loja') || cleanPrompt.includes('mei') || cleanPrompt.includes('simples')) {
+    baseTemplate = buildCompanyOpeningProcess(companyOptions);
+  } else if (cleanPrompt.includes('contratar') || cleanPrompt.includes('funcionário') || cleanPrompt.includes('rh') || cleanPrompt.includes('colaborador')) {
     baseTemplate = PRESET_PROCESS_TEMPLATES['contratar_funcionario'];
-  } else if (cleanPrompt.includes('abrir') || cleanPrompt.includes('empresa') || cleanPrompt.includes('filial') || cleanPrompt.includes('loja')) {
-    baseTemplate = PRESET_PROCESS_TEMPLATES['abertura_empresa'];
   } else if (cleanPrompt.includes('venda') || cleanPrompt.includes('vendas') || cleanPrompt.includes('comercial') || cleanPrompt.includes('proposta') || cleanPrompt.includes('pipeline')) {
     baseTemplate = PRESET_PROCESS_TEMPLATES['processo_vendas'];
-  } else if (cleanPrompt.includes('compra') || cleanPrompt.includes('compras') || cleanPrompt.includes('aquisição') || cleanPrompt.includes('fornecedor') || cleanPrompt.includes('cotação')) {
-    baseTemplate = PRESET_PROCESS_TEMPLATES['processo_compras'];
-  } else if (cleanPrompt.includes('implanta') || cleanPrompt.includes('cliente') || cleanPrompt.includes('onboarding') || cleanPrompt.includes('b2b') || cleanPrompt.includes('customer success')) {
-    baseTemplate = PRESET_PROCESS_TEMPLATES['implantacao_cliente'];
   } else {
     // Gerador Dinâmico baseado na intenção digitada pelo usuário
     baseTemplate = {
@@ -515,7 +442,8 @@ export async function generateProcessFromPrompt(prompt: string): Promise<Process
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
     participants: ['Você (Gestor)', 'Diretoria Financeira', 'RH / Operação'],
-    tags: ['IA Assisted', 'Vurio Core']
+    tags: ['IA Assisted', 'Vurio Core'],
+    companyOptions
   };
 
   // Aplica o motor de dependências para resolver e atualizar bloqueios

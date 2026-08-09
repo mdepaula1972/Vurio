@@ -1,6 +1,6 @@
 /**
- * Vurio v1.0.0 — Gestor Inteligente de Processos com IA
- * Definicões de tipos e interfaces do motor Vurio
+ * Vurio v1.1.0 — Gestor Inteligente de Processos com IA
+ * Definições de tipos e interfaces do motor Vurio
  */
 export type DependencyType = 
 
@@ -13,6 +13,13 @@ export type DependencyType =
   | 'financial';   // Avanço condicionado a orçamento, caixa ou indicador
 
 export type StepStatus = 'not_started' | 'in_progress' | 'blocked' | 'completed';
+
+export type CompanyTaxRegime = 'mei' | 'simples' | 'presumido' | 'real';
+
+export interface CompanyOptions {
+  regime: CompanyTaxRegime;
+  hasExistingCompany: boolean;
+}
 
 export type ApprovalType = 
   | 'individual' 
@@ -83,4 +90,6 @@ export interface Process {
   updatedAt: string;
   participants: string[];
   tags: string[];
+  companyOptions?: CompanyOptions;
 }
+
