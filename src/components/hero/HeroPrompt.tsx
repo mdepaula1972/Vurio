@@ -125,7 +125,7 @@ export const HeroPrompt: React.FC<HeroPromptProps> = ({
             className="px-3.5 py-1.5 rounded-full bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/40 text-emerald-300 text-xs font-bold transition-all flex items-center space-x-1.5 shadow-md shadow-emerald-950/40"
           >
             <Workflow className="w-3.5 h-3.5 text-emerald-400" />
-            <span>Assistente Guiado</span>
+            <span>{t('hero.guidedAssistant')}</span>
           </button>
         </div>
 
@@ -135,7 +135,7 @@ export const HeroPrompt: React.FC<HeroPromptProps> = ({
         </h1>
 
         <p className="text-slate-400 text-sm sm:text-base max-w-xl mx-auto">
-          Escolha entre <strong className="text-indigo-300 font-semibold">Abrir uma Empresa</strong> ou <strong className="text-blue-300 font-semibold">Estruturar um Processo</strong> (via IA, voz ou upload de documento/POP).
+          {t('hero.companyOrProcess')}
         </p>
 
         {/* Input Form with Voice First Button */}
@@ -197,12 +197,17 @@ export const HeroPrompt: React.FC<HeroPromptProps> = ({
               className="text-indigo-400 hover:underline flex items-center space-x-1 font-semibold"
             >
               <Upload className="w-3.5 h-3.5" />
-              <span>Ou faça Upload de Documento / POP</span>
+              <span>{t('hero.uploadDoc')}</span>
             </button>
           </div>
 
           <div className="flex flex-wrap items-center justify-center gap-2">
-            {presetExamples.map((ex, idx) => {
+            {[
+              { label: t('hero.presets.hireEmployee'), icon: UserPlus, isCompany: false },
+              { label: t('hero.presets.openCompany'), icon: Building2, isCompany: true },
+              { label: t('hero.presets.b2bClient'), icon: ShoppingBag, isCompany: false },
+              { label: t('hero.presets.bpoFinance'), icon: DollarSign, isCompany: false }
+            ].map((ex, idx) => {
               const Icon = ex.icon;
               return (
                 <button

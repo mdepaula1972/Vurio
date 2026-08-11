@@ -21,7 +21,20 @@
     "generateButton": "Structure with AI",
     "examplesTitle": "Popular examples:",
     "guidedAssistant": "Guided Assistant",
-    "companyOrProcess": "Choose between **Open a Business** or **Structure a Process** (via AI, voice, or document upload)."
+    "companyOrProcess": "Choose between **Open a Business** or **Structure a Process** (via AI, voice, or document upload).",
+    "uploadDoc": "Or Upload Document / SOP",
+    "presets": {
+      "hireEmployee": "I want to hire an employee",
+      "openCompany": "I want to open a business or branch",
+      "b2bClient": "Onboard a new B2B client",
+      "bpoFinance": "Financial BPO structuring"
+    }
+  },
+  "copilot": {
+    "badge": "Proactive AI Copilot",
+    "stepBlocked": "Step \"{{title}}\" Blocked",
+    "unblockAction": "Unblock Action",
+    "minimize": "Minimize suggestion"
   },
   "home": {
     "activeProcessesTitle": "Your Active Intelligent Processes",
@@ -75,6 +88,40 @@
     "financialDesc": "Steps requiring budget validation",
     "externalGargalos": "External Bottlenecks",
     "externalDesc": "Depend on third parties or clients"
+  },
+  "presetProcesses": {
+    "hiring": {
+      "name": "Employee Hiring & Onboarding",
+      "category": "Human Resources / Operations",
+      "description": "Full workflow from position approval, HR budgeting, candidate document submission, to infrastructure and initial onboarding.",
+      "step1": "Position Budget Approval",
+      "step1Desc": "Validation of financial availability and hiring urgency.",
+      "step2": "Job Opening & Publishing",
+      "step2Desc": "Posting on recruitment channels and resume screening.",
+      "step3": "Interviews & Candidate Selection",
+      "step3Desc": "Technical and behavioral interviews with leadership.",
+      "step4": "Document Submission by Candidate",
+      "step4Desc": "Awaiting submission of ID, Work Permit, and Medical Exam by the new employee.",
+      "step5": "IT Equipment Purchase & System Access",
+      "step5Desc": "Laptop procurement and credential creation across company tools.",
+      "step6": "Day 1 Integration & Welcome",
+      "step6Desc": "Team introduction, initial training, and equipment delivery."
+    },
+    "company": {
+      "name": "Business Formation & Incorporation",
+      "category": "Legal & Finance",
+      "description": "Complete process including prior feasibility check, articles of organization, registry bodies, and tax regime selection.",
+      "step1": "Business Name & Address Feasibility Check",
+      "step1Desc": "Validation at the Commercial Board and City Hall for address usage and business name approval.",
+      "step2": "Drafting Articles of Organization",
+      "step2Desc": "Defining business purpose, share capital, equity distribution among partners, and legal clauses.",
+      "step3": "Registration & Federal Tax ID (CNPJ) Issuance",
+      "step3Desc": "Digital submission of legal documents and automatic generation of the Federal Tax ID.",
+      "step4": "Municipal Registration & Operating Permit",
+      "step4Desc": "Application for operation license, fire department inspection (if required), and final permit issuance.",
+      "step5": "Simplified Tax Regime Selection",
+      "step5Desc": "Filing for tax regime enrollment at the Revenue Service portal."
+    }
   },
   "process": {
     "status": {

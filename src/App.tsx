@@ -133,7 +133,48 @@ export default function App() {
     }));
   };
 
-  const selectedProcess = processes.find(p => p.id === selectedProcessId);
+  // Helper para traduzir processos pré-definidos dinamicamente conforme idioma selecionado
+  const getTranslatedProcess = (proc: Process): Process => {
+    if (proc.name.includes('Contratação') || proc.name.includes('Hiring') || proc.name.includes('Contratación')) {
+      return {
+        ...proc,
+        name: t('presetProcesses.hiring.name'),
+        category: t('presetProcesses.hiring.category'),
+        description: t('presetProcesses.hiring.description'),
+        steps: proc.steps.map(s => {
+          if (s.id === 'step-1') return { ...s, title: t('presetProcesses.hiring.step1'), description: t('presetProcesses.hiring.step1Desc') };
+          if (s.id === 'step-2') return { ...s, title: t('presetProcesses.hiring.step2'), description: t('presetProcesses.hiring.step2Desc') };
+          if (s.id === 'step-3') return { ...s, title: t('presetProcesses.hiring.step3'), description: t('presetProcesses.hiring.step3Desc') };
+          if (s.id === 'step-4') return { ...s, title: t('presetProcesses.hiring.step4'), description: t('presetProcesses.hiring.step4Desc') };
+          if (s.id === 'step-5') return { ...s, title: t('presetProcesses.hiring.step5'), description: t('presetProcesses.hiring.step5Desc') };
+          if (s.id === 'step-6') return { ...s, title: t('presetProcesses.hiring.step6'), description: t('presetProcesses.hiring.step6Desc') };
+          return s;
+        })
+      };
+    }
+
+    if (proc.name.includes('Abertura') || proc.name.includes('Formation') || proc.name.includes('Constitución')) {
+      return {
+        ...proc,
+        name: t('presetProcesses.company.name'),
+        category: t('presetProcesses.company.category'),
+        description: t('presetProcesses.company.description'),
+        steps: proc.steps.map(s => {
+          if (s.id === 'step-101' || s.id === 'step-1') return { ...s, title: t('presetProcesses.company.step1'), description: t('presetProcesses.company.step1Desc') };
+          if (s.id === 'step-102' || s.id === 'step-2') return { ...s, title: t('presetProcesses.company.step2'), description: t('presetProcesses.company.step2Desc') };
+          if (s.id === 'step-103' || s.id === 'step-3') return { ...s, title: t('presetProcesses.company.step3'), description: t('presetProcesses.company.step3Desc') };
+          if (s.id === 'step-104' || s.id === 'step-4') return { ...s, title: t('presetProcesses.company.step4'), description: t('presetProcesses.company.step4Desc') };
+          if (s.id === 'step-105' || s.id === 'step-5') return { ...s, title: t('presetProcesses.company.step5'), description: t('presetProcesses.company.step5Desc') };
+          return s;
+        })
+      };
+    }
+
+    return proc;
+  };
+
+  const selectedProcessRaw = processes.find(p => p.id === selectedProcessId);
+  const selectedProcess = selectedProcessRaw ? getTranslatedProcess(selectedProcessRaw) : undefined;
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col pb-24 sm:pb-12 selection:bg-indigo-500 selection:text-white">
@@ -188,7 +229,8 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {processes.map((proc) => {
+                {processes.map((procRaw) => {
+                  const proc = getTranslatedProcess(procRaw);
                   const blockedCount = proc.steps.filter(s => s.status === 'blocked').length;
                   const completedCount = proc.steps.filter(s => s.status === 'completed').length;
                   const progressPct = Math.round((completedCount / (proc.steps.length || 1)) * 100);

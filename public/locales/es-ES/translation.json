@@ -21,7 +21,20 @@
     "generateButton": "Estructurar con IA",
     "examplesTitle": "Ejemplos populares:",
     "guidedAssistant": "Asistente Guiado",
-    "companyOrProcess": "Elige entre **Abrir una Empresa** o **Estructurar un Proceso** (vía IA, voz o subida de documento)."
+    "companyOrProcess": "Elige entre **Abrir una Empresa** o **Estructurar un Proceso** (vía IA, voz o subida de documento).",
+    "uploadDoc": "O sube un Documento / POP",
+    "presets": {
+      "hireEmployee": "Quiero contratar a un empleado",
+      "openCompany": "Quiero abrir una empresa o sucursal",
+      "b2bClient": "Implementación de nuevo cliente B2B",
+      "bpoFinance": "Estructuración de BPO financiero"
+    }
+  },
+  "copilot": {
+    "badge": "IA Copilot Proactivo",
+    "stepBlocked": "Etapa \"{{title}}\" Bloqueada",
+    "unblockAction": "Acción de Desbloqueo",
+    "minimize": "Minimizar sugerencia"
   },
   "home": {
     "activeProcessesTitle": "Tus Procesos Inteligentes en Curso",
@@ -34,7 +47,7 @@
   "pulseFlow": {
     "title": "Vurio Pulse Flow",
     "badge": "Motor Mobile-First",
-    "description": "Pipeline Antiprocrastinación con Límites WIP, Auditoría de IA, Ponderación y Medidores Regresivos",
+    "description": "Pipeline Antiprocrastinación con Límites WIP, Auditoría de IA, Ponderación y Medidores Regressivos",
     "weightedProgress": "Progreso Ponderado Total",
     "cardsMobile": "Modo Tarjetas Mobile",
     "panoramaMode": "Modo Panorama Auto-rotación",
@@ -60,7 +73,7 @@
     "countdownDeadline": "Plazo Regresivo:",
     "hoursRemaining": "h restantes",
     "budgetSpent": "Presupuesto Consumido:",
-    "exceptionApproved": "Excepción Aprobada: +{{hours}}h por {{by}}",
+    "exceptionApproved": "Excepción Aprovada: +{{hours}}h por {{by}}",
     "exceptionBtn": "Excepción",
     "advanceBtn": "Avanzar",
     "auditRequired": "Requiere Adjunto",
@@ -75,6 +88,40 @@
     "financialDesc": "Etapas con validación de presupuesto",
     "externalGargalos": "Cuellos Externos",
     "externalDesc": "Dependen de terceros o clientes"
+  },
+  "presetProcesses": {
+    "hiring": {
+      "name": "Contratación e Integración de Empleado",
+      "category": "Recursos Humanos / Operaciones",
+      "description": "Proceso completo desde la aprobación del puesto, presupuesto de RRHH, envío de documentos por el candidato, hasta la infraestructura e integración inicial.",
+      "step1": "Aprobación del Presupuesto del Puesto",
+      "step1Desc": "Validación de disponibilidad financiera y urgencia de contratación.",
+      "step2": "Apertura y Publicación de la Vacante",
+      "step2Desc": "Publicación en canales de reclutamiento y filtro de currículums.",
+      "step3": "Entrevistas y Selección del Candidato",
+      "step3Desc": "Entrevistas técnicas y grupales con el equipo directivo.",
+      "step4": "Envío de Documentos por el Candidato",
+      "step4Desc": "Esperando el envío de documento de identidad, permiso de trabajo y examen médico.",
+      "step5": "Compra de Equipos y Accesos de TI",
+      "step5Desc": "Adquisición de la computadora y creación de credenciales en los sistemas.",
+      "step6": "Integración y Bienvenida del Día 1",
+      "step6Desc": "Presentación al equipo, capacitación inicial y entrega de equipos."
+    },
+    "company": {
+      "name": "Constitución de Empresa (Simples Nacional (ME / EPP))",
+      "category": "Legal y Financiero",
+      "description": "Proceso completo con consulta previa de viabilidad, contrato social, organismos de registro y opción por régimen simplificado.",
+      "step1": "Consulta de Viabilidad de Nombre y Dirección",
+      "step1Desc": "Validación en el registro mercantil y ayuntamiento para el uso de la dirección y nombre comercial.",
+      "step2": "Elaboración del Contrato Social",
+      "step2Desc": "Definición del objeto social, capital, reparto de participaciones y cláusulas legales.",
+      "step3": "Registro Mercantil y Emisión del CNPJ (ID Fiscal)",
+      "step3Desc": "Presentación digital de documentos y generación automática del número de registro fiscal.",
+      "step4": "Inscripción Municipal y Licencia de Funcionamiento",
+      "step4Desc": "Solicitud de la licencia de operación, inspección de bomberos y emisión del permiso final.",
+      "step5": "Opción por el Régimen Tributario Simplificado",
+      "step5Desc": "Solicitud de incorporación al régimen fiscal simplificado en el portal oficial."
+    }
   },
   "process": {
     "status": {

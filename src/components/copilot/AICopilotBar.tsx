@@ -3,6 +3,7 @@
  * AICopilotBar — Assistente Proativo com insights em tempo real e ações em 1-clique
  */
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Bot, Sparkles, AlertTriangle, ArrowRight, X, Lightbulb, Zap, Send } from 'lucide-react';
 import { Process } from '../../engine/types';
 
@@ -12,6 +13,7 @@ interface AICopilotBarProps {
 }
 
 export const AICopilotBar: React.FC<AICopilotBarProps> = ({ process, onAdvanceBlockedStep }) => {
+  const { t } = useTranslation();
   const [isDismissed, setIsDismissed] = useState(false);
 
   if (!process || isDismissed) return null;
@@ -37,11 +39,11 @@ export const AICopilotBar: React.FC<AICopilotBarProps> = ({ process, onAdvanceBl
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
               <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 uppercase tracking-wider">
-                IA Copilot Proativo
+                {t('copilot.badge')}
               </span>
               <span className="text-xs font-bold text-amber-400 flex items-center space-x-1">
                 <AlertTriangle className="w-3.5 h-3.5" />
-                <span>Etapa "{firstBlocked.title}" Bloqueada</span>
+                <span>{t('copilot.stepBlocked', { title: firstBlocked.title })}</span>
               </span>
             </div>
 
@@ -59,14 +61,14 @@ export const AICopilotBar: React.FC<AICopilotBarProps> = ({ process, onAdvanceBl
               className="px-4 py-2 rounded-xl bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-bold text-xs shadow-md shadow-indigo-500/25 flex items-center space-x-1.5 transition-all transform active:scale-95"
             >
               <Zap className="w-4 h-4 text-amber-300 fill-amber-300" />
-              <span>Ação de Desbloqueio</span>
+              <span>{t('copilot.unblockAction')}</span>
             </button>
           )}
 
           <button
             onClick={() => setIsDismissed(true)}
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
-            title="Minimizar sugestão"
+            title={t('copilot.minimize')}
           >
             <X className="w-4 h-4" />
           </button>
