@@ -20,8 +20,13 @@ i18n
       'en-US': { translation: enUS },
       'es-ES': { translation: esES }
     },
+    lng: 'pt-BR',
     fallbackLng: 'pt-BR',
     supportedLngs: ['pt-BR', 'en-US', 'es-ES'],
+    detection: {
+      order: ['querystring', 'localStorage', 'navigator'],
+      caches: ['localStorage']
+    },
     interpolation: {
       escapeValue: false
     }

@@ -21,7 +21,7 @@ export const APP_VERSION = '1.3.0';
 
 export default function App() {
   const { i18n, t } = useTranslation();
-  const [currentLang, setCurrentLang] = useState('pt-BR');
+  const [currentLang, setCurrentLang] = useState(i18n.language || 'pt-BR');
   const [activeTab, setActiveTab] = useState<'home' | 'processes' | 'voice' | 'analytics' | 'partners'>('home');
   const [viewMode, setViewMode] = useState<'pulse_flow' | 'graph'>('pulse_flow');
   const [processes, setProcesses] = useState<Process[]>([]);
@@ -29,8 +29,13 @@ export default function App() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [simulatingStepId, setSimulatingStepId] = useState<string | null>(null);
 
-  // Inicializa o estado com processos padrão modelo
+  // Inicializa o estado garantindo o idioma PT-BR padrão e processos modelo
   useEffect(() => {
+    if (i18n.language !== 'pt-BR') {
+      i18n.changeLanguage('pt-BR');
+      setCurrentLang('pt-BR');
+    }
+
     async function init() {
       const p1 = await generateProcessFromPrompt('Quero contratar um funcionário');
       const p2 = await generateProcessFromPrompt('Quero abrir uma empresa ou filial', {
