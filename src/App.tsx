@@ -11,10 +11,11 @@ import { ProcessGraphCanvas } from './components/process/ProcessGraphCanvas';
 import { SimulationModal } from './components/process/SimulationModal';
 import { PartnerSection } from './components/partners/PartnerSection';
 import { AICopilotBar } from './components/copilot/AICopilotBar';
-import { Process, CompanyOptions, DocumentUploadData } from './engine/types';
+import { VurioPulseFlow } from './components/process/VurioPulseFlow';
+import { Process, CompanyOptions, DocumentUploadData, ProcessViewMode } from './engine/types';
 import { generateProcessFromPrompt, generateProcessFromDocument } from './services/aiService';
 import { resolveProcessState } from './engine/dependencyResolver';
-import { ShieldAlert, Plus, Sparkles, FolderGit2, AlertTriangle, Layers, Activity, Zap, CheckCircle2 } from 'lucide-react';
+import { ShieldAlert, Plus, Sparkles, FolderGit2, AlertTriangle, Layers, Activity, Zap, CheckCircle2, Network, SlidersHorizontal } from 'lucide-react';
 
 export const APP_VERSION = '1.3.0';
 
@@ -22,6 +23,7 @@ export default function App() {
   const { i18n, t } = useTranslation();
   const [currentLang, setCurrentLang] = useState('pt-BR');
   const [activeTab, setActiveTab] = useState<'home' | 'processes' | 'voice' | 'analytics' | 'partners'>('home');
+  const [viewMode, setViewMode] = useState<'pulse_flow' | 'graph'>('pulse_flow');
   const [processes, setProcesses] = useState<Process[]>([]);
   const [selectedProcessId, setSelectedProcessId] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -254,14 +256,69 @@ export default function App() {
           </div>
         )}
 
-        {/* Tab Visualizador do Mapa de Conexões do Processo (Redesenhado v1.3.0) */}
+        {/* Tab Visualizador do Processo (Vurio Pulse Flow & Mapa Grafo) */}
         {activeTab === 'processes' && selectedProcess && (
-          <ProcessGraphCanvas
-            process={selectedProcess}
-            onAdvanceStep={handleAdvanceStep}
-            onApproveStep={handleApproveStep}
-            onSimulateDelay={(stepId) => setSimulatingStepId(stepId)}
-          />
+          <div className="space-y-6">
+            {/* Seletor de Modo de Visualização */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 shadow-md">
+              <div className="flex items-center space-x-3">
+                <span className="text-xs font-semibold text-slate-400">Processo Ativo:</span>
+                <select
+                  value={selectedProcessId || ''}
+                  onChange={(e) => setSelectedProcessId(e.target.value)}
+                  className="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-indigo-300 font-bold focus:outline-none focus:border-indigo-500"
+                >
+                  {processes.map(p => (
+                    <option key={p.id} value={p.id}>{p.name} ({p.category})</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Toggle Buttons: Pulse Flow vs Grafo */}
+              <div className="grid grid-cols-2 gap-1 bg-slate-950 p-1 rounded-xl border border-slate-800">
+                <button
+                  onClick={() => setViewMode('pulse_flow')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    viewMode === 'pulse_flow'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Zap className="w-3.5 h-3.5 text-emerald-400" />
+                  Vurio Pulse Flow
+                </button>
+
+                <button
+                  onClick={() => setViewMode('graph')}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all ${
+                    viewMode === 'graph'
+                      ? 'bg-indigo-600 text-white shadow-md'
+                      : 'text-slate-400 hover:text-slate-200'
+                  }`}
+                >
+                  <Network className="w-3.5 h-3.5 text-indigo-400" />
+                  Mapa Grafo
+                </button>
+              </div>
+            </div>
+
+            {/* Render do Modo Selecionado */}
+            {viewMode === 'pulse_flow' ? (
+              <VurioPulseFlow
+                process={selectedProcess}
+                onUpdateProcess={(updatedProc) => {
+                  setProcesses(prev => prev.map(p => p.id === updatedProc.id ? updatedProc : p));
+                }}
+              />
+            ) : (
+              <ProcessGraphCanvas
+                process={selectedProcess}
+                onAdvanceStep={handleAdvanceStep}
+                onApproveStep={handleApproveStep}
+                onSimulateDelay={(stepId) => setSimulatingStepId(stepId)}
+              />
+            )}
+          </div>
         )}
 
         {/* Tab Analytics & Riscos */}

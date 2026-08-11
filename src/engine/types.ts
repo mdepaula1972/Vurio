@@ -28,7 +28,50 @@ export interface DocumentUploadData {
   extractedText: string;
 }
 
-export type ProcessViewMode = 'graph' | 'kanban' | 'timeline' | 'list';
+export type ProcessViewMode = 'graph' | 'kanban' | 'pulse_flow' | 'timeline' | 'list';
+
+export type MetricType = 'deadline' | 'budget' | 'hybrid';
+
+export interface PulseStage {
+  id: string;
+  name: string;
+  weight: number; // Ex: 25 (%)
+  wipLimit?: number | null; // Limite máximo de itens na coluna (Start / Backlog)
+  color?: string;
+  description?: string;
+}
+
+export interface AIAuditInfo {
+  required: boolean;
+  allowedTypes: string[]; // ex: ['pdf', 'png', 'jpg', 'xml', 'nfe']
+  status: 'none' | 'pending' | 'auditing' | 'approved' | 'rejected';
+  fileName?: string;
+  fileUrl?: string;
+  feedback?: string;
+  auditedAt?: string;
+}
+
+export interface ExceptionRule {
+  hasRequested: boolean;
+  requiredRole: 'gerencia' | 'diretoria';
+  status: 'none' | 'pending' | 'approved' | 'rejected';
+  reason?: string;
+  approvedBy?: string;
+  approvedAt?: string;
+  extendedHours?: number;
+}
+
+export interface BudgetData {
+  targetAmount: number;
+  spentAmount: number;
+  currency: string;
+}
+
+export interface DeadlineData {
+  totalHours: number;
+  remainingHours: number;
+  deadlineDate?: string;
+}
 
 export type ApprovalType = 
   | 'individual' 
@@ -67,11 +110,18 @@ export interface Step {
   description: string;
   phaseId?: string;
   phaseName?: string;
+  stageId?: string; // ID do estágio do Pulse Flow
+  stageWeight?: number; // Peso percentual (ex: 20%)
   layer: number; // Camada hierárquica (1..N)
   status: StepStatus;
   responsible: string[];
   dependencies: StepDependency[];
   approval?: ApprovalRequirement;
+  metricType?: MetricType;
+  budgetData?: BudgetData;
+  deadlineData?: DeadlineData;
+  aiAudit?: AIAuditInfo;
+  exceptionRule?: ExceptionRule;
   financialCriteria?: {
     requiredBudget?: number;
     approvedBudget?: number;
@@ -92,6 +142,7 @@ export interface ProcessMetrics {
   healthScore: number; // 0..100%
   timeSavedHours: number;
   criticalPathCount: number;
+  weightedProgress?: number;
 }
 
 export interface Process {
@@ -101,6 +152,7 @@ export interface Process {
   description: string;
   isActive: boolean;
   steps: Step[];
+  stages?: PulseStage[];
   createdAt: string;
   updatedAt: string;
   participants: string[];
