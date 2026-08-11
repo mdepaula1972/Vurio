@@ -10,7 +10,8 @@
     "newProcess": "Novo Processo",
     "analytics": "Análises & Riscos",
     "partners": "Parceiros",
-    "freePlan": "Plano Gratuito"
+    "freePlan": "Plano Gratuito",
+    "voiceIA": "IA & Voz"
   },
   "hero": {
     "questionPrompt": "O que você quer organizar hoje?",
@@ -18,7 +19,62 @@
     "voiceButton": "Falar por Voz",
     "voiceListening": "Ouvindo sua voz...",
     "generateButton": "Estruturar com IA",
-    "examplesTitle": "Exemplos frequentes:"
+    "examplesTitle": "Exemplos frequentes:",
+    "guidedAssistant": "Assistente Guiado",
+    "companyOrProcess": "Escolha entre **Abrir uma Empresa** ou **Estruturar um Processo** (via IA, voz ou upload de documento/POP)."
+  },
+  "home": {
+    "activeProcessesTitle": "Seus Processos Inteligentes em Andamento",
+    "activeCount": "{{count}} de {{max}} ativos (Plano Gratuito)",
+    "health": "Saúde",
+    "stepsCount": "{{count}} etapas",
+    "bottlenecks": "{{count}} gargalo(s)",
+    "readyToAdvance": "Pronto para avançar"
+  },
+  "pulseFlow": {
+    "title": "Vurio Pulse Flow",
+    "badge": "Motor Mobile-First",
+    "description": "Pipeline Antiprocrastinação com WIP Limit, Auditoria IA, Ponderação e Medidores Regressivos",
+    "weightedProgress": "Progresso Ponderado Total",
+    "cardsMobile": "Modo Cards Mobile",
+    "panoramaMode": "Modo Panorama Auto-rotate",
+    "voiceWhatsBtn": "Voz / Whats",
+    "viewGraph": "Mapa Grafo",
+    "viewPulseFlow": "VurioPulseFlow",
+    "activeProcess": "Processo Ativo:",
+    "stages": {
+      "start": "Start & Entrada",
+      "startDesc": "Limite WIP rígido antiprocrastinação",
+      "in_analysis": "Análise & Execução",
+      "in_analysisDesc": "Etapa de progresso ativo com cálculo de prazos/budget",
+      "ai_audit": "Auditoria IA & Anexo",
+      "ai_auditDesc": "Exige anexo comprovatório auditado autônomo",
+      "completed": "Concluído (100%)",
+      "completedDesc": "Etapa final validada"
+    },
+    "weight": "Peso",
+    "maxLimit": "máx",
+    "newItemStart": "Novo Item no Start",
+    "wipBlocked": "Bloqueado (Limite WIP)",
+    "noTasks": "Nenhuma tarefa nesta etapa",
+    "countdownDeadline": "Prazo Regressivo:",
+    "hoursRemaining": "h restantes",
+    "budgetSpent": "Budget Consumido:",
+    "exceptionApproved": "Exceção Aprovada: +{{hours}}h por {{by}}",
+    "exceptionBtn": "Exceção",
+    "advanceBtn": "Avançar",
+    "auditRequired": "Exige Anexo",
+    "auditOk": "Auditado OK"
+  },
+  "analytics": {
+    "title": "Análise Preditiva de Riscos & Gargalos (IA Consultiva)",
+    "description": "O motor Vurio analisa a estrutura inteira de dependências para antecipar atrasos e mitigar falhas.",
+    "criticalSteps": "Etapas Críticas",
+    "criticalDesc": "Possuem múltiplas dependências",
+    "financialGargalos": "Gargalos Financeiros",
+    "financialDesc": "Etapas com validação de orçamento",
+    "externalGargalos": "Gargalos Externos",
+    "externalDesc": "Dependem de terceiros ou clientes"
   },
   "process": {
     "status": {

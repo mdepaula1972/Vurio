@@ -10,7 +10,8 @@
     "newProcess": "New Process",
     "analytics": "Analytics & Risks",
     "partners": "Partners",
-    "freePlan": "Free Plan"
+    "freePlan": "Free Plan",
+    "voiceIA": "AI & Voice"
   },
   "hero": {
     "questionPrompt": "What do you want to organize today?",
@@ -18,7 +19,62 @@
     "voiceButton": "Speak with Voice",
     "voiceListening": "Listening to your voice...",
     "generateButton": "Structure with AI",
-    "examplesTitle": "Popular examples:"
+    "examplesTitle": "Popular examples:",
+    "guidedAssistant": "Guided Assistant",
+    "companyOrProcess": "Choose between **Open a Business** or **Structure a Process** (via AI, voice, or document upload)."
+  },
+  "home": {
+    "activeProcessesTitle": "Your Active Intelligent Processes",
+    "activeCount": "{{count}} of {{max}} active (Free Plan)",
+    "health": "Health",
+    "stepsCount": "{{count}} steps",
+    "bottlenecks": "{{count}} bottleneck(s)",
+    "readyToAdvance": "Ready to advance"
+  },
+  "pulseFlow": {
+    "title": "Vurio Pulse Flow",
+    "badge": "Mobile-First Engine",
+    "description": "Anti-Procrastination Pipeline with WIP Limits, AI Audit, Weighting, and Countdown Gauges",
+    "weightedProgress": "Total Weighted Progress",
+    "cardsMobile": "Mobile Card View",
+    "panoramaMode": "Auto-rotate Panorama View",
+    "voiceWhatsBtn": "Voice / Whats",
+    "viewGraph": "Graph Map",
+    "viewPulseFlow": "VurioPulseFlow",
+    "activeProcess": "Active Process:",
+    "stages": {
+      "start": "Start & Entry",
+      "startDesc": "Strict Anti-Procrastination WIP Limit",
+      "in_analysis": "Analysis & Execution",
+      "in_analysisDesc": "Active progress stage with deadline/budget tracking",
+      "ai_audit": "AI Audit & Attachment",
+      "ai_auditDesc": "Requires autonomous audited proof document",
+      "completed": "Completed (100%)",
+      "completedDesc": "Final validated stage"
+    },
+    "weight": "Weight",
+    "maxLimit": "max",
+    "newItemStart": "New Item in Start",
+    "wipBlocked": "Blocked (WIP Limit)",
+    "noTasks": "No tasks in this stage",
+    "countdownDeadline": "Countdown Deadline:",
+    "hoursRemaining": "h remaining",
+    "budgetSpent": "Budget Consumed:",
+    "exceptionApproved": "Exception Approved: +{{hours}}h by {{by}}",
+    "exceptionBtn": "Exception",
+    "advanceBtn": "Advance",
+    "auditRequired": "Requires Attachment",
+    "auditOk": "Audited OK"
+  },
+  "analytics": {
+    "title": "Predictive Risk & Bottleneck Analysis (Consultative AI)",
+    "description": "The Vurio engine analyzes the entire dependency structure to anticipate delays and mitigate failures.",
+    "criticalSteps": "Critical Steps",
+    "criticalDesc": "Have multiple dependencies",
+    "financialGargalos": "Financial Bottlenecks",
+    "financialDesc": "Steps requiring budget validation",
+    "externalGargalos": "External Bottlenecks",
+    "externalDesc": "Depend on third parties or clients"
   },
   "process": {
     "status": {

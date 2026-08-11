@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { 
   Process, Step, PulseStage, MetricType, AIAuditInfo, ExceptionRule 
 } from '../../engine/types';
@@ -16,46 +17,47 @@ interface VurioPulseFlowProps {
   onUpdateProcess: (updatedProcess: Process) => void;
 }
 
-// Estágios Padrão do Vurio Pulse Flow com pesos ponderados totalizando 100%
-const DEFAULT_PULSE_STAGES: PulseStage[] = [
-  {
-    id: 'start',
-    name: 'Start & Entrada',
-    weight: 15,
-    wipLimit: 3, // Regra antiprocrastinação: Máximo 3 itens
-    color: 'from-amber-500/20 to-amber-600/10 border-amber-500/30',
-    description: 'Limite WIP rígido antiprocrastinação'
-  },
-  {
-    id: 'in_analysis',
-    name: 'Análise & Execução',
-    weight: 30,
-    wipLimit: 4,
-    color: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
-    description: 'Etapa de progresso ativo com cálculo de prazos/budget'
-  },
-  {
-    id: 'ai_audit',
-    name: 'Auditoria IA & Anexo',
-    weight: 35,
-    wipLimit: null,
-    color: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30',
-    description: 'Exige anexo comprovatório auditado autônomo'
-  },
-  {
-    id: 'completed',
-    name: 'Concluído (100%)',
-    weight: 20,
-    wipLimit: null,
-    color: 'from-teal-500/20 to-teal-600/10 border-teal-500/30',
-    description: 'Etapa final validada'
-  }
-];
-
 export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
   process,
   onUpdateProcess
 }) => {
+  const { t } = useTranslation();
+
+  const DEFAULT_PULSE_STAGES: PulseStage[] = [
+    {
+      id: 'start',
+      name: t('pulseFlow.stages.start'),
+      weight: 15,
+      wipLimit: 3,
+      color: 'from-amber-500/20 to-amber-600/10 border-amber-500/30',
+      description: t('pulseFlow.stages.startDesc')
+    },
+    {
+      id: 'in_analysis',
+      name: t('pulseFlow.stages.in_analysis'),
+      weight: 30,
+      wipLimit: 4,
+      color: 'from-blue-500/20 to-blue-600/10 border-blue-500/30',
+      description: t('pulseFlow.stages.in_analysisDesc')
+    },
+    {
+      id: 'ai_audit',
+      name: t('pulseFlow.stages.ai_audit'),
+      weight: 35,
+      wipLimit: null,
+      color: 'from-emerald-500/20 to-emerald-600/10 border-emerald-500/30',
+      description: t('pulseFlow.stages.ai_auditDesc')
+    },
+    {
+      id: 'completed',
+      name: t('pulseFlow.stages.completed'),
+      weight: 20,
+      wipLimit: null,
+      color: 'from-teal-500/20 to-teal-600/10 border-teal-500/30',
+      description: t('pulseFlow.stages.completedDesc')
+    }
+  ];
+
   const [stages, setStages] = useState<PulseStage[]>(process.stages || DEFAULT_PULSE_STAGES);
   const [viewOrientation, setViewOrientation] = useState<'portrait' | 'landscape'>('portrait');
   const [wipWarning, setWipWarning] = useState<string | null>(null);
@@ -237,13 +239,13 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
               </div>
               <div>
                 <h2 className="text-xl font-bold text-slate-100 flex items-center gap-2">
-                  Vurio Pulse Flow
+                  {t('pulseFlow.title')}
                   <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-semibold border border-emerald-500/30">
-                    Mobile-First Engine
+                    {t('pulseFlow.badge')}
                   </span>
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Pipeline Antiprocrastinação com WIP Limit, Auditoria IA, Ponderação e Medidores Regressivos
+                  {t('pulseFlow.description')}
                 </p>
               </div>
             </div>
@@ -255,7 +257,7 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
               <Scale className="w-5 h-5 text-indigo-400" />
               <div>
                 <span className="text-[10px] text-slate-400 uppercase tracking-wider block font-medium">
-                  Progresso Ponderado Total
+                  {t('pulseFlow.weightedProgress')}
                 </span>
                 <span className="text-base font-extrabold text-emerald-400">
                   {Math.round(currentWeightedProgress)}% <span className="text-xs font-normal text-slate-400">/ 100%</span>
@@ -267,11 +269,11 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
             <button
               onClick={() => setViewOrientation(prev => prev === 'portrait' ? 'landscape' : 'portrait')}
               className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl border border-slate-700 transition-all flex items-center gap-1.5 text-xs font-medium"
-              title="Girar Tela Virtual (Orientação Panorama Mobile)"
+              title={t('pulseFlow.panoramaMode')}
             >
               <RotateCw className={`w-4 h-4 text-indigo-400 transition-transform ${viewOrientation === 'landscape' ? 'rotate-90 text-emerald-400' : ''}`} />
               <span className="hidden sm:inline">
-                {viewOrientation === 'portrait' ? 'Modo Cards Mobile' : 'Modo Panorama Auto-rotate'}
+                {viewOrientation === 'portrait' ? t('pulseFlow.cardsMobile') : t('pulseFlow.panoramaMode')}
               </span>
             </button>
 
@@ -282,7 +284,7 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
             >
               <Mic className="w-4 h-4" />
               <MessageSquare className="w-4 h-4" />
-              <span>Voz / Whats</span>
+              <span>{t('pulseFlow.voiceWhatsBtn')}</span>
             </button>
           </div>
         </div>
@@ -318,7 +320,7 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
                   <div className="flex items-center space-x-2">
                     <h3 className="font-bold text-sm text-slate-100">{stage.name}</h3>
                     <span className="px-2 py-0.5 rounded-full bg-slate-800 text-[10px] font-extrabold text-indigo-300 border border-slate-700">
-                      Peso: {stage.weight}%
+                      {t('pulseFlow.weight')}: {stage.weight}%
                     </span>
                   </div>
 
@@ -329,7 +331,7 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
                       : 'bg-slate-800 text-slate-300 border border-slate-700'
                   }`}>
                     {stageSteps.length}
-                    {stage.wipLimit ? ` / ${stage.wipLimit} máx` : ''}
+                    {stage.wipLimit ? ` / ${stage.wipLimit} ${t('pulseFlow.maxLimit')}` : ''}
                   </span>
                 </div>
 
@@ -351,7 +353,7 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
                   }`}
                 >
                   <Plus className="w-4 h-4" />
-                  {isAtWipLimit ? 'Bloqueado (Limite WIP)' : 'Novo Item no Start'}
+                  {isAtWipLimit ? t('pulseFlow.wipBlocked') : t('pulseFlow.newItemStart')}
                 </button>
               )}
 
@@ -360,7 +362,7 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
                 {stageSteps.length === 0 ? (
                   <div className="h-32 flex flex-col items-center justify-center border-2 border-dashed border-slate-800 rounded-xl text-center p-3">
                     <Layers className="w-6 h-6 text-slate-600 mb-1" />
-                    <span className="text-xs text-slate-500">Nenhuma tarefa nesta etapa</span>
+                    <span className="text-xs text-slate-500">{t('pulseFlow.noTasks')}</span>
                   </div>
                 ) : (
                   stageSteps.map((step) => (
@@ -431,6 +433,8 @@ const PulseCard: React.FC<PulseCardProps> = ({
   onOpenAudit,
   onOpenException
 }) => {
+  const { t } = useTranslation();
+
   // 1. Métrica de Prazo: Barra Regressiva (Direita -> Esquerda)
   const remainingHours = step.deadlineData?.remainingHours ?? 32;
   const totalHours = step.deadlineData?.totalHours ?? 48;
@@ -487,7 +491,7 @@ const PulseCard: React.FC<PulseCardProps> = ({
             title="Clique para abrir auditoria da IA"
           >
             <ShieldCheck className="w-3 h-3" />
-            {step.aiAudit.status === 'approved' ? 'Auditado OK' : 'Exige Anexo'}
+            {step.aiAudit.status === 'approved' ? t('pulseFlow.auditOk') : t('pulseFlow.auditRequired')}
           </span>
         )}
       </div>
@@ -501,10 +505,10 @@ const PulseCard: React.FC<PulseCardProps> = ({
         <div className="flex items-center justify-between text-[10px]">
           <span className="text-slate-400 flex items-center gap-1 font-medium">
             <Clock className="w-3 h-3 text-slate-400" />
-            Prazo Regressivo:
+            {t('pulseFlow.countdownDeadline')}
           </span>
           <span className={`font-extrabold ${deadlineTextColor}`}>
-            {remainingHours}h restantes ({Math.round(deadlinePercent)}%)
+            {remainingHours}{t('pulseFlow.hoursRemaining')} ({Math.round(deadlinePercent)}%)
           </span>
         </div>
 
@@ -523,7 +527,7 @@ const PulseCard: React.FC<PulseCardProps> = ({
           <div className="flex items-center justify-between text-[10px]">
             <span className="text-slate-400 flex items-center gap-1 font-medium">
               <DollarSign className="w-3 h-3 text-emerald-400" />
-              Budget Consumido:
+              {t('pulseFlow.budgetSpent')}
             </span>
             <span className={`font-extrabold ${budgetTextColor}`}>
               R$ {spentAmount} / R$ {targetAmount}
@@ -544,7 +548,7 @@ const PulseCard: React.FC<PulseCardProps> = ({
       {step.exceptionRule?.status === 'approved' && (
         <div className="p-2 rounded-lg bg-amber-950/40 border border-amber-500/30 text-[10px] text-amber-300 flex items-center gap-1.5">
           <ShieldAlert className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-          <span>Exceção Aprovada: +{step.exceptionRule.extendedHours}h por {step.exceptionRule.approvedBy}</span>
+          <span>{t('pulseFlow.exceptionApproved', { hours: step.exceptionRule.extendedHours, by: step.exceptionRule.approvedBy })}</span>
         </div>
       )}
 
@@ -558,7 +562,7 @@ const PulseCard: React.FC<PulseCardProps> = ({
           title="Quebra de regra por Alçada (Diretoria/Gerência)"
         >
           <Lock className="w-3 h-3 text-amber-400" />
-          Exceção
+          {t('pulseFlow.exceptionBtn')}
         </button>
 
         {/* Botão de Avanço para Próxima Etapa */}
@@ -567,7 +571,7 @@ const PulseCard: React.FC<PulseCardProps> = ({
             onClick={() => onMove(nextStage.id)}
             className="text-[11px] font-semibold text-indigo-400 hover:text-indigo-200 bg-indigo-500/10 hover:bg-indigo-500/20 border border-indigo-500/20 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ml-auto"
           >
-            Avançar
+            {t('pulseFlow.advanceBtn')}
             <ChevronRight className="w-3.5 h-3.5" />
           </button>
         )}

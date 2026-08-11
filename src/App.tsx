@@ -175,10 +175,10 @@ export default function App() {
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-extrabold text-white flex items-center space-x-2">
                   <FolderGit2 className="w-5 h-5 text-indigo-400" />
-                  <span>Seus Processos Inteligentes em Andamento</span>
+                  <span>{t('home.activeProcessesTitle')}</span>
                 </h3>
                 <span className="text-xs text-slate-400 font-medium">
-                  {processes.length} de 3 ativos (Plano Gratuito)
+                  {t('home.activeCount', { count: processes.length, max: 3 })}
                 </span>
               </div>
 
@@ -221,7 +221,7 @@ export default function App() {
                               ? 'bg-amber-500/10 text-amber-400 border-amber-500/30'
                               : 'bg-red-500/10 text-red-400 border-red-500/30'
                           }`}>
-                            ⚡ {healthScore}% Saúde
+                            ⚡ {healthScore}% {t('home.health')}
                           </span>
                         </div>
                       </div>
@@ -233,18 +233,18 @@ export default function App() {
                       <div className="pt-3 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
                         <div className="flex items-center space-x-2">
                           <Layers className="w-3.5 h-3.5 text-indigo-400" />
-                          <span>{proc.steps.length} etapas</span>
+                          <span>{t('home.stepsCount', { count: proc.steps.length })}</span>
                         </div>
 
                         {blockedCount > 0 ? (
                           <span className="text-red-400 font-bold flex items-center space-x-1">
                             <AlertTriangle className="w-3.5 h-3.5 text-red-400" />
-                            <span>{blockedCount} gargalo(s)</span>
+                            <span>{t('home.bottlenecks', { count: blockedCount })}</span>
                           </span>
                         ) : (
                           <span className="text-emerald-400 font-bold flex items-center space-x-1">
                             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                            <span>Pronto para avançar</span>
+                            <span>{t('home.readyToAdvance')}</span>
                           </span>
                         )}
                       </div>
@@ -262,7 +262,7 @@ export default function App() {
             {/* Seletor de Modo de Visualização */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-900/80 border border-slate-800 rounded-2xl p-3.5 shadow-md">
               <div className="flex items-center space-x-3">
-                <span className="text-xs font-semibold text-slate-400">Processo Ativo:</span>
+                <span className="text-xs font-semibold text-slate-400">{t('pulseFlow.activeProcess')}</span>
                 <select
                   value={selectedProcessId || ''}
                   onChange={(e) => setSelectedProcessId(e.target.value)}
@@ -297,7 +297,7 @@ export default function App() {
                   }`}
                 >
                   <Network className="w-3.5 h-3.5 text-indigo-400" />
-                  Mapa Grafo
+                  {t('pulseFlow.viewGraph')}
                 </button>
               </div>
             </div>
@@ -326,35 +326,35 @@ export default function App() {
           <div className="space-y-6 bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl">
             <h2 className="text-xl font-bold text-white flex items-center space-x-2">
               <Sparkles className="w-5 h-5 text-indigo-400" />
-              <span>Análise Preditiva de Riscos & Gargalos (IA Consultiva)</span>
+              <span>{t('analytics.title')}</span>
             </h2>
             <p className="text-xs text-slate-400">
-              O motor Vurio analisa a estrutura inteira de dependências do processo <strong>"{selectedProcess.name}"</strong> para antecipar atrasos e mitigar falhas antes que ocorram.
+              {t('analytics.description')}
             </p>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4">
               <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Etapas Críticas</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('analytics.criticalSteps')}</span>
                 <p className="text-3xl font-black text-white">
                   {selectedProcess.steps.filter(s => s.dependencies.length > 1).length}
                 </p>
-                <p className="text-[11px] text-slate-400">Possuem múltiplas dependências</p>
+                <p className="text-[11px] text-slate-400">{t('analytics.criticalDesc')}</p>
               </div>
 
               <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gargalos Financeiros</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('analytics.financialGargalos')}</span>
                 <p className="text-3xl font-black text-emerald-400">
                   {selectedProcess.steps.filter(s => s.financialCriteria).length}
                 </p>
-                <p className="text-[11px] text-slate-400">Etapas com validação de orçamento</p>
+                <p className="text-[11px] text-slate-400">{t('analytics.financialDesc')}</p>
               </div>
 
               <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Gargalos Externos</span>
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">{t('analytics.externalGargalos')}</span>
                 <p className="text-3xl font-black text-amber-400">
                   {selectedProcess.steps.filter(s => s.externalCriteria).length}
                 </p>
-                <p className="text-[11px] text-slate-400">Dependem de terceiros ou clientes</p>
+                <p className="text-[11px] text-slate-400">{t('analytics.externalDesc')}</p>
               </div>
             </div>
           </div>
