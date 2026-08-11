@@ -138,6 +138,8 @@ export interface Step {
   completedAt?: string;
 }
 
+export type UserRole = 'operacional' | 'gerencia' | 'diretoria';
+
 export interface ProcessMetrics {
   healthScore: number; // 0..100%
   timeSavedHours: number;
@@ -153,6 +155,9 @@ export interface Process {
   isActive: boolean;
   steps: Step[];
   stages?: PulseStage[];
+  creatorRole?: UserRole;
+  hasFullAutonomy?: boolean;
+  approvalRequiredPhaseId?: string;
   createdAt: string;
   updatedAt: string;
   participants: string[];

@@ -11,6 +11,8 @@ import {
 import { AIAuditUploadModal } from './AIAuditUploadModal';
 import { ExceptionOverrideModal } from './ExceptionOverrideModal';
 import { VoiceWhatsAppInputModal } from './VoiceWhatsAppInputModal';
+import { VoiceConsultantModal } from '../copilot/VoiceConsultantModal';
+import { UserRole } from '../../engine/types';
 
 interface VurioPulseFlowProps {
   process: Process;
@@ -66,6 +68,7 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
   const [auditStep, setAuditStep] = useState<Step | null>(null);
   const [exceptionStep, setExceptionStep] = useState<Step | null>(null);
   const [isVoiceWhatsOpen, setIsVoiceWhatsOpen] = useState(false);
+  const [isConsultantOpen, setIsConsultantOpen] = useState(false);
 
   // Mapeamento de Steps por Estágio (fallback se stageId não existir)
   const stepsByStage = stages.reduce((acc, stage) => {
@@ -277,6 +280,16 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
               </span>
             </button>
 
+            {/* Botão IA Consultiva & Prescritiva */}
+            <button
+              onClick={() => setIsConsultantOpen(true)}
+              className="px-3.5 py-2.5 bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white font-bold text-xs rounded-xl shadow-lg shadow-violet-600/30 transition-all flex items-center gap-1.5"
+              title="IA Consultiva, Preditiva & Prescritiva (Diagnóstico e Autonomia de Alçada)"
+            >
+              <Sparkles className="w-4 h-4 text-emerald-300" />
+              <span>IA Consultiva</span>
+            </button>
+
             {/* Criar via Voz / WhatsApp */}
             <button
               onClick={() => setIsVoiceWhatsOpen(true)}
@@ -406,6 +419,35 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
         isOpen={isVoiceWhatsOpen}
         onClose={() => setIsVoiceWhatsOpen(false)}
         onAddStepFromAI={handleAddStepFromAI}
+      />
+
+      <VoiceConsultantModal
+        isOpen={isConsultantOpen}
+        onClose={() => setIsConsultantOpen(false)}
+        onConfirmConsultantFlow={({ title, description, creatorRole, hasFullAutonomy, prescribedSteps }) => {
+          const generatedSteps: Step[] = prescribedSteps.map((pStep, index) => ({
+            id: `consult-step-${Date.now()}-${index}`,
+            title: pStep.title || title,
+            description: pStep.description || description,
+            stageId: pStep.stageId || 'start',
+            layer: index + 1,
+            status: pStep.status || 'in_progress',
+            responsible: [creatorRole.toUpperCase()],
+            dependencies: [],
+            metricType: pStep.metricType || 'deadline',
+            budgetData: pStep.budgetData,
+            deadlineData: pStep.deadlineData || { totalHours: 48, remainingHours: 48 },
+            aiAudit: pStep.aiAudit,
+            exceptionRule: pStep.exceptionRule
+          }));
+
+          onUpdateProcess({
+            ...process,
+            creatorRole,
+            hasFullAutonomy,
+            steps: [...generatedSteps, ...process.steps]
+          });
+        }}
       />
 
     </div>

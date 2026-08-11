@@ -418,6 +418,9 @@ export default function App() {
       <AICopilotBar
         process={selectedProcess}
         onAdvanceBlockedStep={(stepId) => handleAdvanceStep(stepId)}
+        onUpdateProcess={(updatedProc) => {
+          setProcesses(prev => prev.map(p => p.id === updatedProc.id ? updatedProc : p));
+        }}
       />
 
       {/* Modal de Simulação de Atraso se acionado */}
