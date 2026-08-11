@@ -32,9 +32,9 @@ export const Navbar: React.FC<NavbarProps> = ({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
         
         {/* Logo & Slogan */}
-        <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/20 ring-1 ring-white/20">
-            <Activity className="w-6 h-6 text-white" />
+        <div className="flex items-center space-x-3 cursor-pointer" onClick={onNewProcessClick}>
+          <div className="h-10 px-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center shadow-lg shadow-indigo-500/20">
+            <img src="/logo.png" alt="VURIO Logo" className="h-7 w-auto object-contain" />
           </div>
           <div>
             <div className="flex items-center space-x-2">

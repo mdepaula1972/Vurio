@@ -1,164 +1,49 @@
 {
+  "landing": {
+    "tagline": "Haz avanzar tus flujos.",
+    "subtitle": "Organiza lo que necesita hacerse y avanza un flujo a la vez.",
+    "cta": "Comenzar"
+  },
+  "onboarding": {
+    "title": "Tu capacidad de flujos",
+    "question": "¿Cuántos flujos puedes gestionar al mismo tiempo?",
+    "explanation": "Vurio te ayuda a evitar tener demasiadas cosas en progreso. Define cuántos flujos puedes manejar simultáneamente.",
+    "note": "Podrás cambiar esta capacidad más adelante.",
+    "cta": "Continuar"
+  },
   "app": {
     "title": "Vurio",
-    "tagline": "Inteligencia para hacer avanzar los procesos",
-    "subtitle": "Vurio entiende el proceso, identifica dependencias, explica bloqueos y orienta decisiones."
+    "capacity": "Capacidad: {{count}} flujo",
+    "capacity_plural": "Capacidad: {{count}} flujos"
   },
   "nav": {
-    "home": "Inicio",
-    "processes": "Procesos",
-    "newProcess": "Nuevo Proceso",
-    "analytics": "Análisis y Riesgos",
-    "partners": "Socios",
-    "freePlan": "Plan Gratuito",
-    "voiceIA": "IA y Voz"
+    "overview": "Resumen",
+    "entrada": "Entrada",
+    "settings": "Configuración"
   },
-  "hero": {
-    "questionPrompt": "¿Qué quieres organizar hoy?",
-    "placeholder": "Ej: 'Quiero contratar a un empleado', 'Abrir una sucursal', 'Implementar nuevo cliente'...",
-    "voiceButton": "Hablar por Voz",
-    "voiceListening": "Escuchando tu voz...",
-    "generateButton": "Estructurar con IA",
-    "examplesTitle": "Ejemplos populares:",
-    "guidedAssistant": "Asistente Guiado",
-    "companyOrProcess": "Elige entre **Abrir una Empresa** o **Estructurar un Proceso** (vía IA, voz o subida de documento).",
-    "uploadDoc": "O sube un Documento / POP",
-    "presets": {
-      "hireEmployee": "Quiero contratar a un empleado",
-      "openCompany": "Quiero abrir una empresa o sucursal",
-      "b2bClient": "Implementación de nuevo cliente B2B",
-      "bpoFinance": "Estructuración de BPO financiero"
-    }
+  "entrada": {
+    "title": "Entrada",
+    "description": "Donde empiezan tus ideas y demandas.",
+    "question": "¿Qué quieres hacer?",
+    "placeholder": "Describe una idea, proyecto, tarea, compra, contrato o cualquier cosa que necesite avanzar.",
+    "addBtn": "+ Agregar flujo",
+    "empty": "Aún no hay flujos. Comienza agregando lo que quieres hacer.",
+    "statusLabel": "Entrada"
   },
-  "copilot": {
-    "badge": "IA Copilot Proactivo",
-    "stepBlocked": "Etapa \"{{title}}\" Bloqueada",
-    "unblockAction": "Acción de Desbloqueo",
-    "minimize": "Minimizar sugerencia"
+  "overview": {
+    "title": "Resumen",
+    "soon": "Próximamente en esta fase."
   },
-  "home": {
-    "activeProcessesTitle": "Tus Procesos Inteligentes en Curso",
-    "activeCount": "{{count}} de {{max}} activos (Plan Gratuito)",
-    "health": "Salud",
-    "stepsCount": "{{count}} etapas",
-    "bottlenecks": "{{count}} cuello(s) de botella",
-    "readyToAdvance": "Listo para avanzar"
+  "settings": {
+    "title": "Configuración",
+    "capacity": "Capacidad de flujos",
+    "capacityDesc": "Número máximo de flujos en progreso simultáneamente.",
+    "language": "Idioma",
+    "save": "Guardar"
   },
-  "pulseFlow": {
-    "title": "Vurio Pulse Flow",
-    "badge": "Motor Mobile-First",
-    "description": "Pipeline Antiprocrastinación con Límites WIP, Auditoría de IA, Ponderación y Medidores Regressivos",
-    "weightedProgress": "Progreso Ponderado Total",
-    "cardsMobile": "Modo Tarjetas Mobile",
-    "panoramaMode": "Modo Panorama Auto-rotación",
-    "voiceWhatsBtn": "Voz / Whats",
-    "viewGraph": "Mapa Grafo",
-    "viewPulseFlow": "VurioPulseFlow",
-    "activeProcess": "Proceso Activo:",
-    "stages": {
-      "start": "Inicio y Entrada",
-      "startDesc": "Límite WIP estricto antiprocrastinación",
-      "in_analysis": "Análisis y Ejecución",
-      "in_analysisDesc": "Etapa de progreso activo con seguimiento de plazos/presupuesto",
-      "ai_audit": "Auditoría IA y Adjunto",
-      "ai_auditDesc": "Requiere documento comprobatorio auditado de forma autónoma",
-      "completed": "Completado (100%)",
-      "completedDesc": "Etapa final validada"
-    },
-    "weight": "Peso",
-    "maxLimit": "máx",
-    "newItemStart": "Nuevo Elemento en Inicio",
-    "wipBlocked": "Bloqueado (Límite WIP)",
-    "noTasks": "Sin tareas en esta etapa",
-    "countdownDeadline": "Plazo Regresivo:",
-    "hoursRemaining": "h restantes",
-    "budgetSpent": "Presupuesto Consumido:",
-    "exceptionApproved": "Excepción Aprovada: +{{hours}}h por {{by}}",
-    "exceptionBtn": "Excepción",
-    "advanceBtn": "Avanzar",
-    "auditRequired": "Requiere Adjunto",
-    "auditOk": "Auditado OK"
-  },
-  "analytics": {
-    "title": "Análisis Predictivo de Riesgos y Cuellos de Botella (IA Consultiva)",
-    "description": "El motor Vurio analiza toda la estructura de dependencias para anticipar retrasos y mitigar fallos.",
-    "criticalSteps": "Etapas Críticas",
-    "criticalDesc": "Tienen múltiples dependencias",
-    "financialGargalos": "Cuellos Financieros",
-    "financialDesc": "Etapas con validación de presupuesto",
-    "externalGargalos": "Cuellos Externos",
-    "externalDesc": "Dependen de terceros o clientes"
-  },
-  "presetProcesses": {
-    "hiring": {
-      "name": "Contratación e Integración de Empleado",
-      "category": "Recursos Humanos / Operaciones",
-      "description": "Proceso completo desde la aprobación del puesto, presupuesto de RRHH, envío de documentos por el candidato, hasta la infraestructura e integración inicial.",
-      "step1": "Aprobación del Presupuesto del Puesto",
-      "step1Desc": "Validación de disponibilidad financiera y urgencia de contratación.",
-      "step2": "Apertura y Publicación de la Vacante",
-      "step2Desc": "Publicación en canales de reclutamiento y filtro de currículums.",
-      "step3": "Entrevistas y Selección del Candidato",
-      "step3Desc": "Entrevistas técnicas y grupales con el equipo directivo.",
-      "step4": "Envío de Documentos por el Candidato",
-      "step4Desc": "Esperando el envío de documento de identidad, permiso de trabajo y examen médico.",
-      "step5": "Compra de Equipos y Accesos de TI",
-      "step5Desc": "Adquisición de la computadora y creación de credenciales en los sistemas.",
-      "step6": "Integración y Bienvenida del Día 1",
-      "step6Desc": "Presentación al equipo, capacitación inicial y entrega de equipos."
-    },
-    "company": {
-      "name": "Constitución de Empresa (Simples Nacional (ME / EPP))",
-      "category": "Legal y Financiero",
-      "description": "Proceso completo con consulta previa de viabilidad, contrato social, organismos de registro y opción por régimen simplificado.",
-      "step1": "Consulta de Viabilidad de Nombre y Dirección",
-      "step1Desc": "Validación en el registro mercantil y ayuntamiento para el uso de la dirección y nombre comercial.",
-      "step2": "Elaboración del Contrato Social",
-      "step2Desc": "Definición del objeto social, capital, reparto de participaciones y cláusulas legales.",
-      "step3": "Registro Mercantil y Emisión del CNPJ (ID Fiscal)",
-      "step3Desc": "Presentación digital de documentos y generación automática del número de registro fiscal.",
-      "step4": "Inscripción Municipal y Licencia de Funcionamiento",
-      "step4Desc": "Solicitud de la licencia de operación, inspección de bomberos y emisión del permiso final.",
-      "step5": "Opción por el Régimen Tributario Simplificado",
-      "step5Desc": "Solicitud de incorporación al régimen fiscal simplificado en el portal oficial."
-    }
-  },
-  "process": {
-    "status": {
-      "not_started": "No Iniciado",
-      "in_progress": "En Progreso",
-      "blocked": "Bloqueado",
-      "completed": "Completado"
-    },
-    "dependencyTypes": {
-      "sequential": "Secuencial (A → B)",
-      "parallel": "Paralela (Simultáneas)",
-      "convergent": "Convergente (B + C → D)",
-      "conditional": "Condicional (Si X...)",
-      "hierarchical": "Jerárquica (Fases / Subetapas)",
-      "external": "Externa (Terceros / Clientes)",
-      "financial": "Financiera (Presupuesto / Caja)"
-    },
-    "blockade": {
-      "title": "Diagnóstico de Bloqueo Explicable",
-      "reason": "Motivo del Impedimento",
-      "responsible": "Quién debe actuar",
-      "pendingCondition": "Condición Faltante",
-      "since": "Bloqueado desde",
-      "impact": "Impacto en el Proceso",
-      "aiSuggestion": "Guía de IA para Desbloquear"
-    },
-    "actions": {
-      "advance": "Avanzar Etapa",
-      "approve": "Aprovar",
-      "reject": "Solicitar Ajuste",
-      "viewDetails": "Ver Detalles y Árbol",
-      "addStep": "Agregar Etapa",
-      "simulate": "Simular Retraso"
-    }
-  },
-  "freemium": {
-    "banner": "Estás en el Plan Gratuito (3/3 procesos activos).",
-    "upgrade": "Actualizar a Ilimitado"
+  "language": {
+    "pt-BR": "Português",
+    "en-US": "English",
+    "es-ES": "Español"
   }
 }

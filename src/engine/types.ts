@@ -1,7 +1,45 @@
 /**
- * Vurio v1.3.0 — Gestor Inteligente de Processos com IA
+ * Vurio v2.0.0 — Gestor Inteligente de Processos com IA
  * Definições de tipos e interfaces do motor Vurio
+ *
+ * MVP Fase 1: Flow + UserConfig (novos)
+ * Tipos legados do v1.3.0 mantidos para fases futuras
  */
+
+// ============================================================
+// VURIO MVP FASE 1 — Tipos fundamentais
+// ============================================================
+
+export type FlowStatus = 'entrada';
+// Fases futuras: | 'preparacao' | 'execucao' | 'conclusao'
+
+export interface Flow {
+  id: string;             // UUID único
+  description: string;   // Intenção original do usuário (preservada exatamente)
+  status: FlowStatus;    // Apenas 'entrada' na Fase 1
+  position: number;      // Posição/prioridade na lista
+  createdAt: string;     // ISO date string
+  // Campos opcionais preparados para fases futuras:
+  objective?: string;
+  steps?: unknown[];
+  deadline?: string;
+  budget?: number;
+  responsible?: string[];
+  tags?: string[];
+  history?: Array<{ event: string; at: string }>;
+}
+
+export type AppLanguage = 'pt-BR' | 'en-US' | 'es-ES';
+
+export interface UserConfig {
+  capacity: number;           // Máx de fluxos em andamento simultâneos
+  language: AppLanguage;
+  onboardingDone: boolean;
+}
+
+// ============================================================
+// VURIO v1.3.0 — Tipos legados (mantidos para fases futuras)
+// ============================================================
 export type DependencyType = 
   | 'sequential'   // A -> B
   | 'parallel'     // A -> B e A -> C

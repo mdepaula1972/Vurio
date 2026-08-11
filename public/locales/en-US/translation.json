@@ -1,164 +1,49 @@
 {
+  "landing": {
+    "tagline": "Make your flows move forward.",
+    "subtitle": "Organize what needs to be done and advance one flow at a time.",
+    "cta": "Get Started"
+  },
+  "onboarding": {
+    "title": "Your flow capacity",
+    "question": "How many flows can you manage at the same time?",
+    "explanation": "Vurio helps you avoid having too many things in progress at once. Set how many flows you can handle simultaneously.",
+    "note": "You can change this capacity later.",
+    "cta": "Continue"
+  },
   "app": {
     "title": "Vurio",
-    "tagline": "Intelligence to make processes move forward",
-    "subtitle": "Vurio understands your process, identifies dependencies, explains blockades, and guides decisions."
+    "capacity": "Capacity: {{count}} flow",
+    "capacity_plural": "Capacity: {{count}} flows"
   },
   "nav": {
-    "home": "Home",
-    "processes": "Processes",
-    "newProcess": "New Process",
-    "analytics": "Analytics & Risks",
-    "partners": "Partners",
-    "freePlan": "Free Plan",
-    "voiceIA": "AI & Voice"
+    "overview": "Overview",
+    "entrada": "Inbox",
+    "settings": "Settings"
   },
-  "hero": {
-    "questionPrompt": "What do you want to organize today?",
-    "placeholder": "e.g. 'I want to hire an employee', 'Open a new branch', 'Onboard a new client'...",
-    "voiceButton": "Speak with Voice",
-    "voiceListening": "Listening to your voice...",
-    "generateButton": "Structure with AI",
-    "examplesTitle": "Popular examples:",
-    "guidedAssistant": "Guided Assistant",
-    "companyOrProcess": "Choose between **Open a Business** or **Structure a Process** (via AI, voice, or document upload).",
-    "uploadDoc": "Or Upload Document / SOP",
-    "presets": {
-      "hireEmployee": "I want to hire an employee",
-      "openCompany": "I want to open a business or branch",
-      "b2bClient": "Onboard a new B2B client",
-      "bpoFinance": "Financial BPO structuring"
-    }
+  "entrada": {
+    "title": "Inbox",
+    "description": "Where your ideas and demands begin.",
+    "question": "What do you want to do?",
+    "placeholder": "Describe an idea, project, task, purchase, contract, or anything that needs to move forward.",
+    "addBtn": "+ Add flow",
+    "empty": "No flows yet. Start by adding what you want to do.",
+    "statusLabel": "Inbox"
   },
-  "copilot": {
-    "badge": "Proactive AI Copilot",
-    "stepBlocked": "Step \"{{title}}\" Blocked",
-    "unblockAction": "Unblock Action",
-    "minimize": "Minimize suggestion"
+  "overview": {
+    "title": "Overview",
+    "soon": "Coming soon in this phase."
   },
-  "home": {
-    "activeProcessesTitle": "Your Active Intelligent Processes",
-    "activeCount": "{{count}} of {{max}} active (Free Plan)",
-    "health": "Health",
-    "stepsCount": "{{count}} steps",
-    "bottlenecks": "{{count}} bottleneck(s)",
-    "readyToAdvance": "Ready to advance"
+  "settings": {
+    "title": "Settings",
+    "capacity": "Flow capacity",
+    "capacityDesc": "Maximum number of flows in progress simultaneously.",
+    "language": "Language",
+    "save": "Save"
   },
-  "pulseFlow": {
-    "title": "Vurio Pulse Flow",
-    "badge": "Mobile-First Engine",
-    "description": "Anti-Procrastination Pipeline with WIP Limits, AI Audit, Weighting, and Countdown Gauges",
-    "weightedProgress": "Total Weighted Progress",
-    "cardsMobile": "Mobile Card View",
-    "panoramaMode": "Auto-rotate Panorama View",
-    "voiceWhatsBtn": "Voice / Whats",
-    "viewGraph": "Graph Map",
-    "viewPulseFlow": "VurioPulseFlow",
-    "activeProcess": "Active Process:",
-    "stages": {
-      "start": "Start & Entry",
-      "startDesc": "Strict Anti-Procrastination WIP Limit",
-      "in_analysis": "Analysis & Execution",
-      "in_analysisDesc": "Active progress stage with deadline/budget tracking",
-      "ai_audit": "AI Audit & Attachment",
-      "ai_auditDesc": "Requires autonomous audited proof document",
-      "completed": "Completed (100%)",
-      "completedDesc": "Final validated stage"
-    },
-    "weight": "Weight",
-    "maxLimit": "max",
-    "newItemStart": "New Item in Start",
-    "wipBlocked": "Blocked (WIP Limit)",
-    "noTasks": "No tasks in this stage",
-    "countdownDeadline": "Countdown Deadline:",
-    "hoursRemaining": "h remaining",
-    "budgetSpent": "Budget Consumed:",
-    "exceptionApproved": "Exception Approved: +{{hours}}h by {{by}}",
-    "exceptionBtn": "Exception",
-    "advanceBtn": "Advance",
-    "auditRequired": "Requires Attachment",
-    "auditOk": "Audited OK"
-  },
-  "analytics": {
-    "title": "Predictive Risk & Bottleneck Analysis (Consultative AI)",
-    "description": "The Vurio engine analyzes the entire dependency structure to anticipate delays and mitigate failures.",
-    "criticalSteps": "Critical Steps",
-    "criticalDesc": "Have multiple dependencies",
-    "financialGargalos": "Financial Bottlenecks",
-    "financialDesc": "Steps requiring budget validation",
-    "externalGargalos": "External Bottlenecks",
-    "externalDesc": "Depend on third parties or clients"
-  },
-  "presetProcesses": {
-    "hiring": {
-      "name": "Employee Hiring & Onboarding",
-      "category": "Human Resources / Operations",
-      "description": "Full workflow from position approval, HR budgeting, candidate document submission, to infrastructure and initial onboarding.",
-      "step1": "Position Budget Approval",
-      "step1Desc": "Validation of financial availability and hiring urgency.",
-      "step2": "Job Opening & Publishing",
-      "step2Desc": "Posting on recruitment channels and resume screening.",
-      "step3": "Interviews & Candidate Selection",
-      "step3Desc": "Technical and behavioral interviews with leadership.",
-      "step4": "Document Submission by Candidate",
-      "step4Desc": "Awaiting submission of ID, Work Permit, and Medical Exam by the new employee.",
-      "step5": "IT Equipment Purchase & System Access",
-      "step5Desc": "Laptop procurement and credential creation across company tools.",
-      "step6": "Day 1 Integration & Welcome",
-      "step6Desc": "Team introduction, initial training, and equipment delivery."
-    },
-    "company": {
-      "name": "Business Formation & Incorporation",
-      "category": "Legal & Finance",
-      "description": "Complete process including prior feasibility check, articles of organization, registry bodies, and tax regime selection.",
-      "step1": "Business Name & Address Feasibility Check",
-      "step1Desc": "Validation at the Commercial Board and City Hall for address usage and business name approval.",
-      "step2": "Drafting Articles of Organization",
-      "step2Desc": "Defining business purpose, share capital, equity distribution among partners, and legal clauses.",
-      "step3": "Registration & Federal Tax ID (CNPJ) Issuance",
-      "step3Desc": "Digital submission of legal documents and automatic generation of the Federal Tax ID.",
-      "step4": "Municipal Registration & Operating Permit",
-      "step4Desc": "Application for operation license, fire department inspection (if required), and final permit issuance.",
-      "step5": "Simplified Tax Regime Selection",
-      "step5Desc": "Filing for tax regime enrollment at the Revenue Service portal."
-    }
-  },
-  "process": {
-    "status": {
-      "not_started": "Not Started",
-      "in_progress": "In Progress",
-      "blocked": "Blocked",
-      "completed": "Completed"
-    },
-    "dependencyTypes": {
-      "sequential": "Sequential (A → B)",
-      "parallel": "Parallel (Simultaneous)",
-      "convergent": "Convergent (B + C → D)",
-      "conditional": "Conditional (If X...)",
-      "hierarchical": "Hierarchical (Phases / Sub-steps)",
-      "external": "External (Third-party / Clients)",
-      "financial": "Financial (Budget / Cashflow)"
-    },
-    "blockade": {
-      "title": "Explainable Blockade Diagnosis",
-      "reason": "Reason for Impediment",
-      "responsible": "Who needs to act",
-      "pendingCondition": "Missing Condition",
-      "since": "Blocked since",
-      "impact": "Process Impact",
-      "aiSuggestion": "AI Guidance to Unblock"
-    },
-    "actions": {
-      "advance": "Advance Step",
-      "approve": "Approve",
-      "reject": "Request Changes",
-      "viewDetails": "View Details & Tree",
-      "addStep": "Add Step",
-      "simulate": "Simulate Delay"
-    }
-  },
-  "freemium": {
-    "banner": "You are on the Free Plan (3/3 active processes).",
-    "upgrade": "Upgrade to Unlimited"
+  "language": {
+    "pt-BR": "Português",
+    "en-US": "English",
+    "es-ES": "Español"
   }
 }
