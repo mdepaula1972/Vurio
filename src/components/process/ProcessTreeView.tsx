@@ -24,6 +24,17 @@ export const ProcessTreeView: React.FC<ProcessTreeViewProps> = ({
   onSimulateDelay
 }) => {
   const { t } = useTranslation();
+
+  const totalSteps = process.steps.length;
+  const completedStepsCount = React.useMemo(
+    () => process.steps.filter(s => s.status === 'completed').length,
+    [process.steps]
+  );
+  const progressPercentage = React.useMemo(
+    () => Math.round((completedStepsCount / (totalSteps || 1)) * 100),
+    [completedStepsCount, totalSteps]
+  );
+
   const layerMap = groupStepsByLayer(process.steps);
   const sortedLayers = Array.from(layerMap.keys()).sort((a, b) => a - b);
 
@@ -53,7 +64,7 @@ export const ProcessTreeView: React.FC<ProcessTreeViewProps> = ({
               {process.category}
             </span>
             <span className="text-xs text-slate-400">
-              {process.steps.length} etapas ({process.steps.filter(s => s.status === 'completed').length} concluídas)
+              {totalSteps} etapas ({completedStepsCount} concluídas)
             </span>
           </div>
           <h2 className="text-2xl font-extrabold text-white mt-1">
@@ -68,20 +79,12 @@ export const ProcessTreeView: React.FC<ProcessTreeViewProps> = ({
         <div className="sm:w-48 space-y-1.5">
           <div className="flex justify-between text-xs font-bold text-slate-300">
             <span>Progresso Global</span>
-            <span>
-              {Math.round(
-                (process.steps.filter(s => s.status === 'completed').length / (process.steps.length || 1)) * 100
-              )}%
-            </span>
+            <span>{progressPercentage}%</span>
           </div>
           <div className="w-full bg-slate-800 h-2.5 rounded-full overflow-hidden p-0.5">
             <div
               className="bg-gradient-to-r from-blue-500 to-indigo-500 h-full rounded-full transition-all duration-500"
-              style={{
-                width: `${Math.round(
-                  (process.steps.filter(s => s.status === 'completed').length / (process.steps.length || 1)) * 100
-                )}%`
-              }}
+              style={{ width: `${progressPercentage}%` }}
             />
           </div>
         </div>
