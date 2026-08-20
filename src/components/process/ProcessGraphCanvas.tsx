@@ -3,7 +3,6 @@
  * ProcessGraphCanvas — Visualizador dinâmico de processo com Mapa de Conexões, Kanban, Timeline e Lista
  */
 import React, { useState } from 'react';
-import { useTranslation } from 'react-i18next';
 import { 
   GitFork, LayoutGrid, Calendar, ListFilter, Lock, CheckCircle2, Play, 
   Sparkles, DollarSign, ExternalLink, Clock, UserCheck, Activity, ArrowRight, ShieldAlert
