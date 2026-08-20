@@ -2,7 +2,7 @@
  * Vurio v1.3.0 — Gestor Inteligente de Processos com IA
  * ProcessGraphCanvas — Visualizador dinâmico de processo com Mapa de Conexões, Kanban, Timeline e Lista
  */
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
   GitFork, LayoutGrid, Calendar, ListFilter, Lock, CheckCircle2, Play, 
@@ -26,13 +26,29 @@ export const ProcessGraphCanvas: React.FC<ProcessGraphCanvasProps> = ({
   onSimulateDelay,
 }) => {
   const [viewMode, setViewMode] = useState<ProcessViewMode>('graph');
-  const layerMap = groupStepsByLayer(process.steps);
-  const sortedLayers = Array.from(layerMap.keys()).sort((a, b) => a - b);
+  const layerMap = useMemo(() => groupStepsByLayer(process.steps), [process.steps]);
+  const sortedLayers = useMemo(() => Array.from(layerMap.keys()).sort((a, b) => a - b), [layerMap]);
+
+  const stepsByStatus = useMemo(() => {
+    const grouped: Record<Step['status'], Step[]> = {
+      completed: [],
+      blocked: [],
+      in_progress: [],
+      not_started: [],
+    };
+    for (let i = 0; i < process.steps.length; i++) {
+      const step = process.steps[i];
+      if (grouped[step.status]) {
+        grouped[step.status].push(step);
+      }
+    }
+    return grouped;
+  }, [process.steps]);
 
   const totalSteps = process.steps.length || 1;
-  const completedSteps = process.steps.filter(s => s.status === 'completed').length;
-  const blockedSteps = process.steps.filter(s => s.status === 'blocked').length;
-  const inProgressSteps = process.steps.filter(s => s.status === 'in_progress').length;
+  const completedSteps = stepsByStatus.completed.length;
+  const blockedSteps = stepsByStatus.blocked.length;
+  const inProgressSteps = stepsByStatus.in_progress.length;
   const healthScore = process.metrics?.healthScore || Math.round((completedSteps / totalSteps) * 100);
 
   return (
@@ -331,10 +347,10 @@ export const ProcessGraphCanvas: React.FC<ProcessGraphCanvasProps> = ({
           <div className="space-y-4 p-4 rounded-3xl bg-slate-900/60 border border-indigo-500/30">
             <h3 className="text-sm font-extrabold text-indigo-300 flex items-center space-x-2">
               <Play className="w-4 h-4 text-indigo-400 fill-indigo-400" />
-              <span>Em Progresso / Prontas ({process.steps.filter(s => s.status === 'in_progress').length})</span>
+              <span>Em Progresso / Prontas ({stepsByStatus.in_progress.length})</span>
             </h3>
 
-            {process.steps.filter(s => s.status === 'in_progress').map(s => (
+            {stepsByStatus.in_progress.map(s => (
               <div key={s.id} className="p-4 rounded-2xl bg-slate-900 border border-slate-800 space-y-3 shadow-md">
                 <h4 className="text-sm font-bold text-white">{s.title}</h4>
                 <p className="text-xs text-slate-400">{s.description}</p>
@@ -352,10 +368,10 @@ export const ProcessGraphCanvas: React.FC<ProcessGraphCanvasProps> = ({
           <div className="space-y-4 p-4 rounded-3xl bg-slate-900/60 border border-red-500/30">
             <h3 className="text-sm font-extrabold text-red-300 flex items-center space-x-2">
               <Lock className="w-4 h-4 text-red-400" />
-              <span>Bloqueadas por Dependências ({process.steps.filter(s => s.status === 'blocked').length})</span>
+              <span>Bloqueadas por Dependências ({stepsByStatus.blocked.length})</span>
             </h3>
 
-            {process.steps.filter(s => s.status === 'blocked').map(s => (
+            {stepsByStatus.blocked.map(s => (
               <div key={s.id} className="p-4 rounded-2xl bg-slate-900 border border-red-500/30 space-y-3 shadow-md">
                 <h4 className="text-sm font-bold text-white">{s.title}</h4>
                 <p className="text-xs text-slate-400">{s.description}</p>
@@ -368,10 +384,10 @@ export const ProcessGraphCanvas: React.FC<ProcessGraphCanvasProps> = ({
           <div className="space-y-4 p-4 rounded-3xl bg-slate-900/60 border border-emerald-500/30">
             <h3 className="text-sm font-extrabold text-emerald-300 flex items-center space-x-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              <span>Concluídas ({process.steps.filter(s => s.status === 'completed').length})</span>
+              <span>Concluídas ({stepsByStatus.completed.length})</span>
             </h3>
 
-            {process.steps.filter(s => s.status === 'completed').map(s => (
+            {stepsByStatus.completed.map(s => (
               <div key={s.id} className="p-4 rounded-2xl bg-slate-900/80 border border-emerald-500/20 space-y-2 opacity-80">
                 <h4 className="text-sm font-bold text-slate-200 line-through">{s.title}</h4>
                 <p className="text-xs text-slate-500">{s.description}</p>
