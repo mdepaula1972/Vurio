@@ -94,17 +94,37 @@ export function simulateDelayConsequences(stepId: string, delayDays: number, pro
   totalDelayDays: number;
   explanation: string;
 } {
+  // Pre-build adjacency list: map from parent step ID (dependsOnStepId) to list of dependent step IDs
+  const dependentsMap = new Map<string, string[]>();
+
+  for (let i = 0; i < process.steps.length; i++) {
+    const step = process.steps[i];
+    if (step.dependencies) {
+      for (let j = 0; j < step.dependencies.length; j++) {
+        const parentId = step.dependencies[j].dependsOnStepId;
+        let list = dependentsMap.get(parentId);
+        if (!list) {
+          list = [];
+          dependentsMap.set(parentId, list);
+        }
+        list.push(step.id);
+      }
+    }
+  }
+
   const impactedSet = new Set<string>();
 
   function findDependents(id: string) {
-    process.steps.forEach(s => {
-      if (s.dependencies.some(d => d.dependsOnStepId === id)) {
-        if (!impactedSet.has(s.id)) {
-          impactedSet.add(s.id);
-          findDependents(s.id);
-        }
+    const directDependents = dependentsMap.get(id);
+    if (!directDependents) return;
+
+    for (let i = 0; i < directDependents.length; i++) {
+      const depId = directDependents[i];
+      if (!impactedSet.has(depId)) {
+        impactedSet.add(depId);
+        findDependents(depId);
       }
-    });
+    }
   }
 
   findDependents(stepId);
