@@ -12,7 +12,6 @@ import { AIAuditUploadModal } from './AIAuditUploadModal';
 import { ExceptionOverrideModal } from './ExceptionOverrideModal';
 import { VoiceWhatsAppInputModal } from './VoiceWhatsAppInputModal';
 import { VoiceConsultantModal } from '../copilot/VoiceConsultantModal';
-import { UserRole } from '../../engine/types';
 
 interface VurioPulseFlowProps {
   process: Process;
