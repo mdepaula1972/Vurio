@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Inbox, LayoutDashboard, Settings, ChevronDown } from 'lucide-react';
+import { Inbox, LayoutDashboard, Settings } from 'lucide-react';
 import { LanguageSelector } from '../ui/LanguageSelector';
 import { EntradaColumn } from './EntradaColumn';
 import { useFlows } from '../../hooks/useFlows';
