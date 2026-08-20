@@ -3,7 +3,7 @@
  * SimulationModal — Simulador de efeito cascata e atraso de etapas
  */
 import React, { useState } from 'react';
-import { X, AlertOctagon, ArrowRight, Play, RefreshCw } from 'lucide-react';
+import { X, AlertOctagon, ArrowRight } from 'lucide-react';
 
 import { Process, Step } from '../../engine/types';
 import { simulateDelayConsequences } from '../../engine/dependencyResolver';
