@@ -47,9 +47,24 @@ export function resolveProcessState(process: Process): Process {
 
   // Cálculo da Saúde Operacional do Processo (Health Score 0-100%)
   const total = updatedSteps.length || 1;
-  const completed = updatedSteps.filter(s => s.status === 'completed').length;
-  const blocked = updatedSteps.filter(s => s.status === 'blocked').length;
-  const inProgress = updatedSteps.filter(s => s.status === 'in_progress').length;
+  let completed = 0;
+  let blocked = 0;
+  let inProgress = 0;
+  let criticalPathCount = 0;
+
+  for (const s of updatedSteps) {
+    if (s.status === 'completed') {
+      completed++;
+    } else if (s.status === 'blocked') {
+      blocked++;
+    } else if (s.status === 'in_progress') {
+      inProgress++;
+    }
+
+    if (s.dependencies.length > 1) {
+      criticalPathCount++;
+    }
+  }
 
   // Fórmula de Saúde: (Concluídas * 100 + Em Andamento * 60 - Bloqueadas * 30) / Total
   const rawScore = Math.round(((completed * 100) + (inProgress * 60) - (blocked * 30)) / total);
@@ -58,7 +73,7 @@ export function resolveProcessState(process: Process): Process {
   const metrics: ProcessMetrics = {
     healthScore,
     timeSavedHours: completed * 4.5 + (total - blocked) * 2,
-    criticalPathCount: updatedSteps.filter(s => s.dependencies.length > 1).length
+    criticalPathCount
   };
 
   return {
