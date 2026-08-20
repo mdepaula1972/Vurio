@@ -2,7 +2,7 @@
  * Vurio v1.0.0 — Gestor Inteligente de Processos com IA
  * Analisador Explicável de Bloqueios e Impedimentos
  */
-import { Step, Process, BlockadeInfo, StepDependency } from './types';
+import { Step, Process, BlockadeInfo } from './types';
 
 
 /**
