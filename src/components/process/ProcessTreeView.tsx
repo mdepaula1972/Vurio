@@ -5,7 +5,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { CheckCircle2, Lock, Clock, ArrowDown, UserCheck, DollarSign, ExternalLink, GitMerge, AlertCircle, Play } from 'lucide-react';
+import { CheckCircle2, Lock, Clock, UserCheck, DollarSign, ExternalLink, GitMerge, AlertCircle, Play } from 'lucide-react';
 import { Process, Step } from '../../engine/types';
 import { groupStepsByLayer } from '../../engine/dependencyResolver';
 import { BlockadeBanner } from './BlockadeBanner';
