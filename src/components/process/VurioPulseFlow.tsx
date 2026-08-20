@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { 
-  Process, Step, PulseStage, MetricType, AIAuditInfo, ExceptionRule 
+  Process, Step, PulseStage, MetricType, AIAuditInfo, ExceptionRule, StepStatus
 } from '../../engine/types';
 import { 
   ShieldAlert, ShieldCheck, Clock, DollarSign, Plus, Mic, MessageSquare, 
@@ -121,7 +121,7 @@ export const VurioPulseFlow: React.FC<VurioPulseFlowProps> = ({
         return {
           ...s,
           stageId: targetStageId,
-          status: newStatus as any,
+          status: newStatus as StepStatus,
           completedAt: targetStageId === 'completed' ? new Date().toISOString() : undefined
         };
       }
