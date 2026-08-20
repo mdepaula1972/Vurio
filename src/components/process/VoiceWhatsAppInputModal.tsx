@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mic, MicOff, MessageSquare, Sparkles, X, Volume2, Loader2, ArrowRight, Edit3 } from 'lucide-react';
+import { Mic, MicOff, MessageSquare, Sparkles, X, Loader2, ArrowRight, Edit3 } from 'lucide-react';
 import { Step } from '../../engine/types';
 import { voiceService } from '../../services/voiceService';
 
