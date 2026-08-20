@@ -7,7 +7,7 @@ import { Flow } from '../engine/types';
 import { getFlows, saveFlows } from '../services/storage';
 
 function generateId(): string {
-  return `flow-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+  return `flow-${crypto.randomUUID()}`;
 }
 
 export function useFlows() {
