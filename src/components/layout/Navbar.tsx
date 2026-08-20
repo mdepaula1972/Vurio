@@ -4,7 +4,7 @@
  */
 import React from 'react';
 import { useTranslation } from 'react-i18next';
-import { ShieldAlert, Globe, Plus, Sparkles, Activity } from 'lucide-react';
+import { ShieldAlert, Globe, Plus } from 'lucide-react';
 import { APP_VERSION } from '../../App';
 
 
