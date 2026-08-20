@@ -5,7 +5,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 
-import { Building2, DollarSign, Handshake, Users, ArrowUpRight, ShieldCheck, PieChart } from 'lucide-react';
+import { Building2, DollarSign, Handshake, ArrowUpRight, PieChart } from 'lucide-react';
 
 export const PartnerSection: React.FC = () => {
   const { t } = useTranslation();
