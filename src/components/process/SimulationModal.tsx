@@ -19,7 +19,8 @@ export const SimulationModal: React.FC<SimulationModalProps> = ({ process, stepI
   const targetStep = process.steps.find(s => s.id === stepId);
 
   const simulation = simulateDelayConsequences(stepId, delayDays, process);
-  const impactedSteps = process.steps.filter(s => simulation.impactedStepIds.includes(s.id));
+  const impactedStepIds = new Set(simulation.impactedStepIds);
+  const impactedSteps = process.steps.filter(s => impactedStepIds.has(s.id));
 
   return (
     <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
