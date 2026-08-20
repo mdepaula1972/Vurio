@@ -3,7 +3,7 @@
  * InitialWizardModal — Modal de Pergunta Inicial: Abrir Empresa vs Estruturar Projeto/Processo
  */
 import React, { useState } from 'react';
-import { X, Building2, Workflow, Sparkles, Upload, FileText, CheckCircle2, ArrowRight, Layers, Bot, Edit3 } from 'lucide-react';
+import { X, Building2, Workflow, Sparkles, Upload, FileText, ArrowRight, Layers, Bot, Edit3 } from 'lucide-react';
 import { CreationMode, DocumentUploadData } from '../../engine/types';
 
 interface InitialWizardModalProps {
