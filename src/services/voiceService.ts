@@ -10,13 +10,13 @@ export interface VoiceRecognitionResult {
 }
 
 export class VoiceService {
-  private recognition: any = null;
+  private recognition: SpeechRecognition | null = null;
   private isListening = false;
 
   constructor() {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      this.recognition = new SpeechRecognition();
+    const SpeechRecognitionConstructor = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (SpeechRecognitionConstructor) {
+      this.recognition = new SpeechRecognitionConstructor();
       this.recognition.continuous = true;
       this.recognition.interimResults = true;
       this.recognition.lang = 'pt-BR';
@@ -35,7 +35,7 @@ export class VoiceService {
 
   public startListening(
     onResult: (result: VoiceRecognitionResult) => void,
-    onError?: (err: any) => void
+    onError?: (err: SpeechRecognitionErrorEvent | string) => void
   ) {
     if (!this.recognition) {
       if (onError) onError('Reconhecimento de voz não suportado neste navegador.');
@@ -44,7 +44,7 @@ export class VoiceService {
 
     if (this.isListening) return;
 
-    this.recognition.onresult = (event: any) => {
+    this.recognition.onresult = (event: SpeechRecognitionEvent) => {
       let interim = '';
       let final = '';
 
@@ -62,7 +62,7 @@ export class VoiceService {
       });
     };
 
-    this.recognition.onerror = (err: any) => {
+    this.recognition.onerror = (err: SpeechRecognitionErrorEvent) => {
       if (onError) onError(err);
       this.isListening = false;
     };
