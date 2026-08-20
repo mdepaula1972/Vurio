@@ -4,7 +4,7 @@
  */
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bot, Sparkles, AlertTriangle, ArrowRight, X, Lightbulb, Zap, Send } from 'lucide-react';
+import { Bot, Sparkles, AlertTriangle, X, Lightbulb, Zap, Send } from 'lucide-react';
 import { Process } from '../../engine/types';
 
 import { VoiceConsultantModal } from './VoiceConsultantModal';
