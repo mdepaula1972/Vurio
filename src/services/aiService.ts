@@ -177,105 +177,98 @@ export const PRESET_PROCESS_TEMPLATES: Record<string, Partial<Process>> = {
   }
 };
 
-/**
- * Função geradora de processos de Abertura de Empresa com suporte a regras fiscais (MEI vs Simples/Presumido/Real)
- */
-export function buildCompanyOpeningProcess(options?: CompanyOptions): Partial<Process> {
-  const regime = options?.regime || 'simples';
-  const hasExistingCompany = options?.hasExistingCompany || false;
-
-  // CASO 1: MEI com conflito de sociedade existente
-  if (regime === 'mei' && hasExistingCompany) {
-    return {
-      name: 'Abertura de Empresa (MEI — Impedimento Legal)',
-      category: 'Jurídico & Fiscal',
-      description: 'Estruturação travada por impedimento legal de sociedade prévia no MEI (LC nº 123/2006).',
-      steps: [
-        {
-          id: 'step-mei-block',
-          title: 'Impedimento Legal: Já possui empresa em seu nome',
-          description: 'A Legislação Brasileira (LC 123/2006) veda expressamente que sócios de outras empresas sejam titulares de MEI.',
-          layer: 1,
-          status: 'blocked',
-          responsible: ['Titular / Contabilidade'],
-          dependencies: [],
-          blockadeInfo: {
-            isBlocked: true,
-            reason: 'Titular já possui participação societária ou empresa individual ativa.',
-            missingCondition: 'Alteração da opção de regime para Simples Nacional / Lucro Presumido ou baixa da empresa anterior.',
-            responsibleParties: ['Titular da Empresa'],
-            processImpact: 'Impossível emitir o CCMEI pela Receita Federal enquanto constar vínculo empresarial.',
-            aiRecommendation: 'Recomendamos alterar o processo para Simples Nacional (ME) ou consultar seu contador no AnalisAí.'
-          }
-        },
-        {
-          id: 'step-mei-resolution',
-          title: 'Ajuste de Enquadramento para Simples Nacional (ME)',
-          description: 'Migração do planejamento para Microempresa (ME) enquadrada no Simples Nacional.',
-          layer: 2,
-          status: 'blocked',
-          responsible: ['Contabilidade / Parceiro Vurio'],
-          dependencies: [
-            { dependsOnStepId: 'step-mei-block', type: 'sequential' }
-          ]
+function buildMeiBlockadeProcess(): Partial<Process> {
+  return {
+    name: 'Abertura de Empresa (MEI — Impedimento Legal)',
+    category: 'Jurídico & Fiscal',
+    description: 'Estruturação travada por impedimento legal de sociedade prévia no MEI (LC nº 123/2006).',
+    steps: [
+      {
+        id: 'step-mei-block',
+        title: 'Impedimento Legal: Já possui empresa em seu nome',
+        description: 'A Legislação Brasileira (LC 123/2006) veda expressamente que sócios de outras empresas sejam titulares de MEI.',
+        layer: 1,
+        status: 'blocked',
+        responsible: ['Titular / Contabilidade'],
+        dependencies: [],
+        blockadeInfo: {
+          isBlocked: true,
+          reason: 'Titular já possui participação societária ou empresa individual ativa.',
+          missingCondition: 'Alteração da opção de regime para Simples Nacional / Lucro Presumido ou baixa da empresa anterior.',
+          responsibleParties: ['Titular da Empresa'],
+          processImpact: 'Impossível emitir o CCMEI pela Receita Federal enquanto constar vínculo empresarial.',
+          aiRecommendation: 'Recomendamos alterar o processo para Simples Nacional (ME) ou consultar seu contador no AnalisAí.'
         }
-      ]
-    };
-  }
+      },
+      {
+        id: 'step-mei-resolution',
+        title: 'Ajuste de Enquadramento para Simples Nacional (ME)',
+        description: 'Migração do planejamento para Microempresa (ME) enquadrada no Simples Nacional.',
+        layer: 2,
+        status: 'blocked',
+        responsible: ['Contabilidade / Parceiro Vurio'],
+        dependencies: [
+          { dependsOnStepId: 'step-mei-block', type: 'sequential' }
+        ]
+      }
+    ]
+  };
+}
 
-  // CASO 2: MEI sem outra empresa (MEI Válido) -> DISPENSA CONSULTA PRÉVIA
-  if (regime === 'mei' && !hasExistingCompany) {
-    return {
-      name: 'Abertura de Empresa (MEI — Registro Simplificado)',
-      category: 'Jurídico & Fiscal',
-      description: 'Processo simplificado de MEI. Consulta prévia de viabilidade de nome e endereço DISPENSADA por lei.',
-      steps: [
-        {
-          id: 'step-mei-1',
-          title: 'Emissão do CCMEI e Cadastro no Portal Gov.br',
-          description: 'Dispensa de viabilidade prévia. Início direto na geração do Certificado da Condição de Microempreendedor Individual e CNPJ.',
-          layer: 1,
-          status: 'in_progress',
-          responsible: ['Empreendedor / Parceiro Vurio'],
-          dependencies: []
-        },
-        {
-          id: 'step-mei-2',
-          title: 'Inscrição Municipal e Emissão de Nota Fiscal',
-          description: 'Solicitação do cadastro na prefeitura local para emissão de NF de serviços (NFS-e) no padrão nacional.',
-          layer: 2,
-          status: 'blocked',
-          responsible: ['Empreendedor'],
-          dependencies: [
-            { dependsOnStepId: 'step-mei-1', type: 'sequential' }
-          ]
-        },
-        {
-          id: 'step-mei-3',
-          title: 'Abertura de Conta Bancária PJ e BPO AnalisAí',
-          description: 'Conexão com a conta jurídica e integração com a gestão financeira do AnalisAí.',
-          layer: 3,
-          status: 'blocked',
-          responsible: ['Equipe AnalisAí / Financeiro'],
-          dependencies: [
-            { dependsOnStepId: 'step-mei-2', type: 'sequential' }
-          ]
-        }
-      ]
-    };
-  }
+function buildMeiSimplifiedProcess(): Partial<Process> {
+  return {
+    name: 'Abertura de Empresa (MEI — Registro Simplificado)',
+    category: 'Jurídico & Fiscal',
+    description: 'Processo simplificado de MEI. Consulta prévia de viabilidade de nome e endereço DISPENSADA por lei.',
+    steps: [
+      {
+        id: 'step-mei-1',
+        title: 'Emissão do CCMEI e Cadastro no Portal Gov.br',
+        description: 'Dispensa de viabilidade prévia. Início direto na geração do Certificado da Condição de Microempreendedor Individual e CNPJ.',
+        layer: 1,
+        status: 'in_progress',
+        responsible: ['Empreendedor / Parceiro Vurio'],
+        dependencies: []
+      },
+      {
+        id: 'step-mei-2',
+        title: 'Inscrição Municipal e Emissão de Nota Fiscal',
+        description: 'Solicitação do cadastro na prefeitura local para emissão de NF de serviços (NFS-e) no padrão nacional.',
+        layer: 2,
+        status: 'blocked',
+        responsible: ['Empreendedor'],
+        dependencies: [
+          { dependsOnStepId: 'step-mei-1', type: 'sequential' }
+        ]
+      },
+      {
+        id: 'step-mei-3',
+        title: 'Abertura de Conta Bancária PJ e BPO AnalisAí',
+        description: 'Conexão com a conta jurídica e integração com a gestão financeira do AnalisAí.',
+        layer: 3,
+        status: 'blocked',
+        responsible: ['Equipe AnalisAí / Financeiro'],
+        dependencies: [
+          { dependsOnStepId: 'step-mei-2', type: 'sequential' }
+        ]
+      }
+    ]
+  };
+}
 
-  // CASO 3: Simples Nacional, Lucro Presumido ou Lucro Real -> EXIGE CONSULTA PRÉVIA DE VIABILIDADE
+function buildCorporateOpeningProcess(regime: string): Partial<Process> {
   const regimeNames: Record<string, string> = {
     simples: 'Simples Nacional (ME / EPP)',
     presumido: 'Lucro Presumido',
     real: 'Lucro Real'
   };
 
+  const regimeName = regimeNames[regime] || 'Simples Nacional';
+
   return {
-    name: `Abertura de Empresa (${regimeNames[regime] || 'Simples Nacional'})`,
+    name: `Abertura de Empresa (${regimeName})`,
     category: 'Jurídico & Financeiro',
-    description: `Processo completo com consulta de viabilidade prévia, contrato social, órgãos de registro e opção pelo ${regimeNames[regime]}.`,
+    description: `Processo completo com consulta de viabilidade prévia, contrato social, órgãos de registro e opção pelo ${regimeName}.`,
     steps: [
       {
         id: 'step-corp-1',
@@ -316,8 +309,8 @@ export function buildCompanyOpeningProcess(options?: CompanyOptions): Partial<Pr
       },
       {
         id: 'step-corp-4',
-        title: `Opção Formal pelo Regime: ${regimeNames[regime]}`,
-        description: `Enquadramento oficial no portal da Receita Federal para tributação pelo ${regimeNames[regime]}.`,
+        title: `Opção Formal pelo Regime: ${regimeName}`,
+        description: `Enquadramento oficial no portal da Receita Federal para tributação pelo ${regimeName}.`,
         layer: 4,
         status: 'blocked',
         responsible: ['Contabilidade / BPO'],
@@ -343,6 +336,27 @@ export function buildCompanyOpeningProcess(options?: CompanyOptions): Partial<Pr
       }
     ]
   };
+}
+
+/**
+ * Função geradora de processos de Abertura de Empresa com suporte a regras fiscais (MEI vs Simples/Presumido/Real)
+ */
+export function buildCompanyOpeningProcess(options?: CompanyOptions): Partial<Process> {
+  const regime = options?.regime || 'simples';
+  const hasExistingCompany = options?.hasExistingCompany || false;
+
+  // CASO 1: MEI com conflito de sociedade existente
+  if (regime === 'mei' && hasExistingCompany) {
+    return buildMeiBlockadeProcess();
+  }
+
+  // CASO 2: MEI sem outra empresa (MEI Válido) -> DISPENSA CONSULTA PRÉVIA
+  if (regime === 'mei' && !hasExistingCompany) {
+    return buildMeiSimplifiedProcess();
+  }
+
+  // CASO 3: Simples Nacional, Lucro Presumido ou Lucro Real -> EXIGE CONSULTA PRÉVIA DE VIABILIDADE
+  return buildCorporateOpeningProcess(regime);
 }
 
 /**
