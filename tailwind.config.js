@@ -1,33 +1,25 @@
 /** @type {import('tailwindcss').Config} */
-export default {
+module.exports = {
   content: [
-    "./index.html",
-    "./src/**/*.{js,ts,jsx,tsx}",
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
-  darkMode: 'class',
   theme: {
     extend: {
       colors: {
-        vurio: {
-          50: '#f0f4ff',
-          100: '#e0e9fe',
-          200: '#bae2fd',
-          500: '#3b82f6',
-          600: '#2563eb',
-          700: '#1d4ed8',
-          800: '#1e40af',
-          900: '#0f172a',
-          accent: '#6366f1',
-          gold: '#f59e0b',
-          danger: '#ef4444',
-          success: '#10b981',
-          warning: '#f59e0b'
+        background: "var(--background)",
+        foreground: "var(--foreground)",
+        brand: {
+          50: "#eefbf6",
+          100: "#d7f5e7",
+          500: "#10b981",
+          600: "#059669",
+          700: "#047857",
+          900: "#064e3b",
         }
       },
-      fontFamily: {
-        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif']
-      }
     },
   },
   plugins: [],
-}
+};
