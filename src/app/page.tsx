@@ -658,13 +658,23 @@ export default function LandingHomePage() {
                 </ul>
               </div>
 
-              <div className="pt-6">
-                <button
-                  onClick={() => alert('Para fazer sua consulta avulsa de R$ 10, envie seu arquivo diretamente para o WhatsApp de suporte: (11) 99999-9999')}
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow"
+              <div className="pt-6 space-y-2">
+                <a
+                  href="https://checkout.infinitepay.io/solucione-0s1/gfp8843-consulta-avulsa---auditoria-de-atestado-me"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow text-center block"
                 >
-                  Consultar por R$ 10 (PIX)
-                </button>
+                  Consultar por R$ 10 (PIX / Cartão)
+                </a>
+                <a
+                  href="https://checkout.infinitepay.io/solucione-0s1/mqf4359-consulta-avulsa-completa-geo-shield-distan"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-[11px] font-semibold transition-all text-center block border border-amber-500/30"
+                >
+                  Combo com Geo-Shield (R$ 13)
+                </a>
               </div>
             </div>
 
@@ -688,12 +698,14 @@ export default function LandingHomePage() {
               </div>
 
               <div className="pt-6">
-                <button
-                  onClick={() => alert('Iniciando contratação do plano Starter RH...')}
-                  className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
+                <a
+                  href="https://api.whatsapp.com/send?text=Ol%C3%A1!%20Quero%20assinar%20o%20Plano%20Starter%20RH%20(R$%20149/m%C3%AAs)%20do%20Vurio"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all text-center block"
                 >
                   Assinar Starter
-                </button>
+                </a>
               </div>
             </div>
 
@@ -721,12 +733,14 @@ export default function LandingHomePage() {
               </div>
 
               <div className="pt-6">
-                <button
-                  onClick={() => alert('Iniciando contratação do plano Compliance Pro...')}
-                  className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-sky-600/30"
+                <a
+                  href="https://api.whatsapp.com/send?text=Ol%C3%A1!%20Quero%20assinar%20o%20Plano%20Compliance%20Pro%20(R$%20399/m%C3%AAs)%20do%20Vurio"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-sky-600/30 text-center block"
                 >
                   Assinar Pro
-                </button>
+                </a>
               </div>
             </div>
 
@@ -749,12 +763,14 @@ export default function LandingHomePage() {
               </div>
 
               <div className="pt-6">
-                <button
-                  onClick={() => alert('Falar com consultor corporativo...')}
-                  className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
+                <a
+                  href="https://api.whatsapp.com/send?text=Ol%C3%A1!%20Gostaria%20de%20uma%20proposta%20do%20Plano%20Enterprise%20do%20Vurio"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all text-center block"
                 >
                   Falar com Consultor
-                </button>
+                </a>
               </div>
             </div>
 
@@ -772,54 +788,84 @@ export default function LandingHomePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
               {/* Add-on 1: Geo-Shield */}
-              <div className="p-4 bg-slate-950/80 rounded-xl border border-amber-500/30 space-y-2 relative">
-                <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-bold border border-amber-500/30 uppercase">
-                  Add-on Opcional
-                </span>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="font-bold text-amber-300 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Geo-Shield</span>
-                  <div className="text-right">
-                    <span className="font-extrabold text-white text-sm">R$ 49/mês</span>
-                    <span className="block text-[10px] text-slate-400">ou +R$ 3 na consulta avulsa</span>
+              <div className="p-4 bg-slate-950/80 rounded-xl border border-amber-500/30 space-y-3 relative flex flex-col justify-between">
+                <div>
+                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-bold border border-amber-500/30 uppercase">
+                    Add-on Opcional
+                  </span>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="font-bold text-amber-300 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Geo-Shield</span>
+                    <div className="text-right">
+                      <span className="font-extrabold text-white text-sm">R$ 49/mês</span>
+                      <span className="block text-[10px] text-slate-400">ou +R$ 3 na consulta avulsa</span>
+                    </div>
                   </div>
+                  <p className="text-slate-300 text-[11px] leading-relaxed mt-2">
+                    Auditoria de rota e distância geográfica entre o posto de trabalho/moradia e a clínica do atestado. Identifica incompatibilidades de deslocamento (ex: Santos x Ribeirão Preto) amparado no Art. 482 da CLT.
+                  </p>
                 </div>
-                <p className="text-slate-300 text-[11px] leading-relaxed">
-                  Auditoria de rota e distância geográfica entre o posto de trabalho/moradia e a clínica do atestado. Identifica incompatibilidades de deslocamento (ex: Santos x Ribeirão Preto) amparado no Art. 482 da CLT.
-                </p>
+                <a
+                  href="https://checkout.infinitepay.io/solucione-0s1/mqf4359-consulta-avulsa-completa-geo-shield-distan"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[11px] font-bold transition-all text-center block border border-amber-500/40"
+                >
+                  Contratar com Geo-Shield (R$ 13)
+                </a>
               </div>
 
               {/* Add-on 2: Doctor Shield & Dossiê B.O. */}
-              <div className="p-4 bg-slate-950/80 rounded-xl border border-emerald-500/30 space-y-2 relative">
-                <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30 uppercase">
-                  Add-on Pericial
-                </span>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="font-bold text-emerald-300 flex items-center gap-1.5"><Stethoscope className="w-3.5 h-3.5" /> Dossiê Jurídico & B.O.</span>
-                  <div className="text-right">
-                    <span className="font-extrabold text-white text-sm">R$ 49 / caso</span>
-                    <span className="block text-[10px] text-slate-400">R$ 89 se avulso</span>
+              <div className="p-4 bg-slate-950/80 rounded-xl border border-emerald-500/30 space-y-3 relative flex flex-col justify-between">
+                <div>
+                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30 uppercase">
+                    Add-on Pericial
+                  </span>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="font-bold text-emerald-300 flex items-center gap-1.5"><Stethoscope className="w-3.5 h-3.5" /> Dossiê Jurídico & B.O.</span>
+                    <div className="text-right">
+                      <span className="font-extrabold text-white text-sm">R$ 89 avulso</span>
+                      <span className="block text-[10px] text-emerald-400">R$ 49 se assinante</span>
+                    </div>
                   </div>
+                  <p className="text-slate-300 text-[11px] leading-relaxed mt-2">
+                    Certidão pericial completa com hash SHA-256 inalterável, carimbo de tempo ICP-Brasil e histórico de incidentes do CRM, formatada para abertura direta de Notícia-Crime na Polícia Civil e justa causa trabalhista.
+                  </p>
                 </div>
-                <p className="text-slate-300 text-[11px] leading-relaxed">
-                  Certidão pericial completa com hash SHA-256 inalterável, carimbo de tempo ICP-Brasil e histórico de incidentes do CRM, formatada para abertura direta de Notícia-Crime na Polícia Civil e justa causa trabalhista.
-                </p>
+                <a
+                  href="https://checkout.infinitepay.io/solucione-0s1/sao7695-dossie-noticia-crime-para-bo-policial"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg text-[11px] font-bold transition-all text-center block border border-emerald-500/40"
+                >
+                  Emitir Dossiê B.O. (R$ 89)
+                </a>
               </div>
 
               {/* Add-on 3: Diligência Formal CFM */}
-              <div className="p-4 bg-slate-950/80 rounded-xl border border-sky-500/30 space-y-2 relative">
-                <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[9px] font-bold border border-sky-500/30 uppercase">
-                  Add-on 1-Clique
-                </span>
-                <div className="flex items-center justify-between pt-1">
-                  <span className="font-bold text-sky-300 flex items-center gap-1.5"><Scale className="w-3.5 h-3.5" /> Diligência Formal CFM</span>
-                  <div className="text-right">
-                    <span className="font-extrabold text-white text-sm">R$ 15 / ofício</span>
-                    <span className="block text-[10px] text-emerald-400">Ilimitado no Pro</span>
+              <div className="p-4 bg-slate-950/80 rounded-xl border border-sky-500/30 space-y-3 relative flex flex-col justify-between">
+                <div>
+                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[9px] font-bold border border-sky-500/30 uppercase">
+                    Add-on 1-Clique
+                  </span>
+                  <div className="flex items-center justify-between pt-1">
+                    <span className="font-bold text-sky-300 flex items-center gap-1.5"><Scale className="w-3.5 h-3.5" /> Diligência Formal CFM</span>
+                    <div className="text-right">
+                      <span className="font-extrabold text-white text-sm">R$ 15 / ofício</span>
+                      <span className="block text-[10px] text-emerald-400">Ilimitado no Pro</span>
+                    </div>
                   </div>
+                  <p className="text-slate-300 text-[11px] leading-relaxed mt-2">
+                    Emissão e envio automático de ofício administrativo respaldado na Resolução CFM 1.658/2002 para confirmação de atendimento diretamente com a secretaria do consultório ou hospital.
+                  </p>
                 </div>
-                <p className="text-slate-300 text-[11px] leading-relaxed">
-                  Emissão e envio automático de ofício administrativo respaldado na Resolução CFM 1.658/2002 para confirmação de atendimento diretamente com a secretaria do consultório ou hospital.
-                </p>
+                <a
+                  href="https://checkout.infinitepay.io/solucione-0s1/xnv1997-diligencia-formal-cfm-oficio-1-clique"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-1.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 rounded-lg text-[11px] font-bold transition-all text-center block border border-sky-500/40"
+                >
+                  Disparar Diligência (R$ 15)
+                </a>
               </div>
             </div>
           </div>
