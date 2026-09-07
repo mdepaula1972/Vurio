@@ -28,6 +28,7 @@ export interface ConsistencyAuditInput {
   patientCpf?: string | null;
   cid?: string | null;
   referenceDate?: Date; // Data da submissão (padrão: hoje)
+  maxRetroactiveDays?: number; // Configuração da empresa (ex: 2 para 48h, 3 para 72h)
 }
 
 export interface ConsistencyAuditResult {
@@ -125,7 +126,7 @@ export function auditAttestationConsistency(
 
   const refDateStr = formatBrDate(refDate);
 
-  // 1. Auditoria Cronológica de Emissão (Data Futura / Anacronismo)
+  // 1. Auditoria Cronológica de Emissão (Data Posterior / Anacronismo)
   let isFuture = false;
   const emissionDate = parseDateSafe(input.emissionDate);
   const startDate = parseDateSafe(input.startDate);
@@ -137,10 +138,10 @@ export function auditAttestationConsistency(
       isFuture = true;
       alerts.push({
         code: 'FUTURE_EMISSION_DATE',
-        severity: 'CRITICAL',
-        title: 'Anacronismo: Data de Emissão Futura Detectada',
-        description: `O documento está datado para ${emissionDateStr}, porém a data atual é ${refDateStr}.`,
-        recommendation: 'Atestados pré-datados violam o Código de Ética Médica (Resolução CFM 2.217/2018). Solicite esclarecimentos formais ao emitente.'
+        severity: 'WARNING',
+        title: 'Apontamento Cronológico: Emissão com Data Posterior',
+        description: `O documento registra data de emissão em ${emissionDateStr}, posterior ao dia da análise documental (${refDateStr}).`,
+        recommendation: 'Recomenda-se consultar o colaborador ou a clínica emissora para averiguação de eventual erro material de preenchimento ou digitação da data.'
       });
     }
   }
@@ -153,53 +154,60 @@ export function auditAttestationConsistency(
     if (diffDays > 1) {
       alerts.push({
         code: 'FUTURE_START_DATE',
-        severity: 'WARNING',
-        title: 'Início de Afastamento Programado para Data Futura',
-        description: `O afastamento inicia em ${startDateStr} (${diffDays} dias à frente da data atual).`,
-        recommendation: 'Verifique se há indicação expressa de cirurgia eletiva ou procedimento médico agendado.'
+        severity: 'INFO',
+        title: 'Início de Afastamento com Previsão Futura',
+        description: `O período de repouso está assinalado para iniciar em ${startDateStr} (${diffDays} dias à frente da data atual).`,
+        recommendation: 'Verificar junto ao colaborador se há programação de procedimento cirúrgico, exame preparatório ou atendimento médico previamente agendado.'
       });
     }
   }
 
-  // 3. Auditoria de Apresentação Retroativa Tardia (> 3 dias)
+  // 3. Auditoria de Apresentação Retroativa Conforme Política da Empresa
+  const allowedDays = input.maxRetroactiveDays && input.maxRetroactiveDays > 0 ? input.maxRetroactiveDays : 3;
   if (emissionDate && emissionDate.getTime() < refDate.getTime()) {
     const elapsedDays = Math.round((refDate.getTime() - emissionDate.getTime()) / (1000 * 60 * 60 * 24));
-    if (elapsedDays > 3) {
+    if (elapsedDays > allowedDays) {
       alerts.push({
         code: 'RETROACTIVE_SUBMISSION',
         severity: 'INFO',
-        title: 'Apresentação Retroativa Fora do Prazo Padrão',
-        description: `Documento emitido há ${elapsedDays} dias (em ${formatBrDate(emissionDate)}).`,
-        recommendation: 'Confira a convenção coletiva ou política interna da empresa sobre prazo limite para entrega de atestados (usualmente 48h a 72h).'
+        title: 'Submissão Posterior ao Prazo da Política Interna',
+        description: `Documento apresentado ${elapsedDays} dias após a data da consulta (parâmetro de referência da organização: até ${allowedDays} dias / ${allowedDays * 24}h).`,
+        recommendation: 'Verificar com o colaborador a ocorrência de eventual justificativa plausível de saúde ou aplicar os critérios usuais de tolerância da empresa.'
       });
     }
   }
 
-  // 4. Validação Documental do CPF do Paciente
+  // 4. Conferência Técnica do CPF do Paciente
   let patientCpfValid: boolean | null = null;
   if (input.patientCpf) {
-    patientCpfValid = isValidBrazilianCpf(input.patientCpf);
-    if (!patientCpfValid) {
-      alerts.push({
-        code: 'INVALID_PATIENT_CPF',
-        severity: 'CRITICAL',
-        title: 'CPF do Paciente Matematicamente Inválido',
-        description: `O número de CPF (${input.patientCpf}) não passa no cálculo oficial dos dígitos verificadores (Módulo 11).`,
-        recommendation: 'Risco de fraude ou erro de digitação no receituário. Documentos legítimos devem conter dados cadastrais fidedignos.'
-      });
+    const raw = String(input.patientCpf).trim();
+    const isMasked = raw.includes('*') || raw.includes('x') || raw.includes('X');
+    
+    // Se estiver mascarado para proteção LGPD (ex: ***.456.789-**), não trata como divergência
+    if (!isMasked && raw.replace(/\D/g, '').length === 11) {
+      patientCpfValid = isValidBrazilianCpf(raw);
+      if (!patientCpfValid) {
+        alerts.push({
+          code: 'INVALID_PATIENT_CPF',
+          severity: 'INFO',
+          title: 'Divergência de Dígitos no CPF Registrado',
+          description: `A numeração de CPF indicada (${raw}) diverge da conferência algorítmica de dígitos verificadores.`,
+          recommendation: 'Recomenda-se confirmar a grafia do dado cadastral junto ao colaborador para sanar eventual equívoco de digitação ou transcrição pelo estabelecimento de saúde antes do lançamento.'
+        });
+      }
     }
   }
 
-  // 5. Auditoria de Limite Legal da CLT e INSS (> 15 dias)
+  // 5. Auditoria de Limite Legal da CLT e Previdência (> 15 dias)
   let isInssRequired = false;
   if (input.days && input.days > 15) {
     isInssRequired = true;
     alerts.push({
       code: 'INSS_REFERRAL_REQUIRED',
-      severity: 'WARNING',
-      title: 'Afastamento Superior a 15 Dias (Encaminhamento INSS)',
-      description: `Período solicitado de ${input.days} dias. A empresa arca com os primeiros 15 dias de licença.`,
-      recommendation: 'A partir do 16º dia, o contrato de trabalho é suspenso para percepção de auxílio por incapacidade temporária do INSS (Art. 59 e 60 da Lei 8.213/91).'
+      severity: 'INFO',
+      title: 'Afastamento Superior a 15 Dias (Encaminhamento Previdenciário)',
+      description: `Período prescrito de ${input.days} dias. A empresa arca com os primeiros 15 dias consecutivos de licença.`,
+      recommendation: 'A partir do 16º dia consecutivo, orientar o colaborador quanto ao agendamento de perícia médica junto ao INSS para concessão do benefício previdenciário (Arts. 59 e 60 da Lei 8.213/91).'
     });
   }
 

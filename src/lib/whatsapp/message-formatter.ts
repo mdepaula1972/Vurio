@@ -32,33 +32,33 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     }
 
     if (cfm.nameMatch && cfm.nameMatch.divergenceAlert) {
-      cfmBlock += `• 🚨 ${cfm.nameMatch.divergenceAlert}\n`;
+      cfmBlock += `• ⚠️ *Divergência Nominal:* ${cfm.nameMatch.divergenceAlert}\n`;
     }
 
     if (cfm.interstateAlert && cfm.interstateAlert.hasDivergence) {
-      cfmBlock += `• ⚠️ ${cfm.interstateAlert.description}\n`;
+      cfmBlock += `• 📌 *Registro Regional:* ${cfm.interstateAlert.description}\n`;
     }
   }
 
-  // 3. Bloco de Inconsistências Detectadas (Datas Futuras, CPF Inválido, INSS)
+  // 3. Bloco de Apontamentos Técnicos de Auditoria
   let inconsistencyBlock = '';
   if (report.consistency && report.consistency.hasInconsistencies) {
-    inconsistencyBlock = `\n\n🔍 *Inconsistências Detectadas pelo Motor Pericial:*\n`;
+    inconsistencyBlock = `\n\n📋 *Apontamentos Técnicos de Auditoria:*\n`;
     for (const alert of report.consistency.alerts) {
-      const icon = alert.severity === 'CRITICAL' ? '🚨' : alert.severity === 'WARNING' ? '⚠️' : 'ℹ️';
-      inconsistencyBlock += `${icon} *${alert.title}*\n${alert.description}\n_Orientação:_ ${alert.recommendation}\n\n`;
+      const icon = alert.severity === 'CRITICAL' ? '⚠️' : alert.severity === 'WARNING' ? '⚠️' : '📌';
+      inconsistencyBlock += `${icon} *${alert.title}*\n${alert.description}\n_Sugestão Técnica para o DP:_ ${alert.recommendation}\n\n`;
     }
   }
 
-  // 4. Bloco de Auditoria Geográfica (Geo-Shield Add-on)
+  // 4. Bloco de Auditoria de Localização (Geo-Shield Add-on)
   let geoBlock = '';
   if (report.geoAudit && !report.geoAudit.isCompatible && report.geoAudit.alert) {
     geoBlock =
-      `\n\n📍 *Auditoria Geográfica (Geo-Shield)*\n` +
+      `\n\n📍 *Auditoria de Localização (Geo-Shield)*\n` +
       `• *Local do Atendimento:* ${report.geoAudit.clinicCity}\n` +
       `• *Base de Trabalho:* ${report.geoAudit.workCity}\n` +
       `• *Distância Estimada:* ~${report.geoAudit.distanceKm} km\n` +
-      `• ⚠️ *Alerta:* ${report.geoAudit.alert.description}\n`;
+      `• 📌 *Apontamento:* ${report.geoAudit.alert.description}\n`;
   }
 
   // 5. Montagem da Mensagem por Status
@@ -71,7 +71,7 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
       const issuer = report.signature.issuer || 'AC Autorizada ICP-Brasil';
 
       return (
-        `🟢 *Atestado Autêntico e Íntegro*\n\n` +
+        `🟢 *Atestado em Conformidade Digital*\n\n` +
         `*Médico:* ${doctorName} ${crmStr}\n` +
         `*Assinatura Digital:* Válida (Padrão ICP-Brasil)\n` +
         `*Integridade:* Confirmada (Arquivo intocado após a emissão)\n` +
@@ -88,10 +88,10 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
       const url = report.qrCode?.qrData || '';
 
       return (
-        `🟢 *Atestado Autenticado via QR Code*\n\n` +
+        `🟢 *Atestado Validado via QR Code Oficial*\n\n` +
         `*Emissor:* Sistema Oficial (${issuer})\n` +
-        `*Status:* Documento impresso com QR Code de autenticação legítimo.\n` +
-        `*Link de Auditoria:* ${url}` +
+        `*Status:* Documento com código de autenticação legível e rastreável.\n` +
+        `*Link de Consulta:* ${url}` +
         restDaysLine +
         cfmBlock +
         inconsistencyBlock +
@@ -103,20 +103,20 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
       return (
         `🟡 *Triagem de Atestado Físico (Papel Tradicional)*\n\n` +
         `*Status:* Foto de receituário físico impresso/manual.\n` +
-        `*Observação:* Documentos físicos não contêm a assinatura digital criptográfica e-CPF/ICP-Brasil nem QR Code identificável.\n` +
+        `*Observação:* Documentos físicos não contêm a assinatura digital criptográfica e-CPF/ICP-Brasil.\n` +
         restDaysLine +
         cfmBlock +
         inconsistencyBlock +
         geoBlock +
-        `\n*Recomendação para o RH:* Caso o colaborador tenha recebido o arquivo digital original por e-mail ou WhatsApp da clínica, solicite o envio do arquivo em PDF para validação instantânea. Caso seja atendimento 100% presencial de papel, confira o carimbo e a assinatura manual.`
+        `\n*Orientação para o DP:* Se o colaborador recebeu o arquivo eletrônico diretamente da clínica, solicite o PDF original para validação imediata. Sendo atendimento presencial físico, confira o carimbo legível e assinatura manual.`
       );
     }
 
     case 'DUPLICATE_DOCUMENT': {
       return (
-        `🔴 *Alerta de Duplicidade*\n\n` +
-        `*Status:* Este mesmo arquivo ou atestado já foi submetido anteriormente para abono nesta empresa.\n\n` +
-        `*Recomendação para o RH:* Verifique se não se trata de reenvio acidental ou reaproveitamento indevido do mesmo documento.` +
+        `🟡 *Apontamento de Duplicidade no Arquivo*\n\n` +
+        `*Status:* Este mesmo arquivo documental já consta no histórico de registros recebidos pela empresa.\n\n` +
+        `*Sugestão para o DP:* Verificar com o colaborador se houve reenvio acidental do mesmo comprovante.` +
         inconsistencyBlock +
         geoBlock
       );
@@ -124,13 +124,13 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
 
     case 'TAMPERED': {
       return (
-        `🔴 *Alerta de Inconsistência Criptográfica (Adulteração)*\n\n` +
-        `*Status:* O documento sofreu alterações ou edições nos dados visuais após ter sido assinado digitalmente.\n` +
+        `🟡 *Divergência de Integridade Digital*\n\n` +
+        `*Status:* O documento em PDF apresenta modificações estruturais ou visuais após o fechamento da assinatura digital.\n` +
         restDaysLine +
         cfmBlock +
         inconsistencyBlock +
         geoBlock +
-        `\n*Recomendação para o RH:* Solicite ao colaborador o envio do arquivo PDF original recebido diretamente do médico/clínica.`
+        `\n*Sugestão para o DP:* Solicite ao colaborador o envio do arquivo PDF original emitido diretamente pelo médico ou clínica (sem salvar por cima ou reimprimir em PDF).`
       );
     }
 
@@ -138,13 +138,13 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     case 'INVALID_CERTIFICATE':
     default: {
       return (
-        `🔴 *Alerta de Inconsistência*\n\n` +
-        `*Status:* O documento em PDF não possui assinatura digital criptográfica válida (Padrão ICP-Brasil).\n` +
+        `🟡 *Documento Sem Assinatura ICP-Brasil Identificada*\n\n` +
+        `*Status:* O arquivo PDF enviado não possui certificado digital padrão ICP-Brasil acoplado.\n` +
         restDaysLine +
         cfmBlock +
         inconsistencyBlock +
         geoBlock +
-        `\n*Recomendação para o RH:* Solicite ao colaborador o envio do arquivo PDF original recebido diretamente do médico/clínica.`
+        `\n*Sugestão para o DP:* Caso o colaborador tenha recebido o arquivo digital diretamente do consultório, solicite o PDF com a assinatura digital do médico ou a via com QR Code de autenticação.`
       );
     }
   }
