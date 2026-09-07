@@ -22,7 +22,7 @@ export async function POST(req: NextRequest) {
     const payload = await req.json();
 
     // Extrair remetente e detalhes da mídia
-    const { phone, mediaUrl, mimeType, fileName, mediaBase64 } = extractMediaInfoFromPayload(payload);
+    const { phone, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData } = extractMediaInfoFromPayload(payload);
 
     if (!phone) {
       return NextResponse.json({ received: true, ignored: 'Sem número de telefone no payload' });
@@ -42,11 +42,38 @@ export async function POST(req: NextRequest) {
       message: '🔍 *Analisando assinatura digital e integridade do atestado...*'
     });
 
-    // 2. Obter buffer do arquivo (via download da URL ou Base64)
+    // 2. Obter buffer do arquivo (Base64 direto, descriptografia Evolution API ou download da URL)
     let fileBuffer: Buffer | null = null;
     if (mediaBase64) {
       fileBuffer = Buffer.from(mediaBase64, 'base64');
-    } else if (mediaUrl) {
+    } else if (rawEvolutionData) {
+      try {
+        const apiUrl = process.env.WHATSAPP_API_URL || '';
+        const instanceId = process.env.WHATSAPP_INSTANCE_ID || 'vurio';
+        const apiKey = process.env.WHATSAPP_API_TOKEN || '';
+        if (apiUrl && instanceId) {
+          const decryptRes = await fetch(`${apiUrl}/chat/getBase64FromMediaMessage/${instanceId}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': apiKey
+            },
+            body: JSON.stringify({
+              message: rawEvolutionData,
+              convertToMp4: false
+            })
+          });
+          const decryptData = await decryptRes.json();
+          if (decryptData && decryptData.base64) {
+            fileBuffer = Buffer.from(decryptData.base64, 'base64');
+          }
+        }
+      } catch (err) {
+        console.error('Falha ao descriptografar mídia via Evolution API:', err);
+      }
+    }
+
+    if (!fileBuffer && mediaUrl && !mediaUrl.includes('whatsapp.net')) {
       const response = await fetch(mediaUrl);
       const arrayBuffer = await response.arrayBuffer();
       fileBuffer = Buffer.from(arrayBuffer);
@@ -55,7 +82,7 @@ export async function POST(req: NextRequest) {
     if (!fileBuffer) {
       await sendWhatsAppMessage({
         phone,
-        message: '⚠️ Não foi possível baixar o arquivo enviado. Por favor, tente enviar novamente em PDF.'
+        message: '⚠️ Não foi possível processar o arquivo enviado. Por favor, tente enviar novamente em PDF.'
       });
       return NextResponse.json({ error: 'Falha no download da mídia' }, { status: 400 });
     }
@@ -105,6 +132,7 @@ function extractMediaInfoFromPayload(payload: any) {
   let mimeType = '';
   let fileName = '';
   let mediaBase64 = '';
+  let rawEvolutionData: any = null;
 
   // Formato Z-API
   if (payload.phone) {
@@ -122,8 +150,15 @@ function extractMediaInfoFromPayload(payload: any) {
   // Formato Evolution API
   else if (payload.data && payload.data.key) {
     phone = String(payload.data.key.remoteJid || '').replace('@s.whatsapp.net', '');
+    rawEvolutionData = payload.data;
     const message = payload.data.message || {};
     
+    // Captura base64 caso já venha injetado no webhook
+    if (message.base64) mediaBase64 = message.base64;
+    else if (payload.data.base64) mediaBase64 = payload.data.base64;
+    else if (message.documentMessage?.base64) mediaBase64 = message.documentMessage.base64;
+    else if (message.imageMessage?.base64) mediaBase64 = message.imageMessage.base64;
+
     if (message.documentMessage) {
       mediaUrl = message.documentMessage.url || '';
       mimeType = message.documentMessage.mimetype || 'application/pdf';
@@ -137,10 +172,16 @@ function extractMediaInfoFromPayload(payload: any) {
 
   // Suporte a payload direto de teste / simulador
   if (payload.mediaBase64) mediaBase64 = payload.mediaBase64;
+  if (payload.base64 && !mediaBase64) mediaBase64 = payload.base64;
   if (payload.mediaUrl) mediaUrl = payload.mediaUrl;
   if (payload.mimeType) mimeType = payload.mimeType;
   if (payload.fileName) fileName = payload.fileName;
   if (payload.number && !phone) phone = String(payload.number);
 
-  return { phone, mediaUrl, mimeType, fileName, mediaBase64 };
+  // Limpeza de prefixo Data-URI se existir
+  if (mediaBase64 && mediaBase64.includes('base64,')) {
+    mediaBase64 = mediaBase64.split('base64,')[1];
+  }
+
+  return { phone, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData };
 }
