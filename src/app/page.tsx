@@ -32,6 +32,7 @@ import {
   FileText,
   Lock
 } from 'lucide-react';
+import { INFINITEPAY_LINKS } from '@/lib/services/payment-links';
 
 export default function LandingHomePage() {
   const [selectedProfile, setSelectedProfile] = useState<'mei' | 'dp' | 'doctor'>('mei');
@@ -660,7 +661,7 @@ export default function LandingHomePage() {
 
               <div className="pt-6 space-y-2">
                 <a
-                  href="https://checkout.infinitepay.io/solucione-0s1/gfp8843-consulta-avulsa---auditoria-de-atestado-me"
+                  href={INFINITEPAY_LINKS.CONSULTA_AVULSA_10}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow text-center block"
@@ -668,7 +669,7 @@ export default function LandingHomePage() {
                   Consultar por R$ 10 (PIX / Cartão)
                 </a>
                 <a
-                  href="https://checkout.infinitepay.io/solucione-0s1/mqf4359-consulta-avulsa-completa-geo-shield-distan"
+                  href={INFINITEPAY_LINKS.CONSULTA_AVULSA_GEO_13}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-[11px] font-semibold transition-all text-center block border border-amber-500/30"
@@ -699,7 +700,7 @@ export default function LandingHomePage() {
 
               <div className="pt-6">
                 <a
-                  href="https://api.whatsapp.com/send?text=Ol%C3%A1!%20Quero%20assinar%20o%20Plano%20Starter%20RH%20(R$%20149/m%C3%AAs)%20do%20Vurio"
+                  href={INFINITEPAY_LINKS.PLANOS_WHATSAPP.STARTER}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all text-center block"
@@ -734,7 +735,7 @@ export default function LandingHomePage() {
 
               <div className="pt-6">
                 <a
-                  href="https://api.whatsapp.com/send?text=Ol%C3%A1!%20Quero%20assinar%20o%20Plano%20Compliance%20Pro%20(R$%20399/m%C3%AAs)%20do%20Vurio"
+                  href={INFINITEPAY_LINKS.PLANOS_WHATSAPP.PRO}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-sky-600/30 text-center block"
@@ -764,7 +765,7 @@ export default function LandingHomePage() {
 
               <div className="pt-6">
                 <a
-                  href="https://api.whatsapp.com/send?text=Ol%C3%A1!%20Gostaria%20de%20uma%20proposta%20do%20Plano%20Enterprise%20do%20Vurio"
+                  href={INFINITEPAY_LINKS.PLANOS_WHATSAPP.ENTERPRISE}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all text-center block"
@@ -805,7 +806,7 @@ export default function LandingHomePage() {
                   </p>
                 </div>
                 <a
-                  href="https://checkout.infinitepay.io/solucione-0s1/mqf4359-consulta-avulsa-completa-geo-shield-distan"
+                  href={INFINITEPAY_LINKS.CONSULTA_AVULSA_GEO_13}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[11px] font-bold transition-all text-center block border border-amber-500/40"
@@ -832,7 +833,7 @@ export default function LandingHomePage() {
                   </p>
                 </div>
                 <a
-                  href="https://checkout.infinitepay.io/solucione-0s1/sao7695-dossie-noticia-crime-para-bo-policial"
+                  href={INFINITEPAY_LINKS.DOSSIE_POLICIAL_89}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg text-[11px] font-bold transition-all text-center block border border-emerald-500/40"
@@ -859,7 +860,7 @@ export default function LandingHomePage() {
                   </p>
                 </div>
                 <a
-                  href="https://checkout.infinitepay.io/solucione-0s1/xnv1997-diligencia-formal-cfm-oficio-1-clique"
+                  href={INFINITEPAY_LINKS.DILIGENCIA_CFM_15}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-1.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 rounded-lg text-[11px] font-bold transition-all text-center block border border-sky-500/40"
