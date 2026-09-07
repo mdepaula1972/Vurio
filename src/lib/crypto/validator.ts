@@ -5,6 +5,9 @@ import { analyzePkcs7Envelope } from './pkcs7-analyzer';
 import { extractCrmAndUf } from './crm-extractor';
 import { scanQrCodeFromImageBuffer, QrScanResult } from './qr-scanner';
 import { extractRestDaysAndPeriod, RestPeriodInfo } from './days-extractor';
+import { auditDoctorCrm, CfmDoctorAuditResult } from '../services/cfm-service';
+import { auditAttestationConsistency, ConsistencyAuditResult } from '../services/consistency-service';
+import { extractAttestationFromImageBuffer } from '../services/vision-ocr-service';
 
 export type AttestationValidationStatus =
   | 'VALID_INTACT'          // Caso A1: PDF Nativo com Assinatura Criptográfica ICP-Brasil Íntegra
@@ -25,6 +28,11 @@ export interface AttestationValidationReport {
     uf: string | null;
     cpf: string | null;
   };
+  patient?: {
+    name: string | null;
+    cpf: string | null;
+  };
+  cid?: string | null;
   signature: {
     hasSignature: boolean;
     isIcpBrasil: boolean;
@@ -36,6 +44,8 @@ export interface AttestationValidationReport {
   };
   restPeriod: RestPeriodInfo;
   qrCode?: QrScanResult;
+  cfmAudit?: CfmDoctorAuditResult;
+  consistency?: ConsistencyAuditResult;
   details: string;
 }
 
@@ -74,15 +84,25 @@ export async function validateMedicalAttestation(
 
   // 2. Verificar se é formato de imagem (Foto de celular / print / JPG / PNG)
   if (isImageFile(fileBuffer, mimeType, fileName)) {
-    // Tentar ler QR Code na foto
     const qrResult = await scanQrCodeFromImageBuffer(fileBuffer);
+    const extracted = await extractAttestationFromImageBuffer(fileBuffer, mimeType);
 
     if (qrResult.hasQrCode && qrResult.isValidIssuerUrl) {
-      return {
+      return await finalizeReport({
         status: 'PHOTO_WITH_QR_CODE',
         isAuthentic: true,
         fileSha256,
-        doctor: { name: null, crm: null, uf: null, cpf: null },
+        doctor: {
+          name: extracted.doctorName,
+          crm: extracted.crm,
+          uf: extracted.uf,
+          cpf: null
+        },
+        patient: {
+          name: extracted.patientName,
+          cpf: extracted.patientCpf
+        },
+        cid: extracted.cid,
         signature: {
           hasSignature: false,
           isIcpBrasil: false,
@@ -92,18 +112,31 @@ export async function validateMedicalAttestation(
           calculatedSha256: null,
           expectedSha256: null
         },
-        restPeriod: { days: null, startDate: null },
+        restPeriod: {
+          days: extracted.days,
+          startDate: extracted.startDate
+        },
         qrCode: qrResult,
         details: `Foto com QR Code de Validação Oficial detectado (${qrResult.issuerType}). URL de autenticação confirmada.`
-      };
+      }, extracted);
     }
 
     // Foto tradicional de papel (sem QR Code oficial)
-    return {
+    return await finalizeReport({
       status: 'PHOTO_MANUAL_PAPER',
       isAuthentic: false,
       fileSha256,
-      doctor: { name: null, crm: null, uf: null, cpf: null },
+      doctor: {
+        name: extracted.doctorName,
+        crm: extracted.crm,
+        uf: extracted.uf,
+        cpf: null
+      },
+      patient: {
+        name: extracted.patientName,
+        cpf: extracted.patientCpf
+      },
+      cid: extracted.cid,
       signature: {
         hasSignature: false,
         isIcpBrasil: false,
@@ -113,16 +146,19 @@ export async function validateMedicalAttestation(
         calculatedSha256: null,
         expectedSha256: null
       },
-      restPeriod: { days: null, startDate: null },
+      restPeriod: {
+        days: extracted.days,
+        startDate: extracted.startDate
+      },
       qrCode: qrResult,
       details: 'Foto de documento impresso tradicional (caneta/carimbo). Não possui assinatura digital criptográfica e-CPF/ICP-Brasil nem QR Code oficial.'
-    };
+    }, extracted);
   }
 
   // 3. Verificar cabeçalho de PDF (%PDF)
   const isPdf = fileBuffer.subarray(0, 5).toString('latin1').startsWith('%PDF');
   if (!isPdf) {
-    return {
+    return await finalizeReport({
       status: 'PHOTO_MANUAL_PAPER',
       isAuthentic: false,
       fileSha256,
@@ -138,7 +174,7 @@ export async function validateMedicalAttestation(
       },
       restPeriod: { days: null, startDate: null },
       details: 'Formato de arquivo não reconhecido como PDF nativo.'
-    };
+    });
   }
 
   // 4. Extrair texto do PDF para dias de repouso e CRM
@@ -150,18 +186,18 @@ export async function validateMedicalAttestation(
     pdfText = '';
   }
 
-  // Se o PDF tiver fontes não mapeadas ou texto em streams literais, recorre à varredura direta do buffer
   if (!pdfText.trim()) {
     pdfText = fileBuffer.toString('latin1');
   }
 
   const restPeriod = extractRestDaysAndPeriod(pdfText);
   const crmInfo = await extractCrmAndUf(fileBuffer);
+  const patientInfo = extractPatientInfoFromText(pdfText);
 
   // 5. Extrair blocos de assinatura digital PAdES
   const signatures = extractPdfSignatures(fileBuffer);
   if (signatures.length === 0) {
-    return {
+    return await finalizeReport({
       status: 'NO_DIGITAL_SIGNATURE',
       isAuthentic: false,
       fileSha256,
@@ -171,6 +207,11 @@ export async function validateMedicalAttestation(
         uf: crmInfo.uf,
         cpf: null
       },
+      patient: {
+        name: patientInfo.patientName,
+        cpf: patientInfo.patientCpf
+      },
+      cid: patientInfo.cid,
       signature: {
         hasSignature: false,
         isIcpBrasil: false,
@@ -182,7 +223,7 @@ export async function validateMedicalAttestation(
       },
       restPeriod,
       details: 'O PDF não possui blocos de assinatura digital criptográfica PAdES/PKCS#7.'
-    };
+    }, patientInfo);
   }
 
   // Analisar a assinatura mais recente ou primária
@@ -195,11 +236,16 @@ export async function validateMedicalAttestation(
   // 7. Decodificar envelope PKCS#7
   const p7Result = analyzePkcs7Envelope(primarySig.signatureBuffer);
   if (!p7Result.hasValidStructure) {
-    return {
+    return await finalizeReport({
       status: 'INVALID_CERTIFICATE',
       isAuthentic: false,
       fileSha256,
       doctor: { name: null, crm: crmInfo.crm, uf: crmInfo.uf, cpf: null },
+      patient: {
+        name: patientInfo.patientName,
+        cpf: patientInfo.patientCpf
+      },
+      cid: patientInfo.cid,
       signature: {
         hasSignature: true,
         isIcpBrasil: false,
@@ -211,7 +257,7 @@ export async function validateMedicalAttestation(
       },
       restPeriod,
       details: `Envelope PKCS#7 corrompido ou ilegível: ${p7Result.errorMessage}`
-    };
+    }, patientInfo);
   }
 
   const expectedSha256 = p7Result.expectedDigestHex ? p7Result.expectedDigestHex.toLowerCase() : null;
@@ -223,7 +269,7 @@ export async function validateMedicalAttestation(
   }
 
   if (!integrityConfirmed) {
-    return {
+    return await finalizeReport({
       status: 'TAMPERED',
       isAuthentic: false,
       fileSha256,
@@ -233,6 +279,11 @@ export async function validateMedicalAttestation(
         uf: crmInfo.uf,
         cpf: p7Result.doctorInfo?.cpf || null
       },
+      patient: {
+        name: patientInfo.patientName,
+        cpf: patientInfo.patientCpf
+      },
+      cid: patientInfo.cid,
       signature: {
         hasSignature: true,
         isIcpBrasil: p7Result.doctorInfo?.isIcpBrasil || false,
@@ -244,13 +295,13 @@ export async function validateMedicalAttestation(
       },
       restPeriod,
       details: 'DOCUMENTO ADULTERADO: O hash SHA-256 do arquivo difere da assinatura criptográfica original gravada pelo emissor.'
-    };
+    }, patientInfo);
   }
 
   // 9. Documento Autêntico e Íntegro (ICP-Brasil)
   const doctorData = p7Result.doctorInfo;
 
-  return {
+  return await finalizeReport({
     status: 'VALID_INTACT',
     isAuthentic: true,
     fileSha256,
@@ -260,6 +311,11 @@ export async function validateMedicalAttestation(
       uf: crmInfo.uf,
       cpf: doctorData?.cpf || null
     },
+    patient: {
+      name: patientInfo.patientName,
+      cpf: patientInfo.patientCpf
+    },
+    cid: patientInfo.cid,
     signature: {
       hasSignature: true,
       isIcpBrasil: doctorData?.isIcpBrasil || true,
@@ -271,7 +327,58 @@ export async function validateMedicalAttestation(
     },
     restPeriod,
     details: 'Atestado autêntico e íntegro. Assinatura digital válida e inviolabilidade confirmada.'
+  }, patientInfo);
+}
+
+/**
+ * Extrai dados cadastrais do paciente e datas presentes no texto do PDF
+ */
+function extractPatientInfoFromText(text: string) {
+  const patientMatch = text.match(/(?:paciente|colaborador)[\s:]*([A-Za-zÀ-ÿ\s]{3,35})(?:\s*[\|\n\r]|$)/i);
+  const cpfMatch = text.match(/CPF[\s:]*([0-9\*\.\-]{11,14})/i);
+  const emissionMatch = text.match(/(?:data|emiss[ãa]o|s[ãa]o\s*paulo,?)[\s:]*(\d{2}[\/\.-]\d{2}[\/\.-]\d{4})/i);
+  const cidMatch = text.match(/CID(?:-10)?[\s:]*([A-Z][0-9]{2}(?:\.[0-9]{1,2})?)/i);
+
+  return {
+    patientName: patientMatch ? patientMatch[1].trim() : null,
+    patientCpf: cpfMatch ? cpfMatch[1].trim() : null,
+    emissionDate: emissionMatch ? emissionMatch[1].replace(/[\.-]/g, '/') : null,
+    cid: cidMatch ? cidMatch[1].toUpperCase() : null
   };
+}
+
+/**
+ * Enriquece o relatório final com a Auditoria Nacional de CRM (CFM) e Motor de Inconsistências Forenses
+ */
+async function finalizeReport(
+  baseReport: AttestationValidationReport,
+  context?: {
+    patientName?: string | null;
+    patientCpf?: string | null;
+    emissionDate?: string | null;
+    cid?: string | null;
+  }
+): Promise<AttestationValidationReport> {
+  // 1. Auditoria de CRM / CFM Nacional (27 Estados)
+  if (baseReport.doctor.crm) {
+    baseReport.cfmAudit = await auditDoctorCrm(
+      baseReport.doctor.crm,
+      baseReport.doctor.uf,
+      baseReport.doctor.name
+    );
+  }
+
+  // 2. Auditoria de Inconsistências (Datas Futuras, CPF, Limites CLT/INSS)
+  baseReport.consistency = auditAttestationConsistency({
+    emissionDate: context?.emissionDate || baseReport.restPeriod.startDate,
+    startDate: baseReport.restPeriod.startDate,
+    days: baseReport.restPeriod.days,
+    patientName: context?.patientName || baseReport.patient?.name,
+    patientCpf: context?.patientCpf || baseReport.patient?.cpf,
+    cid: context?.cid || baseReport.cid
+  });
+
+  return baseReport;
 }
 
 /**

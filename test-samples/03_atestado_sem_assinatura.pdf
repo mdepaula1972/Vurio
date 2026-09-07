@@ -1,0 +1,34 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 5 0 R /F2 6 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length 739 >>
+stream
+0.1 0.4 0.8 rg 40 800 515 4 re f 0 0 0 rg
+BT /F2 16 Tf 40 770 Td (CONSULTORIO MEDICO DR. PAULO SOUZA) Tj ET
+BT /F1 9 Tf 40 755 Td (Clinica Geral e Atendimento Ambulatorial) Tj ET
+BT /F1 9 Tf 40 742 Td (Rua das Palmeiras, 300 - Campinas / SP - Tel: (19) 3211-0000) Tj ET
+0.8 0.8 0.8 RG 40 725 m 555 725 l S
+BT /F2 14 Tf 210 685 Td (DECLARACAO MEDICA) Tj ET
+BT /F1 10 Tf 40 620 Td (Declaro para os devidos fins que o colaborador Marcos Antonio de Paula compareceu a este consultorio,) Tj ET
+BT /F1 10 Tf 40 605 Td (sendo recomendado repouso por 2 dias a partir de hoje.) Tj ET
+BT /F1 9 Tf 40 500 Td (Dr. Paulo Souza - CRM 123456/SP) Tj ET
+BT /F1 8 Tf 40 480 Td (Documento impresso em PDF comum, sem assinatura digital ICP-Brasil e-CPF) Tj ET
+endstream
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+trailer
+<< /Root 1 0 R >>
+%%EOF
