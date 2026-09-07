@@ -647,8 +647,9 @@ export default function LandingHomePage() {
                 </div>
                 <ul className="space-y-2 text-xs text-slate-300 pt-3">
                   <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> 1.000+ validações mensais</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> API REST integrada ao seu ERP (TOTVS, Senior)</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Gerente de conta exclusivo</li>
+                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Integração com ERP (TOTVS, Senior) ou exportação em lote</li>
+                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Conexão com o canal de WhatsApp da sua própria empresa</li>
+                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Gerente de conta e SLA prioritário</li>
                 </ul>
               </div>
 
