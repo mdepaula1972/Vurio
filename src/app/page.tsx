@@ -138,19 +138,26 @@ export default function LandingHomePage() {
           {/* Botões de Ação Rápida */}
           <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
             <a
-              href="#precos"
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-sm font-bold shadow-xl shadow-emerald-500/20 transition-all flex items-center gap-2"
+              href="#degustacao-gratis"
+              className="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white text-sm font-bold shadow-xl shadow-sky-500/20 transition-all flex items-center gap-2"
             >
-              <span>Fazer Consulta Avulsa (R$ 10,00)</span>
-              <ArrowRight className="w-4 h-4" />
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>Testar 15 Atestados Gratuitamente</span>
+            </a>
+
+            <a
+              href="#precos"
+              className="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-700/80 transition-all flex items-center gap-2"
+            >
+              <span>Consulta Avulsa (R$ 10)</span>
             </a>
 
             <Link
               href="/dashboard"
-              className="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-700/80 transition-all flex items-center gap-2"
+              className="px-4 py-3 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5"
             >
-              <Briefcase className="w-4 h-4 text-sky-400" />
-              <span>Acessar Painel do RH</span>
+              <Briefcase className="w-3.5 h-3.5 text-sky-400" />
+              <span>Painel do RH</span>
             </Link>
           </div>
 
@@ -520,6 +527,94 @@ export default function LandingHomePage() {
               <p className="text-xs text-slate-300 leading-relaxed">
                 Você recebe uma mensagem clara dizendo se o documento está em conformidade ou com sugestões amigáveis para averiguação do DP.
               </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* 5.5. DEGUSTAÇÃO CORPORATIVA: 15 AUDITORIAS GRATUITAS & RESPALDO EXECUTIVO */}
+      <section id="degustacao-gratis" className="py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-gradient-to-b from-slate-900/90 via-slate-950 to-slate-900/60 relative overflow-hidden">
+        <div className="max-w-5xl mx-auto space-y-10">
+          
+          <div className="text-center space-y-3 max-w-3xl mx-auto">
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs font-bold">
+              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+              <span>Degustação Corporativa Sem Compromisso</span>
+            </div>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white">
+              Suas primeiras <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400">15 auditorias</span> são por nossa conta
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Teste o Vurio na prática com os atestados reais da sua empresa. Sem pedir cartão de crédito, sem contratos engessados e com resposta imediata.
+            </p>
+          </div>
+
+          {/* O Diferencial: E se todos os atestados forem 100% autênticos? */}
+          <div className="p-8 rounded-3xl bg-slate-950/80 border border-slate-800 space-y-6 shadow-2xl relative">
+            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-5 gap-3">
+              <div>
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">A Pergunta Mais Inteligente do RH:</span>
+                <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
+                  "E se todos os meus 15 atestados forem autênticos? Qual o valor disso para a empresa?"
+                </h3>
+              </div>
+              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-xs font-semibold whitespace-nowrap self-start md:self-auto">
+                ✓ Respaldo & Compliance
+              </span>
+            </div>
+
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              O objetivo do Vurio não é apenas identificar inconsistências. <strong>Nosso maior valor é gerar o Laudo Pericial de Conformidade que blinda o Departamento Pessoal e a Diretoria:</strong>
+            </p>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+              
+              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div className="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center font-bold">
+                  👔
+                </div>
+                <h4 className="font-bold text-white text-sm">Respaldo perante a Diretoria</h4>
+                <p className="text-slate-400 leading-relaxed text-[11px]">
+                  O DP apresenta relatórios mensais comprovando que cada dia abonado na folha foi oficialmente checado na ICP-Brasil e no CFM, justificando os salários pagos com governança irretocável.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
+                  ⚖️
+                </div>
+                <h4 className="font-bold text-white text-sm">Blindagem no eSocial e MTE</h4>
+                <p className="text-slate-400 leading-relaxed text-[11px]">
+                  Em caso de fiscalização trabalhista ou previdenciária, sua empresa possui certidões digitais com código hash SHA-256 inalterável, evitando multas e glosas do eSocial.
+                </p>
+              </div>
+
+              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
+                  🤝
+                </div>
+                <h4 className="font-bold text-white text-sm">Segurança Jurídica para o DP</h4>
+                <p className="text-slate-400 leading-relaxed text-[11px]">
+                  Elimina o medo e a insegurança do analista de DP na hora de aprovar o abono. O gestor tem respaldo pericial formal para justificar decisões sem desgastes com os colaboradores.
+                </p>
+              </div>
+
+            </div>
+
+            {/* CTA da Degustação */}
+            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div className="text-xs text-slate-400">
+                <p className="font-medium text-slate-300">Quer testar com sua equipe agora mesmo?</p>
+                <p className="text-[11px]">Basta enviar uma mensagem no WhatsApp com a palavra <strong>DEGUSTACAO</strong>.</p>
+              </div>
+
+              <button
+                onClick={() => alert('Para iniciar seu teste gratuito de 15 atestados, envie a palavra DEGUSTACAO no WhatsApp: (11) 99999-9999')}
+                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2 whitespace-nowrap"
+              >
+                <Sparkles className="w-4 h-4 text-amber-300" />
+                <span>Ativar 15 Atestados Gratuitos</span>
+              </button>
             </div>
           </div>
         </div>
