@@ -721,6 +721,37 @@ export default function DashboardPage() {
               </button>
             </div>
 
+            {/* Banner Freemium de Atração de Leads / Propaganda Impulsionada */}
+            <div className="p-5 bg-gradient-to-r from-emerald-950/60 via-slate-900 to-indigo-950/60 border-2 border-dashed border-emerald-500/40 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-black uppercase">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>Campanha Diagnóstico Gratuito (Freemium)</span>
+                </div>
+                <h3 className="text-base font-bold text-white">
+                  Audite Gratuitamente até 15 Atestados da sua Empresa
+                </h3>
+                <p className="text-xs text-slate-300 max-w-2xl">
+                  Descubra em 2 minutos se o seu RH absorveu atestados adulterados ou sem assinatura digital ICP-Brasil nos últimos meses. Nós geramos o laudo executivo de sangria financeira para a sua diretoria sem custo.
+                </p>
+              </div>
+              <label className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-extrabold text-xs rounded-xl cursor-pointer shadow-lg shadow-emerald-500/20 transition-all whitespace-nowrap">
+                Subir 15 Atestados Grátis
+                <input
+                  type="file"
+                  multiple
+                  accept=".pdf,.zip,.jpg,.jpeg,.png"
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      const limited = Array.from(e.target.files).slice(0, 15);
+                      handleBatchAudit(limited);
+                    }
+                  }}
+                />
+              </label>
+            </div>
+
             {/* Configuração de Custos de Folha (Inputs Solicitados pelo Usuário) */}
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
               <h3 className="text-sm font-bold text-white flex items-center gap-2">
@@ -1262,20 +1293,21 @@ export default function DashboardPage() {
         {/* ABA 5: PLANOS & DIFERENCIAIS DE ASSINATURA (DESCONTO ANUAL DE 15%)         */}
         {/* ========================================================================= */}
         {activeTab === 'pricing' && (
-          <div className="space-y-8 animate-fadeIn">
+          <div className="space-y-12 animate-fadeIn pb-12">
+            {/* Header de Preços */}
             <div className="text-center max-w-3xl mx-auto space-y-3">
               <div className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs font-bold">
                 <Percent className="w-3.5 h-3.5 text-emerald-400" />
-                <span>TABELA DE PLANOS & ASSINATURAS RECORRENTES</span>
+                <span>TABELA DE PLANOS & CONTRATAÇÃO B2B</span>
               </div>
               <h2 className="text-3xl font-extrabold text-white tracking-tight">
-                Investimento que se Paga no Primeiro Mês
+                Previsibilidade, Compliance e ROI Imediato
               </h2>
-              <p className="text-xs text-slate-400">
-                Pague via Cartão de Crédito ou PIX instantâneo com a tecnologia e segurança da <strong>InfinitePay</strong>.
+              <p className="text-xs text-slate-400 max-w-xl mx-auto">
+                Pagamento antecipado via Cartão de Crédito ou PIX com a tecnologia da <strong>InfinitePay</strong>, ou faturado via <strong>Boleto Bancário</strong> para contratos Enterprise.
               </p>
 
-              {/* Toggle de Ciclo de Cobrança: Mensal vs Anual (-15%) */}
+              {/* Toggle de Ciclo: Mensal vs Anual (-15%) */}
               <div className="inline-flex items-center p-1.5 bg-slate-900 border border-slate-800 rounded-2xl mt-4">
                 <button
                   onClick={() => setBillingCycle('MONTHLY')}
@@ -1299,14 +1331,18 @@ export default function DashboardPage() {
               </div>
             </div>
 
-            {/* Grid dos 3 Planos para Empresas */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+            {/* Grid dos 3 Planos Corporativos com Tetos Rígidos e Saudáveis */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-2">
               {/* Plano Starter */}
               <div className="p-6 bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col justify-between space-y-6">
                 <div className="space-y-3">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pequenas Empresas</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pequenas Empresas</span>
+                    <span className="text-[10px] px-2 py-0.5 bg-slate-800 text-slate-300 rounded font-semibold">PIX ou Cartão</span>
+                  </div>
                   <h3 className="text-xl font-bold text-white">Starter RH</h3>
-                  <p className="text-xs text-slate-400">Ideal para empresas com até 50 colaboradores.</p>
+                  <p className="text-xs text-slate-400">Ideal para empresas com até 50 colaboradores ativos.</p>
+                  
                   <div className="pt-3 border-t border-slate-800">
                     <p className="text-3xl font-extrabold text-white">
                       R$ {billingCycle === 'ANNUAL' ? '126' : '149'}
@@ -1317,20 +1353,24 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  <ul className="space-y-2 text-xs text-slate-300 pt-3">
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Até 50 validações por mês</li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Validação ICP-Brasil & QR Code</li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Trava antifraude de duplicidade</li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Laudo com CRM e dias em PDF</li>
+                  <ul className="space-y-2.5 text-xs text-slate-300 pt-3">
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>50 validações</strong> mensais inclusas</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span>Excedente: <strong>R$ 3,50</strong> por atestado extra</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>Rollover 30 dias:</strong> créditos não usados acumulam por 1 ciclo</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>Auditoria de Entrada:</strong> até 50 atestados passados</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span>1 Instância WhatsApp corporativa</span></li>
                   </ul>
                 </div>
 
-                <button
-                  onClick={() => alert('Redirecionando para Checkout Seguro InfinitePay...')}
-                  className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
-                >
-                  Assinar Starter
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => alert('Redirecionando para Checkout Seguro InfinitePay...')}
+                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
+                  >
+                    Assinar Starter
+                  </button>
+                  <p className="text-[10px] text-center text-slate-500">Pagamento antecipado via PIX ou Cartão</p>
+                </div>
               </div>
 
               {/* Plano Pro (Destaque) */}
@@ -1340,9 +1380,13 @@ export default function DashboardPage() {
                 </span>
 
                 <div className="space-y-3">
-                  <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Médias Empresas</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Médias Empresas</span>
+                    <span className="text-[10px] px-2 py-0.5 bg-indigo-500/20 text-indigo-300 rounded font-semibold">PIX ou Cartão</span>
+                  </div>
                   <h3 className="text-xl font-bold text-white">Compliance Pro</h3>
                   <p className="text-xs text-slate-400">Até 250 colaboradores com esteira completa de diligência.</p>
+                  
                   <div className="pt-3 border-t border-slate-800">
                     <p className="text-3xl font-extrabold text-white">
                       R$ {billingCycle === 'ANNUAL' ? '339' : '399'}
@@ -1353,29 +1397,37 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  <ul className="space-y-2 text-xs text-slate-300 pt-3">
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Até 250 validações por mês</li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> <strong>Diligências de 1-Clique Ilimitadas</strong></li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> <strong>Auditoria Retroativa de Passivo</strong></li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Integração com WhatsApp da Empresa</li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Suporte Trabalhista Prioritário</li>
+                  <ul className="space-y-2.5 text-xs text-slate-300 pt-3">
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>250 validações</strong> mensais inclusas</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span>Excedente: <strong>R$ 2,00</strong> por atestado extra</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>Rollover 60 dias</strong> (teto máximo de 1 mensalidade de reserva)</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>Auditoria de Entrada:</strong> até 250 atestados do último ano</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>Diligências 1-Clique Ilimitadas</strong> para clínicas</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span>Laudo formal de Boa-Fé para DP e funcionário</span></li>
                   </ul>
                 </div>
 
-                <button
-                  onClick={() => alert('Redirecionando para Checkout Seguro InfinitePay...')}
-                  className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-lg shadow-indigo-600/30"
-                >
-                  Assinar Compliance Pro
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => alert('Redirecionando para Checkout Seguro InfinitePay...')}
+                    className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-extrabold transition-all shadow-lg shadow-indigo-600/30"
+                  >
+                    Assinar Compliance Pro
+                  </button>
+                  <p className="text-[10px] text-center text-slate-400">Recarga automática opcional para o RH não parar</p>
+                </div>
               </div>
 
               {/* Plano Enterprise */}
               <div className="p-6 bg-slate-900/60 border border-slate-800 rounded-2xl flex flex-col justify-between space-y-6">
                 <div className="space-y-3">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Grandes Corporações</span>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Grandes Corporações</span>
+                    <span className="text-[10px] px-2 py-0.5 bg-slate-800 text-amber-300 rounded font-semibold">Boleto B2B Faturado</span>
+                  </div>
                   <h3 className="text-xl font-bold text-white">Enterprise</h3>
                   <p className="text-xs text-slate-400">Grandes operações, indústrias, varejo e terceirizadas.</p>
+                  
                   <div className="pt-3 border-t border-slate-800">
                     <p className="text-3xl font-extrabold text-white">
                       R$ {billingCycle === 'ANNUAL' ? '849' : '999'}
@@ -1386,41 +1438,258 @@ export default function DashboardPage() {
                     )}
                   </div>
 
-                  <ul className="space-y-2 text-xs text-slate-300 pt-3">
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Validações ilimitadas via API</li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Múltiplas instâncias de WhatsApp</li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> Auditoria de folha em lote contínua</li>
-                    <li className="flex items-center"><Check className="w-4 h-4 text-emerald-400 mr-2" /> SLA de resposta 99.9% e Gestor de Conta</li>
+                  <ul className="space-y-2.5 text-xs text-slate-300 pt-3">
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>1.000 validações</strong> mensais inclusas (expansível)</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span>Excedente mais baixo: <strong>R$ 1,20</strong> por atestado</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>Rollover 60 dias</strong> (teto máximo controlado)</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>Auditoria de Entrada:</strong> até 1.000 atestados (extra R$ 0,80/doc)</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span><strong>Múltiplas Instâncias de WhatsApp:</strong> filiais e turnos segregados</span></li>
+                    <li className="flex items-start"><Check className="w-4 h-4 text-emerald-400 mr-2 flex-shrink-0 mt-0.5" /> <span>API REST dedicada + Gestor de Conta Exclusivo</span></li>
                   </ul>
                 </div>
 
-                <button
-                  onClick={() => alert('Entrando em contato com nosso time corporativo...')}
-                  className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
-                >
-                  Falar com Consultor
-                </button>
+                <div className="space-y-2">
+                  <button
+                    onClick={() => alert('Entrando em contato com nosso time corporativo...')}
+                    className="w-full py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
+                  >
+                    Falar com Consultor B2B
+                  </button>
+                  <p className="text-[10px] text-center text-slate-500">Faturamento a 15/30 dias via Boleto Bancário</p>
+                </div>
               </div>
             </div>
 
-            {/* Banner de Plano para Médicos */}
-            <div className="p-6 bg-gradient-to-r from-emerald-950/60 via-slate-900 to-slate-900 border border-emerald-800/40 rounded-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  Para Médicos e Clínicas
-                </span>
-                <h4 className="text-lg font-bold text-white mt-1">Plano Vurio Doctor Shield</h4>
-                <p className="text-xs text-slate-300 max-w-2xl">
-                  Proteja seu CRM em todo o Brasil contra clonagem de carimbo e falsidade ideológica por apenas <strong>R$ 29/mês</strong> (ou <strong>R$ 295/ano com 15% OFF</strong>), com Dossiê para B.O. Eletrônico em 1 clique incluso.
-                </p>
+            {/* TABELA COMPARATIVA DE RECURSOS (FEATURE MATRIX COMPLETA) */}
+            <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 space-y-5">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-slate-800 pb-4">
+                <div>
+                  <h3 className="text-base font-bold text-white">Matriz Comparativa de Recursos</h3>
+                  <p className="text-xs text-slate-400">Detalhamento técnico de limites, franquias e políticas de uso.</p>
+                </div>
+                <span className="text-xs text-slate-400 font-medium">Todos os planos incluem conformidade integral com a LGPD</span>
               </div>
 
-              <button
-                onClick={() => alert('Assinatura Doctor Shield via InfinitePay')}
-                className="px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold text-xs rounded-xl transition-all shadow whitespace-nowrap"
-              >
-                Proteger Meu CRM
-              </button>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs text-slate-300">
+                  <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider border-b border-slate-800 font-semibold">
+                    <tr>
+                      <th className="py-3 px-4">Recurso ou Capacidade</th>
+                      <th className="py-3 px-4 text-center">Starter RH</th>
+                      <th className="py-3 px-4 text-center text-indigo-300">Compliance Pro</th>
+                      <th className="py-3 px-4 text-center">Enterprise</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/60">
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Validações Mensais Inclusas</td>
+                      <td className="py-3 px-4 text-center">50 / mês</td>
+                      <td className="py-3 px-4 text-center font-bold text-indigo-400">250 / mês</td>
+                      <td className="py-3 px-4 text-center font-bold text-emerald-400">1.000 / mês (expansível)</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Custo do Atestado Excedente</td>
+                      <td className="py-3 px-4 text-center">R$ 3,50</td>
+                      <td className="py-3 px-4 text-center text-indigo-400">R$ 2,00</td>
+                      <td className="py-3 px-4 text-center text-emerald-400">R$ 1,20</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Acúmulo de Sobras (Rollover)</td>
+                      <td className="py-3 px-4 text-center">30 dias (1 ciclo)</td>
+                      <td className="py-3 px-4 text-center">60 dias (teto de 1 mensalidade)</td>
+                      <td className="py-3 px-4 text-center">60 dias (teto rígido de reserva)</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Auditoria Retroativa Inclusa</td>
+                      <td className="py-3 px-4 text-center">Até 50 atestados</td>
+                      <td className="py-3 px-4 text-center font-bold text-indigo-400">Até 250 atestados</td>
+                      <td className="py-3 px-4 text-center font-bold text-emerald-400">Até 1.000 atestados</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Excedente de Auditoria em Lote</td>
+                      <td className="py-3 px-4 text-center">R$ 1,50 / doc extra</td>
+                      <td className="py-3 px-4 text-center">R$ 1,00 / doc extra</td>
+                      <td className="py-3 px-4 text-center text-emerald-400">R$ 0,80 / doc extra</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Diligências 1-Clique para Clínicas</td>
+                      <td className="py-3 px-4 text-center">10 / mês</td>
+                      <td className="py-3 px-4 text-center text-emerald-400 font-bold">Ilimitadas</td>
+                      <td className="py-3 px-4 text-center text-emerald-400 font-bold">Ilimitadas</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Laudo Formal de Boa-Fé (DP e Funcionário)</td>
+                      <td className="py-3 px-4 text-center text-emerald-400">Incluso</td>
+                      <td className="py-3 px-4 text-center text-emerald-400">Incluso</td>
+                      <td className="py-3 px-4 text-center text-emerald-400">Incluso</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Instâncias de WhatsApp Conectadas</td>
+                      <td className="py-3 px-4 text-center">1 número corporativo</td>
+                      <td className="py-3 px-4 text-center">1 número corporativo</td>
+                      <td className="py-3 px-4 text-center font-bold text-indigo-400">Múltiplas filiais e turnos</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Formas de Pagamento</td>
+                      <td className="py-3 px-4 text-center">Cartão ou PIX</td>
+                      <td className="py-3 px-4 text-center">Cartão ou PIX</td>
+                      <td className="py-3 px-4 text-center font-bold text-amber-300">Boleto B2B ou Cartão</td>
+                    </tr>
+                    <tr>
+                      <td className="py-3 px-4 font-semibold text-white">Suporte Técnico</td>
+                      <td className="py-3 px-4 text-center">E-mail (até 24h)</td>
+                      <td className="py-3 px-4 text-center text-indigo-400">WhatsApp Prioritário</td>
+                      <td className="py-3 px-4 text-center text-emerald-400">Gestor de Conta Exclusivo</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* SEÇÃO DE SERVIÇOS AVULSOS & ADD-ONS (ALTA RENTABILIDADE) */}
+            <div className="space-y-4">
+              <div className="space-y-1">
+                <span className="text-xs font-bold text-indigo-400 uppercase tracking-wider">Flexibilidade Sob Demanda</span>
+                <h3 className="text-xl font-bold text-white">Serviços Avulsos & Pacotes Adicionais</h3>
+                <p className="text-xs text-slate-400">Contrate serviços pontuais sem alterar sua mensalidade.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-rose-500/20 text-rose-300">
+                      Peça Pericial Formal
+                    </span>
+                    <h4 className="text-sm font-bold text-white">Dossiê para B.O. Policial Avulso</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Elaboração da notícia-crime estruturada com prova técnica de hash SHA-256 e enquadramento nos Arts. 299 e 304 do Código Penal para a Delegacia Eletrônica.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-500">Por ocorrência:</span>
+                      <p className="text-lg font-extrabold text-white">R$ 89,00</p>
+                    </div>
+                    <button
+                      onClick={() => alert('Emissão avulsa de Dossiê Policial iniciada')}
+                      className="px-3 py-1.5 bg-rose-600 hover:bg-rose-500 text-white rounded-lg text-xs font-bold"
+                    >
+                      Emitir Peça
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+                      Recarga Rápida
+                    </span>
+                    <h4 className="text-sm font-bold text-white">Micro-Pacote de Recarga (PIX)</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Pacote emergencial de 30 validações adicionais com liberação em segundos via PIX Copia-e-Cola para não interromper os prazos do DP.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-500">30 créditos avulsos:</span>
+                      <p className="text-lg font-extrabold text-emerald-400">R$ 60,00</p>
+                    </div>
+                    <button
+                      onClick={() => alert('Gerando PIX Copia-e-Cola para recarga de 30 créditos...')}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+                    >
+                      Pagar no PIX
+                    </button>
+                  </div>
+                </div>
+
+                <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between space-y-3">
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
+                      Grandes Volumes
+                    </span>
+                    <h4 className="text-sm font-bold text-white">Auditoria em Lote Excedente</h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Para empresas com grande arquivo morto de atestados que necessitam de perícia em lote acima da cota do plano contratado.
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
+                    <div>
+                      <span className="text-[10px] text-slate-500">A partir de:</span>
+                      <p className="text-lg font-extrabold text-white">R$ 0,80 <span className="text-xs text-slate-500 font-normal">/ doc</span></p>
+                    </div>
+                    <button
+                      onClick={() => alert('Solicitação de orçamento em lote enviada')}
+                      className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold"
+                    >
+                      Contratar Lote
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* SEÇÃO VURIO DOCTOR SHIELD (PLANOS REFINADOS PARA MÉDICOS) */}
+            <div className="p-6 bg-gradient-to-r from-emerald-950/60 via-slate-900 to-indigo-950/60 border border-emerald-800/40 rounded-2xl space-y-6">
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 border-b border-slate-800/80 pb-4">
+                <div className="space-y-1">
+                  <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-extrabold uppercase">
+                    <Stethoscope className="w-3 h-3 text-emerald-400" />
+                    <span>Proteção e Economia de Tempo para Médicos</span>
+                  </div>
+                  <h4 className="text-xl font-bold text-white">Vurio Doctor Shield</h4>
+                  <p className="text-xs text-slate-300 max-w-2xl">
+                    Evite perder R$ 1.500 em consultas não atendidas por ter que se deslocar a uma delegacia. O Vurio monitora seu CRM e você só age quando houver clonagem de carimbo.
+                  </p>
+                </div>
+
+                <span className="text-xs text-slate-400">Cobrança individual por profissional médico</span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Doctor Shield Básico */}
+                <div className="p-5 bg-slate-950/80 border border-slate-800 rounded-xl space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h5 className="font-bold text-white text-base">Doctor Shield Básico</h5>
+                    <p className="text-xl font-extrabold text-emerald-400">R$ 29 <span className="text-xs text-slate-500 font-normal">/ mês</span></p>
+                  </div>
+                  <ul className="space-y-2 text-xs text-slate-300">
+                    <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Monitoramento de CRM em todo o Brasil</li>
+                    <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Alerta passivo no WhatsApp (*"Ignore se procedente..."*)</li>
+                    <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Raio-X Histórico de exposições passadas</li>
+                    <li className="flex items-center text-slate-400"><AlertOctagon className="w-3.5 h-3.5 text-amber-400 mr-2" /> Dossiê para B.O. Policial contratado à parte por R$ 89 quando houver fraude</li>
+                  </ul>
+                  <button
+                    onClick={() => alert('Assinatura Doctor Shield Básico via InfinitePay')}
+                    className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all"
+                  >
+                    Assinar Básico (R$ 29/mês)
+                  </button>
+                </div>
+
+                {/* Doctor Shield VIP */}
+                <div className="p-5 bg-gradient-to-b from-emerald-950/40 to-slate-950/80 border-2 border-emerald-500/50 rounded-xl space-y-4 relative">
+                  <span className="absolute -top-2.5 right-4 px-2 py-0.5 bg-emerald-500 text-slate-950 text-[10px] font-black uppercase rounded-full">
+                    Mais Tranquilidade
+                  </span>
+                  <div className="flex items-center justify-between">
+                    <h5 className="font-bold text-white text-base">Doctor Shield VIP</h5>
+                    <p className="text-xl font-extrabold text-emerald-400">R$ 59 <span className="text-xs text-slate-500 font-normal">/ mês</span></p>
+                  </div>
+                  <ul className="space-y-2 text-xs text-slate-300">
+                    <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Todos os recursos do plano Básico</li>
+                    <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> <strong>2 Dossiês de B.O. Policial Inclusos por ano</strong> (sem taxa de R$ 89)</li>
+                    <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Notificação prioritária automática à empresa</li>
+                    <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Suporte técnico pericial especializado</li>
+                  </ul>
+                  <button
+                    onClick={() => alert('Assinatura Doctor Shield VIP via InfinitePay')}
+                    className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-emerald-600/30"
+                  >
+                    Assinar VIP (R$ 59/mês)
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         )}
