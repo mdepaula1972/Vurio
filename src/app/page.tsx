@@ -1144,13 +1144,25 @@ export default function DashboardPage() {
 
             {/* Consulta Raio-X Histórico de CRM */}
             <div className="bg-slate-900/80 border border-slate-800 rounded-2xl p-6 space-y-4">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Search className="w-4 h-4 text-emerald-400" />
-                Raio-X Histórico: Saiba se seu CRM já foi envolvido em fraudes
-              </h3>
-              <p className="text-xs text-slate-400">
-                Consulte a exposição do seu registro médico na base de dados de empresas do Vurio em todo o Brasil.
-              </p>
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Search className="w-4 h-4 text-emerald-400" />
+                  Raio-X Histórico: Saiba se seu CRM já foi envolvido em fraudes
+                </h3>
+                <span className="text-[10px] font-bold uppercase px-2.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
+                  Base Corporativa Vurio
+                </span>
+              </div>
+              
+              <div className="p-3 bg-indigo-950/30 border border-indigo-800/30 rounded-xl text-xs text-indigo-200">
+                <p className="font-semibold flex items-center gap-1.5 text-indigo-300">
+                  <Lock className="w-3.5 h-3.5 text-indigo-400" />
+                  Transparência de Escopo & Base de Dados:
+                </p>
+                <p className="text-slate-400 text-[11px] leading-relaxed mt-0.5">
+                  A pesquisa e o monitoramento em tempo real operam sobre o <strong>banco de dados de documentos submetidos nas empresas clientes contratantes do Vurio em todo o Brasil</strong> (e não varredura irrestrita externa de prontuários ou sistemas de terceiros). A cada nova empresa que adota o Vurio, a rede de proteção ao seu CRM se expande automaticamente.
+                </p>
+              </div>
 
               <div className="flex flex-col sm:flex-row gap-3 max-w-md">
                 <input
@@ -1579,50 +1591,58 @@ export default function DashboardPage() {
                   </div>
                 </div>
 
+                {/* Card 2: Compra Única Avulsa Sem Assinatura */}
                 <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between space-y-3">
                   <div className="space-y-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
-                      Recarga Rápida
-                    </span>
-                    <h4 className="text-sm font-bold text-white">Micro-Pacote de Recarga (PIX)</h4>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300">
+                        Sem Assinatura (Avulso)
+                      </span>
+                      <span className="text-[10px] text-slate-500">R$ 5,00 / consulta</span>
+                    </div>
+                    <h4 className="text-sm font-bold text-white">Pacote Único: 30 Validações</h4>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Pacote emergencial de 30 validações adicionais com liberação em segundos via PIX Copia-e-Cola para não interromper os prazos do DP.
+                      Compra única sem mensalidade. Validação criptográfica pontual ICP-Brasil sem esteira de diligências contínuas ou benefícios de planos recorrentes.
                     </p>
                   </div>
                   <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] text-slate-500">30 créditos avulsos:</span>
-                      <p className="text-lg font-extrabold text-emerald-400">R$ 60,00</p>
+                      <span className="text-[10px] text-slate-500">30 consultas avulsas:</span>
+                      <p className="text-lg font-extrabold text-amber-400">R$ 150,00</p>
                     </div>
                     <button
-                      onClick={() => alert('Gerando PIX Copia-e-Cola para recarga de 30 créditos...')}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-bold"
+                      onClick={() => alert('Checkout de Pacote Avulso de 30 consultas via InfinitePay (R$ 150,00)...')}
+                      className="px-3 py-1.5 bg-amber-600 hover:bg-amber-500 text-white rounded-lg text-xs font-bold"
                     >
-                      Pagar no PIX
+                      Comprar Avulso
                     </button>
                   </div>
                 </div>
 
+                {/* Card 3: Auditoria em Lote Avulsa (Não-Assinantes) */}
                 <div className="p-5 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col justify-between space-y-3">
                   <div className="space-y-2">
-                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
-                      Grandes Volumes
-                    </span>
-                    <h4 className="text-sm font-bold text-white">Auditoria em Lote Excedente</h4>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-indigo-500/20 text-indigo-300">
+                        Diagnóstico Pontual
+                      </span>
+                      <span className="text-[10px] text-slate-500">R$ 3,00 / doc</span>
+                    </div>
+                    <h4 className="text-sm font-bold text-white">Auditoria em Lote Avulsa</h4>
                     <p className="text-xs text-slate-400 leading-relaxed">
-                      Para empresas com grande arquivo morto de atestados que necessitam de perícia em lote acima da cota do plano contratado.
+                      Para empresas não-assinantes que desejam apenas uma perícia pontual de passivo em arquivo morto (mínimo de 50 atestados = R$ 150,00). Assinantes têm franquias inclusas e excedente a R$ 0,80.
                     </p>
                   </div>
                   <div className="pt-3 border-t border-slate-800 flex items-center justify-between">
                     <div>
-                      <span className="text-[10px] text-slate-500">A partir de:</span>
-                      <p className="text-lg font-extrabold text-white">R$ 0,80 <span className="text-xs text-slate-500 font-normal">/ doc</span></p>
+                      <span className="text-[10px] text-slate-500">Valor avulso:</span>
+                      <p className="text-lg font-extrabold text-white">R$ 3,00 <span className="text-xs text-slate-500 font-normal">/ doc</span></p>
                     </div>
                     <button
-                      onClick={() => alert('Solicitação de orçamento em lote enviada')}
+                      onClick={() => alert('Solicitação de Auditoria Avulsa iniciada')}
                       className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-xs font-bold"
                     >
-                      Contratar Lote
+                      Auditar Lote
                     </button>
                   </div>
                 </div>
@@ -1640,6 +1660,9 @@ export default function DashboardPage() {
                   <h4 className="text-xl font-bold text-white">Vurio Doctor Shield</h4>
                   <p className="text-xs text-slate-300 max-w-2xl">
                     Evite perder R$ 1.500 em consultas não atendidas por ter que se deslocar a uma delegacia. O Vurio monitora seu CRM e você só age quando houver clonagem de carimbo.
+                  </p>
+                  <p className="text-[11px] text-slate-400 italic">
+                    ℹ️ Transparência de Escopo: A pesquisa e alertas baseiam-se continuamente na base corporativa de atestados apresentados nas empresas clientes contratantes da rede Vurio em todo o Brasil.
                   </p>
                 </div>
 
