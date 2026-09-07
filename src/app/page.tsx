@@ -936,7 +936,20 @@ export default function LandingHomePage() {
         <p className="max-w-2xl mx-auto text-[11px] leading-relaxed text-slate-500">
           Respaldo legal: Medida Provisória nº 2.200-2/2001 (ICP-Brasil), Lei 14.510/2023 (Telemedicina), Resoluções CFM 1.658/2002 e 2.299/2021, Art. 482 da CLT e LGPD (Lei 13.709/2018).
         </p>
-        <p className="text-[10px] text-slate-600">
+        <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 pt-1">
+          <Link href="/termos" className="hover:text-emerald-400 underline transition-colors">
+            Termos de Uso & Política de Privacidade (LGPD)
+          </Link>
+          <span>•</span>
+          <Link href="/termos" className="hover:text-emerald-400 underline transition-colors">
+            Política de Zero Retenção de Arquivos
+          </Link>
+          <span>•</span>
+          <Link href="/dashboard" className="hover:text-sky-400 transition-colors">
+            Painel do Cliente (DP)
+          </Link>
+        </div>
+        <p className="text-[10px] text-slate-600 pt-2">
           © 2026 Vurio. Todos os direitos reservados.
         </p>
       </footer>
