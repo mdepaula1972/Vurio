@@ -8,6 +8,8 @@ import { extractRestDaysAndPeriod, RestPeriodInfo } from './days-extractor';
 import { auditDoctorCrm, CfmDoctorAuditResult } from '../services/cfm-service';
 import { auditAttestationConsistency, ConsistencyAuditResult } from '../services/consistency-service';
 import { extractAttestationFromImageBuffer } from '../services/vision-ocr-service';
+import { auditGeoDistance, GeoAuditResult } from '../services/geo-audit-service';
+import { getCompanyPolicy } from '../services/company-policy-service';
 
 export type AttestationValidationStatus =
   | 'VALID_INTACT'          // Caso A1: PDF Nativo com Assinatura Criptográfica ICP-Brasil Íntegra
@@ -46,6 +48,7 @@ export interface AttestationValidationReport {
   qrCode?: QrScanResult;
   cfmAudit?: CfmDoctorAuditResult;
   consistency?: ConsistencyAuditResult;
+  geoAudit?: GeoAuditResult;
   details: string;
 }
 
@@ -348,7 +351,7 @@ function extractPatientInfoFromText(text: string) {
 }
 
 /**
- * Enriquece o relatório final com a Auditoria Nacional de CRM (CFM) e Motor de Inconsistências Forenses
+ * Enriquece o relatório final com a Auditoria Nacional de CRM (CFM), Motor de Inconsistências e Geo-Shield
  */
 async function finalizeReport(
   baseReport: AttestationValidationReport,
@@ -357,8 +360,12 @@ async function finalizeReport(
     patientCpf?: string | null;
     emissionDate?: string | null;
     cid?: string | null;
+    clinicName?: string | null;
+    clinicAddress?: string | null;
   }
 ): Promise<AttestationValidationReport> {
+  const policy = getCompanyPolicy();
+
   // 1. Auditoria de CRM / CFM Nacional (27 Estados)
   if (baseReport.doctor.crm) {
     baseReport.cfmAudit = await auditDoctorCrm(
@@ -368,15 +375,29 @@ async function finalizeReport(
     );
   }
 
-  // 2. Auditoria de Inconsistências (Datas Futuras, CPF, Limites CLT/INSS)
+  // 2. Auditoria de Inconsistências (Datas Futuras, CPF, Limites CLT/INSS, Prazo da CCT)
+  const maxDays = Math.max(1, Math.round(policy.maxRetroactiveHours / 24));
   baseReport.consistency = auditAttestationConsistency({
     emissionDate: context?.emissionDate || baseReport.restPeriod.startDate,
     startDate: baseReport.restPeriod.startDate,
     days: baseReport.restPeriod.days,
     patientName: context?.patientName || baseReport.patient?.name,
     patientCpf: context?.patientCpf || baseReport.patient?.cpf,
-    cid: context?.cid || baseReport.cid
+    cid: context?.cid || baseReport.cid,
+    maxRetroactiveDays: maxDays
   });
+
+  // 3. Auditoria Geográfica (Geo-Shield Add-on)
+  if (policy.geoShieldEnabled) {
+    const rawAddress = context?.clinicAddress || context?.clinicName || baseReport.details || '';
+    if (rawAddress) {
+      baseReport.geoAudit = auditGeoDistance({
+        clinicAddressOrCity: rawAddress,
+        employeeWorkCity: policy.workCity,
+        distanceThresholdKm: policy.maxAllowedDistanceKm
+      });
+    }
+  }
 
   return baseReport;
 }

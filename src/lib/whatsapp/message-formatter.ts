@@ -50,7 +50,18 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     }
   }
 
-  // 4. Montagem da Mensagem por Status
+  // 4. Bloco de Auditoria Geográfica (Geo-Shield Add-on)
+  let geoBlock = '';
+  if (report.geoAudit && !report.geoAudit.isCompatible && report.geoAudit.alert) {
+    geoBlock =
+      `\n\n📍 *Auditoria Geográfica (Geo-Shield)*\n` +
+      `• *Local do Atendimento:* ${report.geoAudit.clinicCity}\n` +
+      `• *Base de Trabalho:* ${report.geoAudit.workCity}\n` +
+      `• *Distância Estimada:* ~${report.geoAudit.distanceKm} km\n` +
+      `• ⚠️ *Alerta:* ${report.geoAudit.alert.description}\n`;
+  }
+
+  // 5. Montagem da Mensagem por Status
   switch (report.status) {
     case 'VALID_INTACT': {
       const doctorName = report.doctor.name ? `Dr(a). ${report.doctor.name}` : 'Médico Identificado';
@@ -67,7 +78,8 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
         `*Emissor:* ${issuer}` +
         restDaysLine +
         cfmBlock +
-        inconsistencyBlock
+        inconsistencyBlock +
+        geoBlock
       );
     }
 
@@ -82,7 +94,8 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
         `*Link de Auditoria:* ${url}` +
         restDaysLine +
         cfmBlock +
-        inconsistencyBlock
+        inconsistencyBlock +
+        geoBlock
       );
     }
 
@@ -94,6 +107,7 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
         restDaysLine +
         cfmBlock +
         inconsistencyBlock +
+        geoBlock +
         `\n*Recomendação para o RH:* Caso o colaborador tenha recebido o arquivo digital original por e-mail ou WhatsApp da clínica, solicite o envio do arquivo em PDF para validação instantânea. Caso seja atendimento 100% presencial de papel, confira o carimbo e a assinatura manual.`
       );
     }
@@ -103,7 +117,8 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
         `🔴 *Alerta de Duplicidade*\n\n` +
         `*Status:* Este mesmo arquivo ou atestado já foi submetido anteriormente para abono nesta empresa.\n\n` +
         `*Recomendação para o RH:* Verifique se não se trata de reenvio acidental ou reaproveitamento indevido do mesmo documento.` +
-        inconsistencyBlock
+        inconsistencyBlock +
+        geoBlock
       );
     }
 
@@ -114,6 +129,7 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
         restDaysLine +
         cfmBlock +
         inconsistencyBlock +
+        geoBlock +
         `\n*Recomendação para o RH:* Solicite ao colaborador o envio do arquivo PDF original recebido diretamente do médico/clínica.`
       );
     }
@@ -127,6 +143,7 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
         restDaysLine +
         cfmBlock +
         inconsistencyBlock +
+        geoBlock +
         `\n*Recomendação para o RH:* Solicite ao colaborador o envio do arquivo PDF original recebido diretamente do médico/clínica.`
       );
     }
