@@ -70,3 +70,24 @@ Por favor, cadastre os seguintes produtos no meu catálogo com suas respectivas 
 
 Por favor, confirme a criação e me forneça os links de pagamento de cada um para eu integrar no meu atendimento do WhatsApp!
 ```
+
+---
+
+## 📌 Links Ativos e Slugs Oficiais (Conta: Solucione Assessoria Virtual - `$solucione-0s1`)
+
+### 1. Produtos de Pagamento Único (Links Avulsos Diretos)
+* **Consulta Avulsa — R$ 10,00:** [https://link.infinitepay.io/solucione-0s1/Ri0x-ofGuGKW2dD-10,00](https://link.infinitepay.io/solucione-0s1/Ri0x-ofGuGKW2dD-10,00)
+* **Consulta + Geo-Shield — R$ 13,00:** [https://link.infinitepay.io/solucione-0s1/Ri0x-Fg28KsHJTM-13,00](https://link.infinitepay.io/solucione-0s1/Ri0x-Fg28KsHJTM-13,00)
+* **Dossiê Notícia-Crime — R$ 89,00:** [https://link.infinitepay.io/solucione-0s1/Ri0x-GkKs5Wgo6f-89,00](https://link.infinitepay.io/solucione-0s1/Ri0x-GkKs5Wgo6f-89,00)
+* **Diligência CFM — R$ 15,00:** [https://link.infinitepay.io/solucione-0s1/Ri0x-ODqeuT487v-15,00](https://link.infinitepay.io/solucione-0s1/Ri0x-ODqeuT487v-15,00)
+
+> 💡 **Como ativar o PIX nestes links:**
+> No app da InfinitePay: **Aba Vendas $\rightarrow$ Checkout $\rightarrow$ Configurações $\rightarrow$ Meios de Pagamento $\rightarrow$ Ativar Pix**.
+
+### 2. Planos de Assinatura Mensal (Cobrança Recorrente Automática)
+* **Plano Starter RH (R$ 149,00/mês):** Slug `a9uywH9Nrp`
+* **Plano Compliance Pro (R$ 399,00/mês):** Slug `dmAxCSaySf`
+* **Add-on Geo-Shield Mensal (R$ 49,00/mês):** Slug `CoQoJ6Bb5Z`
+
+> 📲 **Fluxo de Assinatura:** O cliente clica no site, chama no WhatsApp (`551331500987`), passa seus dados e a InfinitePay envia a cobrança automática no WhatsApp e e-mail dele.
+
