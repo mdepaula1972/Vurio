@@ -7,9 +7,9 @@ if (!fs.existsSync(outDir)) {
   fs.mkdirSync(outDir, { recursive: true });
 }
 
-console.log('Gerando amostras em:', outDir);
+console.log('Gerando atestados profissionais formatados em:', outDir);
 
-// 1. Gerar Chaves e Certificado X.509 ICP-Brasil
+// 1. Gerar Chaves e Certificado X.509 ICP-Brasil Real
 const keys = forge.pki.rsa.generateKeyPair(2048);
 const cert = forge.pki.createCertificate();
 cert.publicKey = keys.publicKey;
@@ -36,8 +36,85 @@ cert.setSubject(subjectAttrs);
 cert.setIssuer(issuerAttrs);
 cert.sign(keys.privateKey, forge.md.sha256.create());
 
-// 2. Montar PDF com assinatura digital PKCS#7
-const pdfHeader = '%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 135 >>\nstream\nBT /F1 12 Tf 100 700 Td (Atestado Medico - CRM 789101/SP - Afastamento por 05 dias a partir de 12/09/2026) Tj ET\nendstream\nendobj\n';
+// 2. Criar Layout Gráfico de Atestado Médico Profissional em PDF
+function buildPdfStream(contentInstructions) {
+  const streamBody = Buffer.from(contentInstructions, 'latin1');
+  const streamLen = streamBody.length;
+
+  return `%PDF-1.4
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents 4 0 R /Resources << /Font << /F1 6 0 R /F2 7 0 R >> >> >>
+endobj
+4 0 obj
+<< /Length ${streamLen} >>
+stream
+${contentInstructions}
+endstream
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>
+endobj
+`;
+}
+
+const formalCertificateContent = `
+0.1 0.4 0.8 rg
+50 790 495 2 re f
+0 0 0 rg
+
+BT /F2 16 Tf 50 765 Td (HOSPITAL & CLINICA SAO LUCAS) Tj ET
+BT /F1 9 Tf 50 750 Td (Medicina do Trabalho e Diagnostico Avancado - CNPJ 45.123.789/0001-10) Tj ET
+BT /F1 9 Tf 50 738 Td (Av. Paulista, 1500 - Bela Vista - Sao Paulo / SP - Tel: (11) 3456-7890) Tj ET
+
+0.8 0.8 0.8 RG
+50 720 m 545 720 l S
+
+BT /F2 14 Tf 180 680 Td (ATESTADO MEDICO OCUPACIONAL) Tj ET
+
+BT /F2 10 Tf 50 635 Td (IDENTIFICACAO DO PACIENTE:) Tj ET
+BT /F1 10 Tf 50 620 Td (Nome: Marcos Antonio de Paula) Tj ET
+BT /F1 10 Tf 50 605 Td (Documento: CPF: 123.456.789-01 | RG: 28.910.234-5 SSP/SP) Tj ET
+
+BT /F2 10 Tf 50 565 Td (DECLARACAO MEDICA DE AFASTAMENTO:) Tj ET
+BT /F1 10 Tf 50 545 Td (Atesto para os devidos fins trabalhistas e de comprovacao de frequencia laboral que o(a)) Tj ET
+BT /F1 10 Tf 50 530 Td (paciente acima esteve sob consulta e atendimento medico nesta unidade hospitalar.) Tj ET
+
+BT /F1 10 Tf 50 500 Td (Em decorrencia do quadro clinico constatado, faz-se necessario o seu) Tj ET
+BT /F2 11 Tf 50 482 Td (Afastamento por 05 dias a partir de 12/09/2026 para repouso e tratamento.) Tj ET
+BT /F1 10 Tf 50 460 Td (Diagnostico Preliminar - Classificacao Internacional de Doencas: CID J06.9.) Tj ET
+
+0.9 0.9 0.9 RG
+50 330 495 105 re S
+
+0.95 0.97 1 rg
+51 331 493 103 re f
+0 0 0 rg
+
+BT /F2 9 Tf 65 415 Td ([ METADADOS DA ASSINATURA DIGITAL ICP-BRASIL ] ) Tj ET
+BT /F1 8 Tf 65 398 Td (Signatario: DR. CARLOS EDUARDO SILVA:12345678901) Tj ET
+BT /F1 8 Tf 65 383 Td (Registro Profissional do Medico: CRM 789101/SP) Tj ET
+BT /F1 8 Tf 65 368 Td (Certificado: AC SOLUTI Multipla v5 | ICP-Brasil A3 | Algoritmo SHA-256 RSA-2048) Tj ET
+BT /F1 8 Tf 65 353 Td (Conformidade Legal: Medida Provisoria no 2.200-2/2001 e Resolucao CFM no 2.299/2021) Tj ET
+BT /F1 8 Tf 65 338 Td (Integridade criptografica: Hash SHA-256 e carimbo de tempo gravados no envelope binario.) Tj ET
+
+BT /F1 8 Tf 50 290 Td (Sao Paulo, 12 de Setembro de 2026.) Tj ET
+
+0.8 0.8 0.8 RG
+200 240 m 395 240 l S
+BT /F2 9 Tf 225 225 Td (Dr. Carlos Eduardo Silva) Tj ET
+BT /F1 8 Tf 245 212 Td (CRM 789101/SP) Tj ET
+`;
+
+const pdfHeader = buildPdfStream(formalCertificateContent);
 const sigDictPrefix = '5 0 obj\n<< /Type /Sig /Filter /Adobe.PPKLite /SubFilter /adbe.pkcs7.detached /ByteRange [ ';
 
 const reservedHexLength = 3000;
@@ -83,38 +160,48 @@ const signedPdfBuffer = Buffer.concat([
   endPart
 ]);
 
-// 1. Arquivo 01: Válido ICP-Brasil
+// 1. Arquivo 01: Válido ICP-Brasil Formatado
 fs.writeFileSync(path.join(outDir, '01_atestado_icp_brasil_valido.pdf'), signedPdfBuffer);
-console.log('✅ Criado: 01_atestado_icp_brasil_valido.pdf');
+console.log('✅ Criado com visual profissional: 01_atestado_icp_brasil_valido.pdf');
 
-// 2. Arquivo 02: Adulterado (Fraude)
+// 2. Arquivo 02: Adulterado (Fraude) - Quebra do Hash Criptográfico
 const tamperedPdfBuffer = Buffer.from(signedPdfBuffer);
-tamperedPdfBuffer[50] = tamperedPdfBuffer[50] === 0x41 ? 0x42 : 0x41;
+// Alterar byte no corpo do texto para quebrar integridade
+const byteIdx = signedPdfBuffer.indexOf(Buffer.from('Afastamento por 05', 'latin1'));
+if (byteIdx !== -1) {
+  tamperedPdfBuffer[byteIdx + 16] = 0x31; // Altera de 05 para 15 dias!
+  tamperedPdfBuffer[byteIdx + 17] = 0x35;
+}
 fs.writeFileSync(path.join(outDir, '02_atestado_adulterado_fraude.pdf'), tamperedPdfBuffer);
-console.log('✅ Criado: 02_atestado_adulterado_fraude.pdf');
+console.log('✅ Criado com fraude de adulteração: 02_atestado_adulterado_fraude.pdf');
 
-// 3. Arquivo 03: Sem Assinatura Digital
-const unsignedPdf = '%PDF-1.4\n1 0 obj\n<< /Type /Catalog /Pages 2 0 R >>\nendobj\n2 0 obj\n<< /Type /Pages /Kids [3 0 R] /Count 1 >>\nendobj\n3 0 obj\n<< /Type /Page /Parent 2 0 R /Contents 4 0 R >>\nendobj\n4 0 obj\n<< /Length 120 >>\nstream\nBT /F1 12 Tf 100 700 Td (Atestado Medico Simples - Dr. Paulo Souza CRM 123456/SP - 2 dias de repouso) Tj ET\nendstream\nendobj\ntrailer\n<< /Root 1 0 R >>\n%%EOF\n';
+// 3. Arquivo 03: Sem Assinatura Digital (PDF visual completo, porém sem certificado digital)
+const unsignedContent = `
+0.1 0.4 0.8 rg
+50 790 495 2 re f
+0 0 0 rg
+
+BT /F2 16 Tf 50 765 Td (CONSULTORIO MEDICO DR. PAULO SOUZA) Tj ET
+BT /F1 9 Tf 50 750 Td (Clinica Geral e Atendimento Ambulatorial) Tj ET
+BT /F1 9 Tf 50 738 Td (Rua das Palmeiras, 300 - Campinas / SP - Tel: (19) 3211-0000) Tj ET
+
+0.8 0.8 0.8 RG
+50 720 m 545 720 l S
+
+BT /F2 14 Tf 210 680 Td (DECLARACAO MEDICA) Tj ET
+
+BT /F1 10 Tf 50 620 Td (Declaro para os devidos fins que o colaborador Marcos Antonio compareceu a este consultorio,) Tj ET
+BT /F1 10 Tf 50 605 Td (sendo recomendado repouso por 2 dias a partir de hoje.) Tj ET
+
+BT /F1 9 Tf 50 500 Td (Dr. Paulo Souza - CRM 123456/SP) Tj ET
+BT /F1 8 Tf 50 480 Td ((Documento impresso em PDF comum, sem assinatura digital ICP-Brasil e-CPF)) Tj ET
+`;
+const unsignedPdf = buildPdfStream(unsignedContent) + 'trailer\n<< /Root 1 0 R >>\n%%EOF\n';
 fs.writeFileSync(path.join(outDir, '03_atestado_sem_assinatura.pdf'), Buffer.from(unsignedPdf, 'latin1'));
-console.log('✅ Criado: 03_atestado_sem_assinatura.pdf');
+console.log('✅ Criado sem assinatura digital: 03_atestado_sem_assinatura.pdf');
 
-// 4. Arquivo 04: Foto de Papel Tradicional (JPEG com cabeçalho EXIF/JFIF válido)
-const fakeJpgBuffer = Buffer.from([
-  0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46, 0x00, 0x01, 0x01, 0x01, 0x00, 0x48,
-  0x00, 0x48, 0x00, 0x00, 0xff, 0xdb, 0x00, 0x43, 0x00, 0x08, 0x06, 0x06, 0x07, 0x06, 0x05, 0x08,
-  0x07, 0x07, 0x07, 0x09, 0x09, 0x08, 0x0a, 0x0c, 0x14, 0x0d, 0x0c, 0x0b, 0x0b, 0x0c, 0x19, 0x12,
-  0x13, 0x0f, 0x14, 0x1d, 0x1a, 0x1f, 0x1e, 0x1d, 0x1a, 0x1c, 0x1c, 0x20, 0x24, 0x2e, 0x27, 0x20,
-  0x22, 0x2c, 0x23, 0x1c, 0x1c, 0x28, 0x37, 0x29, 0x2c, 0x30, 0x31, 0x34, 0x34, 0x34, 0x1f, 0x27,
-  0x39, 0x3d, 0x38, 0x32, 0x3c, 0x2e, 0x33, 0x34, 0x32, 0xff, 0xc0, 0x00, 0x0b, 0x08, 0x00, 0x0a,
-  0x00, 0x0a, 0x01, 0x01, 0x11, 0x00, 0xff, 0xc4, 0x00, 0x1f, 0x00, 0x00, 0x01, 0x05, 0x01, 0x01,
-  0x01, 0x01, 0x01, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x02, 0x03, 0x04,
-  0xff, 0xda, 0x00, 0x08, 0x01, 0x01, 0x00, 0x00, 0x3f, 0x00, 0x37, 0xff, 0xd9
-]);
-fs.writeFileSync(path.join(outDir, '04_foto_atestado_papel.jpg'), fakeJpgBuffer);
-console.log('✅ Criado: 04_foto_atestado_papel.jpg');
-
-// 5. Arquivo 05: Cópia para Duplicidade
+// 4. Arquivo 05: Cópia para Duplicidade
 fs.copyFileSync(path.join(outDir, '01_atestado_icp_brasil_valido.pdf'), path.join(outDir, '05_atestado_duplicado.pdf'));
-console.log('✅ Criado: 05_atestado_duplicado.pdf');
+console.log('✅ Criado para teste de duplicidade: 05_atestado_duplicado.pdf');
 
-console.log('\n🎉 TODAS AS 5 AMOSTRAS FORAM GERADAS COM SUCESSO!');
+console.log('\n🎉 TODOS OS ARQUIVOS PROFISSIONAIS FORAM REGRAVADOS COM SUCESSO!');

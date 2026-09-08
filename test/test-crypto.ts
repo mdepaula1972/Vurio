@@ -1,3 +1,4 @@
+import fs from 'fs';
 import crypto from 'crypto';
 import * as forge from 'node-forge';
 import { validateMedicalAttestation } from '../src/lib/crypto/validator';
@@ -158,6 +159,10 @@ async function runTests() {
     Buffer.from(paddedP7Hex, 'latin1'),
     endPart
   ]);
+
+  // Salvar amostra oficial validada
+  fs.writeFileSync('test-samples/01_atestado_icp_brasil_valido.pdf', signedPdfBuffer);
+  fs.writeFileSync('test-samples/05_atestado_duplicado.pdf', signedPdfBuffer);
 
   // Validar o PDF íntegro (Caso A1)
   const validResult = await validateMedicalAttestation(signedPdfBuffer, 'application/pdf', 'atestado_valido.pdf');
