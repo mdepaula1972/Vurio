@@ -700,7 +700,7 @@ export default function LandingHomePage() {
 
               <div className="pt-6">
                 <a
-                  href={INFINITEPAY_LINKS.PLANOS_WHATSAPP.STARTER}
+                  href={INFINITEPAY_LINKS.CHECKOUT_STARTER_149}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all text-center block"
@@ -735,7 +735,7 @@ export default function LandingHomePage() {
 
               <div className="pt-6">
                 <a
-                  href={INFINITEPAY_LINKS.PLANOS_WHATSAPP.PRO}
+                  href={INFINITEPAY_LINKS.CHECKOUT_PRO_399}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-sky-600/30 text-center block"
