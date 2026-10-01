@@ -13,7 +13,11 @@ export async function sendWhatsAppMessage({ phone, message, instanceId, token }:
   const effectiveInstance = instanceId || process.env.WHATSAPP_INSTANCE_ID || 'vurio';
   const effectiveToken = token || process.env.WHATSAPP_API_TOKEN || 'vurio_secret_key_2026';
   const provider = process.env.WHATSAPP_PROVIDER || 'EVOLUTION'; // 'Z_API' ou 'EVOLUTION'
-  const apiUrl = process.env.WHATSAPP_API_URL || 'https://shed-promotions-prize-onto.trycloudflare.com';
+  const DEFAULT_API_URL = 'https://shed-promotions-prize-onto.trycloudflare.com';
+  let apiUrl = process.env.WHATSAPP_API_URL;
+  if (!apiUrl || apiUrl.includes('instead-stylish-patrick-prayer') || apiUrl.includes('localhost')) {
+    apiUrl = DEFAULT_API_URL;
+  }
 
   // Se não estiver configurado em produção, opera em modo log de desenvolvimento
   if (!apiUrl || !effectiveInstance) {
