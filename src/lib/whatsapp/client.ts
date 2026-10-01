@@ -11,11 +11,14 @@ interface SendTextMessageParams {
 
 export async function sendWhatsAppMessage({ phone, message, instanceId, token }: SendTextMessageParams): Promise<boolean> {
   const effectiveInstance = instanceId || process.env.WHATSAPP_INSTANCE_ID || 'vurio';
-  const effectiveToken = token || process.env.WHATSAPP_API_TOKEN || 'vurio_secret_key_2026';
-  const provider = process.env.WHATSAPP_PROVIDER || 'EVOLUTION'; // 'Z_API' ou 'EVOLUTION'
+  let effectiveToken = token || process.env.WHATSAPP_API_TOKEN;
+  if (!effectiveToken || effectiveToken.startsWith('http') || effectiveToken.length < 5) {
+    effectiveToken = 'vurio_secret_key_2026';
+  }
+  const provider = process.env.WHATSAPP_PROVIDER || 'EVOLUTION';
   const DEFAULT_API_URL = 'https://shed-promotions-prize-onto.trycloudflare.com';
   let apiUrl = process.env.WHATSAPP_API_URL;
-  if (!apiUrl || apiUrl.includes('instead-stylish-patrick-prayer') || apiUrl.includes('localhost')) {
+  if (!apiUrl || apiUrl.includes('instead-stylish-patrick-prayer') || apiUrl.includes('localhost') || !apiUrl.startsWith('http')) {
     apiUrl = DEFAULT_API_URL;
   }
 
