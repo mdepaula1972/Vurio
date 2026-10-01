@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
     });
 
     // 5. Montar link parametrizado para o WhatsApp do robô do Vurio
-    const botPhone = process.env.WHATSAPP_BOT_PHONE || '5511999990000';
+    const botPhone = process.env.WHATSAPP_BOT_PHONE || '551331500987';
     const rawGreeting = `Olá! Acabei de me cadastrar no Vurio para ativar minhas 15 consultas gratuitas. Meu e-mail corporativo é: ${email} da empresa ${companyName}.`;
     const encodedGreeting = encodeURIComponent(rawGreeting);
     const whatsappUrl = `https://wa.me/${botPhone}?text=${encodedGreeting}`;

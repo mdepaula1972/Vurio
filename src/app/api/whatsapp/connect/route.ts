@@ -9,7 +9,7 @@ export const runtime = 'nodejs';
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const instance = searchParams.get('instance') || process.env.WHATSAPP_INSTANCE_ID || 'vurio';
-  const apiUrl = process.env.WHATSAPP_API_URL || 'http://localhost:8080';
+  const apiUrl = process.env.WHATSAPP_API_URL || 'https://shed-promotions-prize-onto.trycloudflare.com';
   const apiKey = process.env.WHATSAPP_API_TOKEN || 'vurio_secret_key_2026';
 
   try {
@@ -71,7 +71,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const apiUrl = process.env.WHATSAPP_API_URL || 'http://localhost:8080';
+  const apiUrl = process.env.WHATSAPP_API_URL || 'https://shed-promotions-prize-onto.trycloudflare.com';
   const apiKey = process.env.WHATSAPP_API_TOKEN || 'vurio_secret_key_2026';
 
   try {
