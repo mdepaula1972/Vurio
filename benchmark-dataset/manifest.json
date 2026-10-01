@@ -1,0 +1,702 @@
+[
+  {
+    "id": "BM-001",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_01.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. PAULO SOUZA - CRM 123456/SP)"
+  },
+  {
+    "id": "BM-002",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_02.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. MARIANA COSTA FERREIRA - CRM 998877/RJ)"
+  },
+  {
+    "id": "BM-003",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_03.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. FERNANDA LIMA ALCANTARA - CRM 112233/BA)"
+  },
+  {
+    "id": "BM-004",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_04.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. CARLOS EDUARDO SILVA - CRM 789101/SP)"
+  },
+  {
+    "id": "BM-005",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_05.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. PAULO SOUZA - CRM 123456/SP)"
+  },
+  {
+    "id": "BM-006",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_06.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. MARIANA COSTA FERREIRA - CRM 998877/RJ)"
+  },
+  {
+    "id": "BM-007",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_07.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. FERNANDA LIMA ALCANTARA - CRM 112233/BA)"
+  },
+  {
+    "id": "BM-008",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_08.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. CARLOS EDUARDO SILVA - CRM 789101/SP)"
+  },
+  {
+    "id": "BM-009",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_09.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. PAULO SOUZA - CRM 123456/SP)"
+  },
+  {
+    "id": "BM-010",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_10.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. MARIANA COSTA FERREIRA - CRM 998877/RJ)"
+  },
+  {
+    "id": "BM-011",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_11.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. FERNANDA LIMA ALCANTARA - CRM 112233/BA)"
+  },
+  {
+    "id": "BM-012",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_12.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. CARLOS EDUARDO SILVA - CRM 789101/SP)"
+  },
+  {
+    "id": "BM-013",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_13.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. PAULO SOUZA - CRM 123456/SP)"
+  },
+  {
+    "id": "BM-014",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_14.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. MARIANA COSTA FERREIRA - CRM 998877/RJ)"
+  },
+  {
+    "id": "BM-015",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_15.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. FERNANDA LIMA ALCANTARA - CRM 112233/BA)"
+  },
+  {
+    "id": "BM-016",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_16.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. CARLOS EDUARDO SILVA - CRM 789101/SP)"
+  },
+  {
+    "id": "BM-017",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_17.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. PAULO SOUZA - CRM 123456/SP)"
+  },
+  {
+    "id": "BM-018",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_18.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. MARIANA COSTA FERREIRA - CRM 998877/RJ)"
+  },
+  {
+    "id": "BM-019",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_19.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. FERNANDA LIMA ALCANTARA - CRM 112233/BA)"
+  },
+  {
+    "id": "BM-020",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_20.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. CARLOS EDUARDO SILVA - CRM 789101/SP)"
+  },
+  {
+    "id": "BM-021",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_21.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. PAULO SOUZA - CRM 123456/SP)"
+  },
+  {
+    "id": "BM-022",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_22.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. MARIANA COSTA FERREIRA - CRM 998877/RJ)"
+  },
+  {
+    "id": "BM-023",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_23.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. FERNANDA LIMA ALCANTARA - CRM 112233/BA)"
+  },
+  {
+    "id": "BM-024",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_24.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. CARLOS EDUARDO SILVA - CRM 789101/SP)"
+  },
+  {
+    "id": "BM-025",
+    "category": "1. ICP-Brasil Válido",
+    "filename": "cat1_icp_valido_25.pdf",
+    "expectedStatus": "VALID_INTACT",
+    "description": "Atestado PDF assinado com PAdES íntegro (Dr. PAULO SOUZA - CRM 123456/SP)"
+  },
+  {
+    "id": "BM-026",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_01.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-027",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_02.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-028",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_03.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-029",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_04.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-030",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_05.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-031",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_06.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-032",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_07.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-033",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_08.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-034",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_09.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-035",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_10.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-036",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_11.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-037",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_12.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-038",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_13.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-039",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_14.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-040",
+    "category": "2. PDF Adulterado (Fraude)",
+    "filename": "cat2_adulterado_15.pdf",
+    "expectedStatus": "TAMPERED",
+    "description": "Assinatura válida violada cirurgicamente no texto (hash SHA-256 diverge)"
+  },
+  {
+    "id": "BM-041",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_01.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-042",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_02.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-043",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_03.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-044",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_04.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-045",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_05.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-046",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_06.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-047",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_07.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-048",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_08.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-049",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_09.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-050",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_10.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-051",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_11.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-052",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_12.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-053",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_13.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-054",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_14.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-055",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_15.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-056",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_16.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-057",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_17.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-058",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_18.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-059",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_19.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-060",
+    "category": "3. PDF Sem Assinatura",
+    "filename": "cat3_sem_assinatura_20.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "Atestado médico em PDF gerado por sistema clínico comum sem e-CPF"
+  },
+  {
+    "id": "BM-061",
+    "category": "4. Foto de Atestado Físico",
+    "filename": "cat4_foto_papel_01.jpg",
+    "expectedStatus": "PHOTO_MANUAL_PAPER",
+    "description": "Foto de receituário físico em papel para triagem pericial via Gemini Vision"
+  },
+  {
+    "id": "BM-062",
+    "category": "4. Foto de Atestado Físico",
+    "filename": "cat4_foto_papel_02.jpg",
+    "expectedStatus": "PHOTO_MANUAL_PAPER",
+    "description": "Foto de receituário físico em papel para triagem pericial via Gemini Vision"
+  },
+  {
+    "id": "BM-063",
+    "category": "4. Foto de Atestado Físico",
+    "filename": "cat4_foto_papel_03.jpg",
+    "expectedStatus": "PHOTO_MANUAL_PAPER",
+    "description": "Foto de receituário físico em papel para triagem pericial via Gemini Vision"
+  },
+  {
+    "id": "BM-064",
+    "category": "4. Foto de Atestado Físico",
+    "filename": "cat4_foto_papel_04.jpg",
+    "expectedStatus": "PHOTO_MANUAL_PAPER",
+    "description": "Foto de receituário físico em papel para triagem pericial via Gemini Vision"
+  },
+  {
+    "id": "BM-065",
+    "category": "4. Foto de Atestado Físico",
+    "filename": "cat4_foto_papel_05.jpg",
+    "expectedStatus": "PHOTO_MANUAL_PAPER",
+    "description": "Foto de receituário físico em papel para triagem pericial via Gemini Vision"
+  },
+  {
+    "id": "BM-066",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_01.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Cancelado no CFM / Prazo regular"
+  },
+  {
+    "id": "BM-067",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_02.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Suspenso no CFM / Atestado pre-datado para o futuro"
+  },
+  {
+    "id": "BM-068",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_03.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Cancelado no CFM / Prazo regular"
+  },
+  {
+    "id": "BM-069",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_04.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Suspenso no CFM / Atestado pre-datado para o futuro"
+  },
+  {
+    "id": "BM-070",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_05.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Cancelado no CFM / Prazo regular"
+  },
+  {
+    "id": "BM-071",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_06.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Suspenso no CFM / Atestado pre-datado para o futuro"
+  },
+  {
+    "id": "BM-072",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_07.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Cancelado no CFM / Prazo regular"
+  },
+  {
+    "id": "BM-073",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_08.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Suspenso no CFM / Atestado pre-datado para o futuro"
+  },
+  {
+    "id": "BM-074",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_09.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Cancelado no CFM / Prazo regular"
+  },
+  {
+    "id": "BM-075",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_10.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Suspenso no CFM / Atestado pre-datado para o futuro"
+  },
+  {
+    "id": "BM-076",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_11.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Cancelado no CFM / Prazo regular"
+  },
+  {
+    "id": "BM-077",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_12.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Suspenso no CFM / Atestado pre-datado para o futuro"
+  },
+  {
+    "id": "BM-078",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_13.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Cancelado no CFM / Prazo regular"
+  },
+  {
+    "id": "BM-079",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_14.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Suspenso no CFM / Atestado pre-datado para o futuro"
+  },
+  {
+    "id": "BM-080",
+    "category": "5. Inconsistência CFM/Data",
+    "filename": "cat5_inconsistencia_15.pdf",
+    "expectedStatus": "NO_DIGITAL_SIGNATURE",
+    "description": "CRM Cancelado no CFM / Prazo regular"
+  },
+  {
+    "id": "BM-081",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_01.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-082",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_02.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-083",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_03.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-084",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_04.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-085",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_05.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-086",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_06.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-087",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_07.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-088",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_08.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-089",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_09.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-090",
+    "category": "6. Trava de Duplicidade",
+    "filename": "cat6_duplicado_reenvio_10.pdf",
+    "expectedStatus": "DUPLICATE_DOCUMENT",
+    "description": "Reenvio do mesmo arquivo para validar trava antifraude por SHA-256"
+  },
+  {
+    "id": "BM-091",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_01.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (DEMONSTRATIVO DE PAGAMENTO - HOLERITE) contendo siglas comerciais"
+  },
+  {
+    "id": "BM-092",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_02.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (NOTA FISCAL DE SERVICOS ELETRONICA) contendo siglas comerciais"
+  },
+  {
+    "id": "BM-093",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_03.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (COMPROVANTE DE TRANSFERENCIA PIX) contendo siglas comerciais"
+  },
+  {
+    "id": "BM-094",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_04.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (RELATORIO MENSAL DE METAS E VENDAS) contendo siglas comerciais"
+  },
+  {
+    "id": "BM-095",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_05.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (CONTRATO DE PRESTACAO DE SERVICOS) contendo siglas comerciais"
+  },
+  {
+    "id": "BM-096",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_06.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (DEMONSTRATIVO DE PAGAMENTO - HOLERITE) contendo siglas comerciais"
+  },
+  {
+    "id": "BM-097",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_07.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (NOTA FISCAL DE SERVICOS ELETRONICA) contendo siglas comerciais"
+  },
+  {
+    "id": "BM-098",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_08.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (COMPROVANTE DE TRANSFERENCIA PIX) contendo siglas comerciais"
+  },
+  {
+    "id": "BM-099",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_09.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (RELATORIO MENSAL DE METAS E VENDAS) contendo siglas comerciais"
+  },
+  {
+    "id": "BM-100",
+    "category": "7. Controle Não Médico",
+    "filename": "cat7_nao_medico_10.pdf",
+    "expectedStatus": "NOT_AN_ATTESTATION",
+    "description": "Documento corporativo comum (CONTRATO DE PRESTACAO DE SERVICOS) contendo siglas comerciais"
+  }
+]

@@ -208,21 +208,7 @@ export async function auditDoctorCrm(
     otherUfMatch = KNOWN_MEDICAL_DIRECTORY.find(doc => doc.crm === cleanCrm);
   }
 
-  // 3. Caso não conste na base direta, se o CRM tem formato válido (4 a 7 dígitos),
-  // realizamos a inferência de conformidade cadastral CFM
-  if (!record && !otherUfMatch && cleanCrm.length >= 4 && cleanCrm.length <= 7) {
-    if (declaredDoctorName && declaredDoctorName.length > 5) {
-      record = {
-        crm: cleanCrm,
-        uf: cleanUf,
-        name: declaredDoctorName.replace(/^Dr\(?a?\)?\.?\s*/i, '').trim(),
-        status: 'REGULAR',
-        specialty: 'Medicina Geral / Assistencial'
-      };
-    }
-  }
-
-  // Se ainda não encontrado de nenhuma forma
+  // Se não encontrado no diretório local nem em outras UFs
   if (!record && !otherUfMatch) {
     return {
       isRegistered: false,

@@ -134,6 +134,15 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
       );
     }
 
+    case 'NOT_AN_ATTESTATION': {
+      return (
+        `📄 *Documento Não Identificado como Atestado*\n\n` +
+        `*Status:* O arquivo enviado não possui características ou termos de um atestado médico ou declaração de saúde.\n\n` +
+        `*Finalidade:* O canal Vurio Compliance é dedicado à recepção e auditoria pericial de atestados médicos de colaboradores.\n\n` +
+        `_Caso deseje validar um atestado, por favor envie o arquivo PDF original emitido pela clínica ou uma foto nítida do receituário físico._`
+      );
+    }
+
     case 'NO_DIGITAL_SIGNATURE':
     case 'INVALID_CERTIFICATE':
     default: {

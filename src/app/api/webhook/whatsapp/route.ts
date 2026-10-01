@@ -52,6 +52,47 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      // Ativação automática de 15 consultas gratuitas originadas do formulário da landing page
+      if (
+        lowerText.includes('15 consultas') || 
+        lowerText.includes('cadastrei') || 
+        lowerText.includes('ativar minhas') ||
+        lowerText.includes('gratuita') ||
+        lowerText.includes('trial')
+      ) {
+        // Extrai e-mail corporativo se presente na mensagem
+        const emailMatch = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+        const extractedEmail = emailMatch ? emailMatch[1].toLowerCase() : null;
+        
+        let companyGreeting = '';
+        if (extractedEmail) {
+          try {
+            const { getAllCompanies, updateCompany } = await import('@/lib/services/company-service');
+            const companies = await getAllCompanies();
+            const matched = companies.find(c => c.contactEmail?.toLowerCase() === extractedEmail);
+            if (matched) {
+              companyGreeting = ` para a *${matched.tradeName || matched.name}*`;
+              await updateCompany(matched.id, { whatsappPhone: phone, whatsappStatus: 'connected' });
+            }
+          } catch (e) {
+            console.warn('Erro ao associar empresa ao trial WhatsApp:', e);
+          }
+        }
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vurio.com.br';
+        await sendWhatsAppMessage({
+          phone,
+          message: `🎉 *Parabéns! Suas 15 Consultas Gratuitas no Vurio já estão ativas${companyGreeting}!* 🛡️\n\n✅ *E-mail corporativo validado:* ${extractedEmail || 'Conta verificada com sucesso'}\n🎁 *Saldo inicial liberado:* 15 créditos de auditoria forense instantânea.\n\n🚀 *Como testar agora mesmo (em 3 segundos):*\n1️⃣ Envie por aqui qualquer arquivo *PDF ou foto de atestado médico* que gerou dúvida no seu DP.\n2️⃣ Nosso motor pericial emitirá o laudo técnico com checagem de ICP-Brasil, distância física (Geo-Shield) e regras da CCT em instantes.\n\n💻 *Seu Painel Web já está liberado:* Você também pode acompanhar todos os laudos pelo navegador acessando:\n${appUrl}/dashboard\n\nFique à vontade para enviar seu primeiro atestado para teste!`
+        });
+
+        return NextResponse.json({
+          received: true,
+          type: 'trial_activated',
+          matchedEmail: extractedEmail,
+          message: 'Ativação de 15 consultas gratuitas confirmada com sucesso via WhatsApp.'
+        });
+      }
+
       if (lowerText.includes('olá') || lowerText.includes('ola') || lowerText.includes('oi') || lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite') || lowerText.includes('ajuda')) {
         await sendWhatsAppMessage({
           phone,
@@ -74,7 +115,7 @@ export async function POST(req: NextRequest) {
     // 1. Enviar mensagem automática instantânea de processamento
     await sendWhatsAppMessage({
       phone,
-      message: '🔍 *Analisando assinatura digital e integridade do atestado...*'
+      message: '🔍 *Processando e analisando documento recebido...*'
     });
 
     // 2. Obter buffer do arquivo (Base64 direto, descriptografia Evolution API ou download da URL)
@@ -117,7 +158,7 @@ export async function POST(req: NextRequest) {
     if (!fileBuffer) {
       await sendWhatsAppMessage({
         phone,
-        message: '⚠️ Não foi possível processar o arquivo enviado. Por favor, tente enviar novamente em PDF.'
+        message: '⚠️ Não foi possível processar o arquivo enviado. Por favor, tente enviar novamente em PDF ou foto legível.'
       });
       return NextResponse.json({ error: 'Falha no download da mídia' }, { status: 400 });
     }
@@ -132,9 +173,11 @@ export async function POST(req: NextRequest) {
     const report = await validateMedicalAttestation(fileBuffer, mimeType, fileName, existingHashes);
     const executionTimeMs = Date.now() - startTime;
 
-    // 5. Salvar auditoria LGPD e debitar crédito
+    // 5. Salvar auditoria LGPD e debitar crédito (somente para atestados médicos válidos para auditoria)
     await saveValidationLog(companyId, report, fileName, executionTimeMs);
-    await deductCredit(companyId);
+    if (report.status !== 'NOT_AN_ATTESTATION') {
+      await deductCredit(companyId);
+    }
 
     // 6. Formatar mensagem de resposta de acordo com a regra de negócio
     const whatsappResponse = formatWhatsAppResponse(report);

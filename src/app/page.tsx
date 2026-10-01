@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { 
   ShieldCheck, 
   CheckCircle2, 
+  XCircle,
   MessageSquare, 
   Activity, 
   Check, 
@@ -15,945 +16,945 @@ import {
   Building2,
   Stethoscope,
   Send,
-  CreditCard,
   MapPin,
   Sliders,
-  Compass,
   Zap,
   ArrowRight,
   Eye,
   Scale,
   UserCheck,
   Briefcase,
-  Home,
-  Info,
   Clock,
   ChevronDown,
   FileText,
-  Lock
+  Lock,
+  ExternalLink,
+  Copy,
+  AlertTriangle,
+  Fingerprint,
+  FileSpreadsheet,
+  Smartphone,
+  PhoneCall,
+  Flame,
+  Award
 } from 'lucide-react';
-import { INFINITEPAY_LINKS } from '@/lib/services/payment-links';
 
 export default function LandingHomePage() {
-  const [selectedProfile, setSelectedProfile] = useState<'mei' | 'dp' | 'doctor'>('mei');
-  const [activeTooltip, setActiveTooltip] = useState<string | null>(null);
-  const [copiedWebhook, setCopiedWebhook] = useState(false);
+  // Estado do formulário de 15 consultas gratuitas (Seção 5)
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  const [formPhone, setFormPhone] = useState('');
+  const [formCompany, setFormCompany] = useState('');
+  const [formCnpj, setFormCnpj] = useState('');
+  const [formRange, setFormRange] = useState('100 a 500 colaboradores');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [trialData, setTrialData] = useState<{ whatsappUrl: string; dashboardUrl: string } | null>(null);
+  
+  // Modal de Simulação Interativa de Laudo
+  const [demoModalOpen, setDemoModalOpen] = useState(false);
 
-  // Dicionário de Linguagem Trivial (O que cada termo significa em português simples)
-  const terminology = {
-    icp: {
-      title: 'Assinatura Digital ICP-Brasil',
-      simple: 'A identidade eletrônica oficial do médico emitida pelo governo. Ela garante que o atestado é legítimo e que ninguém alterou o número de dias, a data ou o CID no computador.'
-    },
-    cfm: {
-      title: 'Consulta ao CFM dos 27 Estados',
-      simple: 'Checamos em tempo real no Conselho Federal de Medicina se o médico que assinou existe, se o registro dele está ativo e se o nome do carimbo bate com o profissional oficial.'
-    },
-    geo: {
-      title: 'Geo-Shield (Distância de Atendimento)',
-      simple: 'Verifica se o colaborador foi atendido em uma cidade incompatível com a sua rotina de trabalho (por exemplo: trabalha em Santos e apresentou atestado físico emitido em Ribeirão Preto a 430 km).'
-    },
-    dates: {
-      title: 'Checagem de Datas e Prazo da Empresa',
-      simple: 'Avisa se o atestado veio pré-datado (com data futura) ou se foi entregue fora do prazo limite estabelecido pela convenção coletiva ou política interna da sua empresa.'
-    },
-    dossier: {
-      title: 'Dossiê Pericial para B.O. na Polícia',
-      simple: 'Se comprovada a falsificação, geramos uma certidão pericial com carimbo oficial e código inalterável pronta para você levar à delegacia ou fundamentar uma demissão com segurança.'
-    },
-    inquiry: {
-      title: 'Diligência com a Clínica em 1-Clique',
-      simple: 'Um ofício administrativo formal enviado diretamente para a secretaria do hospital ou consultório confirmar se o colaborador realmente passou por consulta médica lá.'
+  // Ação de Conversão Inteligente do Formulário (Seção 5)
+  const handleSubmitTrial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    if (!formEmail || !formCompany || !formPhone) {
+      setFormError('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      const res = await fetch('/api/trial/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fullName: formName,
+          email: formEmail,
+          phone: formPhone,
+          companyName: formCompany,
+          cnpj: formCnpj,
+          employeeRange: formRange
+        })
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        setSubmitted(true);
+        setTrialData({
+          whatsappUrl: data.whatsappUrl,
+          dashboardUrl: data.dashboardUrl || '/dashboard'
+        });
+
+        // Automação sem atrito: abre o WhatsApp com mensagem parametrizada imediatamente
+        if (data.whatsappUrl) {
+          window.open(data.whatsappUrl, '_blank');
+        }
+      } else {
+        setFormError(data.error || 'Não foi possível concluir o registro. Verifique os dados e tente novamente.');
+      }
+    } catch (err) {
+      console.error('Erro ao enviar trial:', err);
+      setFormError('Falha na conexão com o servidor. Tente novamente em instantes.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-sky-500/30 selection:text-sky-200">
+    <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-sky-500/30 selection:text-sky-200 bg-slate-950">
       
-      {/* 1. TOP NAVBAR ELEGANTE & LIMPA */}
-      <header className="border-b border-slate-800/60 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-50">
+      {/* 1. TOPBAR ELEGANTE & CORPORATIVA */}
+      <header className="border-b border-slate-800/60 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
-          {/* Logo & Slogan */}
+          {/* Logo & Badge */}
           <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/10">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
               <ShieldCheck className="w-5 h-5 text-white" />
             </div>
             <div>
               <div className="flex items-center space-x-2">
                 <span className="font-extrabold text-xl tracking-tight text-white">VURIO</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                  Compliance & Perícia
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+                  Compliance & Perícia DP
                 </span>
               </div>
             </div>
           </div>
 
-          {/* Links Centrais Acolhedores */}
-          <nav className="hidden md:flex items-center space-x-6 text-xs text-slate-300 font-medium">
-            <a href="#como-funciona" className="hover:text-white transition-colors">Como Funciona</a>
-            <a href="#para-quem-e" className="hover:text-white transition-colors">Para Quem É</a>
-            <a href="#o-que-auditamos" className="hover:text-white transition-colors">O Que Auditamos</a>
-            <a href="#precos" className="hover:text-white transition-colors">Preços & Avulso</a>
-            <a href="#perguntas-frequentes" className="hover:text-white transition-colors">Dúvidas Comuns</a>
+          {/* Links de Navegação Institucional */}
+          <nav className="hidden lg:flex items-center space-x-6 text-xs text-slate-300 font-medium">
+            <a href="#o-abismo" className="hover:text-white transition-colors">O Ponto Cego do CFM</a>
+            <a href="#pilares-defesa" className="hover:text-white transition-colors">5 Pilares de Defesa</a>
+            <a href="#compliance-lgpd" className="hover:text-white transition-colors">Compliance & LGPD</a>
+            <a href="#ativar-trial" className="hover:text-white transition-colors">15 Consultas Free</a>
           </nav>
 
-          {/* Ações: Área do Cliente & WhatsApp */}
+          {/* Ações de Conversão & Login DP */}
           <div className="flex items-center space-x-3">
             <Link
               href="/dashboard"
               className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-semibold border border-slate-700 transition-all flex items-center gap-1.5"
             >
               <Briefcase className="w-3.5 h-3.5 text-sky-400" />
-              <span>Área do Cliente (DP)</span>
+              <span className="hidden sm:inline">Acessar Painel DP</span>
+              <span className="sm:hidden">Entrar</span>
             </Link>
 
             <a
-              href="#precos"
+              href="#ativar-trial"
               className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5"
             >
-              <MessageSquare className="w-3.5 h-3.5" />
-              <span>Consulta por R$ 10</span>
+              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <span>Testar 15 Atestados Free</span>
             </a>
           </div>
         </div>
       </header>
 
-      {/* 2. HERO SECTION CONVIDATIVO EM PORTUGUÊS CLARO */}
-      <section className="relative pt-12 pb-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 overflow-hidden">
-        <div className="max-w-4xl mx-auto text-center space-y-5">
+      {/* 2. HERO SECTION (DOBRA PRINCIPAL) */}
+      <section className="relative pt-14 pb-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 overflow-hidden">
+        {/* Glow de fundo */}
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[350px] bg-sky-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+        <div className="absolute top-1/3 right-1/4 w-[400px] h-[250px] bg-emerald-600/10 rounded-full blur-3xl pointer-events-none -z-10"></div>
+
+        <div className="max-w-7xl mx-auto space-y-12">
           
-          <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            <span>Auditoria médica técnica, neutra e sem constrangimentos</span>
-          </div>
-
-          <h1 className="text-3xl sm:text-5xl font-extrabold text-white tracking-tight leading-tight">
-            Descubra em segundos se o atestado médico recebido é <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400">autêntico e confiável</span>
-          </h1>
-
-          <p className="text-sm sm:text-base text-slate-300 max-w-2xl mx-auto leading-relaxed font-normal">
-            Elimine as incertezas no fechamento da folha e evite conflitos desnecessários com seus colaboradores. O Vurio checa a assinatura digital, o registro do médico no CFM e a consistência das datas diretamente pelo <strong>WhatsApp</strong> ou pela <strong>Web</strong>.
-          </p>
-
-          {/* Botões de Ação Rápida */}
-          <div className="flex flex-wrap items-center justify-center gap-3 pt-4">
-            <a
-              href="#degustacao-gratis"
-              className="px-6 py-3 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white text-sm font-bold shadow-xl shadow-sky-500/20 transition-all flex items-center gap-2"
-            >
-              <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>Testar 15 Atestados Gratuitamente</span>
-            </a>
-
-            <a
-              href="#precos"
-              className="px-5 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-700/80 transition-all flex items-center gap-2"
-            >
-              <span>Consulta Avulsa (R$ 10)</span>
-            </a>
-
-            <Link
-              href="/dashboard"
-              className="px-4 py-3 rounded-xl bg-slate-900/60 hover:bg-slate-800 text-slate-400 hover:text-white text-xs font-semibold transition-all flex items-center gap-1.5"
-            >
-              <Briefcase className="w-3.5 h-3.5 text-sky-400" />
-              <span>Painel do RH</span>
-            </Link>
-          </div>
-
-          {/* Garantias em Destaque */}
-          <div className="pt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400" /> Resposta em 3 segundos</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400" /> Sem termos acusatórios</span>
-            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400" /> 100% amparado na CLT & CFM</span>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. SELETOR DE PERFIL: "PARA QUEM É O VURIO?" (ONBOARDING INTELIGENTE) */}
-      <section id="para-quem-e" className="py-14 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950/40">
-        <div className="max-w-7xl mx-auto space-y-8">
-          
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <h2 className="text-2xl font-bold text-white">Para quem é o Vurio?</h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Escolha seu perfil para entender como o Vurio atende exatamente a sua necessidade:
-            </p>
-          </div>
-
-          {/* Seletor de 3 Botões */}
-          <div className="flex flex-wrap justify-center gap-3">
-            <button
-              onClick={() => setSelectedProfile('mei')}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border ${
-                selectedProfile === 'mei'
-                  ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/60 shadow-lg shadow-emerald-500/10'
-                  : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800'
-              }`}
-            >
-              <Home className="w-4 h-4" />
-              <span>MEI / Pequeno Negócio / Doméstica</span>
-            </button>
-
-            <button
-              onClick={() => setSelectedProfile('dp')}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border ${
-                selectedProfile === 'dp'
-                  ? 'bg-sky-500/20 text-sky-300 border-sky-500/60 shadow-lg shadow-sky-500/10'
-                  : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800'
-              }`}
-            >
-              <Briefcase className="w-4 h-4" />
-              <span>Recursos Humanos & Departamento Pessoal</span>
-            </button>
-
-            <button
-              onClick={() => setSelectedProfile('doctor')}
-              className={`px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all flex items-center gap-2 border ${
-                selectedProfile === 'doctor'
-                  ? 'bg-indigo-500/20 text-indigo-300 border-indigo-500/60 shadow-lg shadow-indigo-500/10'
-                  : 'bg-slate-900/80 text-slate-400 border-slate-800 hover:bg-slate-800'
-              }`}
-            >
-              <Stethoscope className="w-4 h-4" />
-              <span>Médicos & Consultórios</span>
-            </button>
-          </div>
-
-          {/* Conteúdo Dinâmico do Perfil Escolhido */}
-          <div className="max-w-3xl mx-auto p-6 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4">
-            
-            {selectedProfile === 'mei' && (
-              <div className="space-y-4 animate-fadeIn">
-                <div className="flex items-center space-x-2 text-emerald-400 font-bold text-sm">
-                  <Home className="w-5 h-5" />
-                  <span>Você tem 1 ou 2 funcionários e recebeu um atestado suspeito?</span>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  Você não precisa pagar mensalidades altas nem assinar contratos longos. Com o Vurio, você pode fazer uma <strong>Consulta Avulsa por apenas R$ 10,00</strong>. Basta mandar a foto ou o PDF do atestado no nosso WhatsApp e pagar via PIX instantâneo. Em 3 segundos você recebe um laudo claro dizendo se o médico existe e se o documento é válido.
-                </p>
-                <div className="pt-2">
-                  <a
-                    href="#precos"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all"
-                  >
-                    <span>Consultar Atestado por R$ 10,00</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-              </div>
-            )}
-
-            {selectedProfile === 'dp' && (
-              <div className="space-y-4 animate-fadeIn">
-                <div className="flex items-center space-x-2 text-sky-400 font-bold text-sm">
-                  <Briefcase className="w-5 h-5" />
-                  <span>Sua empresa lida com dezenas de atestados todo mês?</span>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  Automatize a recepção de atestados pelo WhatsApp oficial da empresa. O Vurio audita a assinatura eletrônica ICP-Brasil, o registro do CRM nos 27 estados, calcula regras de prazo da CCT e alerta caso o colaborador tenha passado por consulta em cidades muito distantes do trabalho (Geo-Shield). O DP ganha segurança jurídica e reduz o absenteísmo sem estresse.
-                </p>
-                <div className="pt-2 flex gap-3">
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition-all"
-                  >
-                    <span>Acessar Painel do Cliente</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                  <a
-                    href="#precos"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-all"
-                  >
-                    <span>Ver Planos Mensais</span>
-                  </a>
-                </div>
-              </div>
-            )}
-
-            {selectedProfile === 'doctor' && (
-              <div className="space-y-4 animate-fadeIn">
-                <div className="flex items-center space-x-2 text-indigo-400 font-bold text-sm">
-                  <Stethoscope className="w-5 h-5" />
-                  <span>Médico: Descubra se criminosos estão usando seu carimbo</span>
-                </div>
-                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-                  Infelizmente, carimbos médicos são falsificados diariamente para venda de atestados ilegais. No <strong>Doctor Shield</strong>, médicos podem consultar gratuitamente se seu CRM apareceu em documentos questionados por empresas em todo o Brasil e gerar um Dossiê Jurídico com 1 clique para abertura de Notícia-Crime na Polícia Civil.
-                </p>
-                <div className="pt-2">
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all"
-                  >
-                    <span>Consultar Exposição do CRM</span>
-                    <ArrowRight className="w-3.5 h-3.5" />
-                  </Link>
-                </div>
-              </div>
-            )}
-
-          </div>
-        </div>
-      </section>
-
-      {/* 4. VITRINE EXPLICATIVA: "O QUE AUDITAMOS?" (COM HOVER EM LINGUAGEM TRIVIAL) */}
-      <section id="o-que-auditamos" className="py-14 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60">
-        <div className="max-w-7xl mx-auto space-y-8">
-          
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <span className="text-xs font-semibold text-sky-400 uppercase tracking-wider">Transparência Total</span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">
-              O que o Vurio analisa em cada atestado?
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Passe o mouse (ou toque) nos cartões abaixo para entender o que cada checagem significa em linguagem simples, sem termos complicados:
-            </p>
-          </div>
-
-          {/* Grid de 6 Cartões com Explicação Trivial */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            {/* Card 1: ICP-Brasil */}
-            <div 
-              onMouseEnter={() => setActiveTooltip('icp')}
-              onMouseLeave={() => setActiveTooltip(null)}
-              onClick={() => setActiveTooltip(activeTooltip === 'icp' ? null : 'icp')}
-              className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-sky-500/50 transition-all cursor-pointer space-y-3 relative group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center">
-                  <Lock className="w-5 h-5" />
-                </div>
-                <span className="text-[10px] text-sky-400 font-bold uppercase bg-sky-500/10 px-2 py-0.5 rounded-full">
-                  Passe o mouse
-                </span>
-              </div>
-              <h3 className="text-sm font-bold text-white">{terminology.icp.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Verifica se o PDF possui certificado digital válido e se o documento foi alterado após a emissão.
-              </p>
-              
-              {/* Balão Explicativo Suave */}
-              <div className="p-3 rounded-xl bg-slate-950 border border-sky-500/30 text-xs text-sky-200/90 space-y-1">
-                <span className="font-bold flex items-center gap-1 text-[11px] text-sky-300">
-                  <Info className="w-3.5 h-3.5" /> Entenda em termos simples:
-                </span>
-                <p className="text-[11px] text-slate-300 leading-relaxed">{terminology.icp.simple}</p>
-              </div>
+          <div className="text-center space-y-6 max-w-4xl mx-auto">
+            {/* Badge de Destaque */}
+            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-emerald-400 text-xs font-semibold shadow-inner">
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+              <span>Auditoria Forense Contínua de Atestados Médicos</span>
             </div>
 
-            {/* Card 2: CFM Nacional */}
-            <div 
-              onMouseEnter={() => setActiveTooltip('cfm')}
-              onMouseLeave={() => setActiveTooltip(null)}
-              onClick={() => setActiveTooltip(activeTooltip === 'cfm' ? null : 'cfm')}
-              className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer space-y-3 relative group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                  <Stethoscope className="w-5 h-5" />
-                </div>
-                <span className="text-[10px] text-emerald-400 font-bold uppercase bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                  27 Estados
-                </span>
-              </div>
-              <h3 className="text-sm font-bold text-white">{terminology.cfm.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Cruza o CRM e a UF do carimbo com os cadastros oficiais do Conselho Federal de Medicina.
-              </p>
-              
-              <div className="p-3 rounded-xl bg-slate-950 border border-emerald-500/30 text-xs text-emerald-200/90 space-y-1">
-                <span className="font-bold flex items-center gap-1 text-[11px] text-emerald-300">
-                  <Info className="w-3.5 h-3.5" /> Entenda em termos simples:
-                </span>
-                <p className="text-[11px] text-slate-300 leading-relaxed">{terminology.cfm.simple}</p>
-              </div>
-            </div>
+            {/* Headline de Alto Impacto */}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.15]">
+              Validar se o médico existe{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-rose-400 via-amber-300 to-rose-400">
+                não protege
+              </span>{' '}
+              a sua folha de pagamento.
+            </h1>
 
-            {/* Card 3: Geo-Shield */}
-            <div 
-              onMouseEnter={() => setActiveTooltip('geo')}
-              onMouseLeave={() => setActiveTooltip(null)}
-              onClick={() => setActiveTooltip(activeTooltip === 'geo' ? null : 'geo')}
-              className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-amber-500/50 transition-all cursor-pointer space-y-3 relative group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center">
-                  <MapPin className="w-5 h-5" />
-                </div>
-                <span className="text-[10px] text-amber-400 font-bold uppercase bg-amber-500/10 px-2 py-0.5 rounded-full">
-                  Add-on Opcional
-                </span>
-              </div>
-              <h3 className="text-sm font-bold text-white">{terminology.geo.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Calcula a distância física entre o posto de trabalho do empregado e a clínica que emitiu o atestado.
-              </p>
-              
-              <div className="p-3 rounded-xl bg-slate-950 border border-amber-500/30 text-xs text-amber-200/90 space-y-1">
-                <span className="font-bold flex items-center gap-1 text-[11px] text-amber-300">
-                  <Info className="w-3.5 h-3.5" /> Entenda em termos simples:
-                </span>
-                <p className="text-[11px] text-slate-300 leading-relaxed">{terminology.geo.simple}</p>
-              </div>
-            </div>
-
-            {/* Card 4: Checagem de Datas */}
-            <div 
-              onMouseEnter={() => setActiveTooltip('dates')}
-              onMouseLeave={() => setActiveTooltip(null)}
-              onClick={() => setActiveTooltip(activeTooltip === 'dates' ? null : 'dates')}
-              className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-sky-500/50 transition-all cursor-pointer space-y-3 relative group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-xl bg-sky-500/10 text-sky-400 flex items-center justify-center">
-                  <Clock className="w-5 h-5" />
-                </div>
-                <span className="text-[10px] text-sky-400 font-bold uppercase bg-sky-500/10 px-2 py-0.5 rounded-full">
-                  Cronologia & CCT
-                </span>
-              </div>
-              <h3 className="text-sm font-bold text-white">{terminology.dates.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Identifica atestados pré-datados para o futuro e submissões fora do prazo da convenção da categoria.
-              </p>
-              
-              <div className="p-3 rounded-xl bg-slate-950 border border-sky-500/30 text-xs text-sky-200/90 space-y-1">
-                <span className="font-bold flex items-center gap-1 text-[11px] text-sky-300">
-                  <Info className="w-3.5 h-3.5" /> Entenda em termos simples:
-                </span>
-                <p className="text-[11px] text-slate-300 leading-relaxed">{terminology.dates.simple}</p>
-              </div>
-            </div>
-
-            {/* Card 5: Dossiê para B.O. */}
-            <div 
-              onMouseEnter={() => setActiveTooltip('dossier')}
-              onMouseLeave={() => setActiveTooltip(null)}
-              onClick={() => setActiveTooltip(activeTooltip === 'dossier' ? null : 'dossier')}
-              className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer space-y-3 relative group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <span className="text-[10px] text-emerald-400 font-bold uppercase bg-emerald-500/10 px-2 py-0.5 rounded-full">
-                  Add-on Pericial
-                </span>
-              </div>
-              <h3 className="text-sm font-bold text-white">{terminology.dossier.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Laudo pericial com carimbo de tempo ICP-Brasil e hash imutável pronto para delegacia e processo.
-              </p>
-              
-              <div className="p-3 rounded-xl bg-slate-950 border border-emerald-500/30 text-xs text-emerald-200/90 space-y-1">
-                <span className="font-bold flex items-center gap-1 text-[11px] text-emerald-300">
-                  <Info className="w-3.5 h-3.5" /> Entenda em termos simples:
-                </span>
-                <p className="text-[11px] text-slate-300 leading-relaxed">{terminology.dossier.simple}</p>
-              </div>
-            </div>
-
-            {/* Card 6: Diligência Formal CFM */}
-            <div 
-              onMouseEnter={() => setActiveTooltip('inquiry')}
-              onMouseLeave={() => setActiveTooltip(null)}
-              onClick={() => setActiveTooltip(activeTooltip === 'inquiry' ? null : 'inquiry')}
-              className="p-5 rounded-2xl bg-slate-900/70 border border-slate-800 hover:border-teal-500/50 transition-all cursor-pointer space-y-3 relative group"
-            >
-              <div className="flex items-center justify-between">
-                <div className="w-9 h-9 rounded-xl bg-teal-500/10 text-teal-400 flex items-center justify-center">
-                  <Send className="w-5 h-5" />
-                </div>
-                <span className="text-[10px] text-teal-400 font-bold uppercase bg-teal-500/10 px-2 py-0.5 rounded-full">
-                  Ofício 1-Clique
-                </span>
-              </div>
-              <h3 className="text-sm font-bold text-white">{terminology.inquiry.title}</h3>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Conferência direta com a clínica respaldada pela Resolução CFM 1.658/2002.
-              </p>
-              
-              <div className="p-3 rounded-xl bg-slate-950 border border-teal-500/30 text-xs text-teal-200/90 space-y-1">
-                <span className="font-bold flex items-center gap-1 text-[11px] text-teal-300">
-                  <Info className="w-3.5 h-3.5" /> Entenda em termos simples:
-                </span>
-                <p className="text-[11px] text-slate-300 leading-relaxed">{terminology.inquiry.simple}</p>
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      {/* 5. COMO FUNCIONA (PASSO A PASSO DESCOMPLICADO) */}
-      <section id="como-funciona" className="py-14 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950/40">
-        <div className="max-w-7xl mx-auto space-y-10">
-          
-          <div className="text-center space-y-2 max-w-2xl mx-auto">
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Sem Instalar Nada</span>
-            <h2 className="text-2xl sm:text-3xl font-bold text-white">Como Funciona na Prática?</h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Você não precisa baixar programas pesados nem fazer integrações demoradas:
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-sky-500/10 text-sky-400 font-black text-lg flex items-center justify-center mx-auto">
-                1
-              </div>
-              <h3 className="text-base font-bold text-white">Envie o Documento</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Basta encaminhar o arquivo em PDF ou a foto do atestado diretamente para o número de WhatsApp do Vurio.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 text-emerald-400 font-black text-lg flex items-center justify-center mx-auto">
-                2
-              </div>
-              <h3 className="text-base font-bold text-white">Auditoria Instantânea</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Em menos de 3 segundos, nossos motores periciais checam a assinatura do arquivo, o CFM do médico e as regras da empresa.
-              </p>
-            </div>
-
-            <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 text-center space-y-3">
-              <div className="w-12 h-12 rounded-2xl bg-teal-500/10 text-teal-400 font-black text-lg flex items-center justify-center mx-auto">
-                3
-              </div>
-              <h3 className="text-base font-bold text-white">Receba o Parecer Técnico</h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Você recebe uma mensagem clara dizendo se o documento está em conformidade ou com sugestões amigáveis para averiguação do DP.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* 5.5. DEGUSTAÇÃO CORPORATIVA: 15 AUDITORIAS GRATUITAS & RESPALDO EXECUTIVO */}
-      <section id="degustacao-gratis" className="py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-gradient-to-b from-slate-900/90 via-slate-950 to-slate-900/60 relative overflow-hidden">
-        <div className="max-w-5xl mx-auto space-y-10">
-          
-          <div className="text-center space-y-3 max-w-3xl mx-auto">
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-sky-500/15 border border-sky-500/30 text-sky-300 text-xs font-bold">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-              <span>Degustação Corporativa Sem Compromisso</span>
-            </div>
-            <h2 className="text-2xl sm:text-4xl font-extrabold text-white">
-              Suas primeiras <span className="text-transparent bg-clip-text bg-gradient-to-r from-sky-400 via-teal-300 to-emerald-400">15 auditorias</span> são por nossa conta
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              Teste o Vurio na prática com os atestados reais da sua empresa. Sem pedir cartão de crédito, sem contratos engessados e com resposta imediata.
-            </p>
-          </div>
-
-          {/* O Diferencial: E se todos os atestados forem 100% autênticos? */}
-          <div className="p-8 rounded-3xl bg-slate-950/80 border border-slate-800 space-y-6 shadow-2xl relative">
-            <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-800 pb-5 gap-3">
-              <div>
-                <span className="text-xs font-bold uppercase tracking-wider text-emerald-400">A Pergunta Mais Inteligente do RH:</span>
-                <h3 className="text-lg sm:text-xl font-bold text-white mt-1">
-                  "E se todos os meus 15 atestados forem autênticos? Qual o valor disso para a empresa?"
-                </h3>
-              </div>
-              <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 text-xs font-semibold whitespace-nowrap self-start md:self-auto">
-                ✓ Respaldo & Compliance
-              </span>
-            </div>
-
-            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
-              O objetivo do Vurio não é apenas identificar inconsistências. <strong>Nosso maior valor é gerar o Laudo Pericial de Conformidade que blinda o Departamento Pessoal e a Diretoria:</strong>
+            {/* Subheadline Precisa em 2 Frases */}
+            <p className="text-sm sm:text-base lg:text-lg text-slate-300 max-w-3xl mx-auto leading-relaxed font-normal">
+              O Vurio recepciona atestados autonomamente pelo <strong>WhatsApp corporativo</strong> da sua empresa e executa a <strong>triagem pericial de metadados em 3 segundos</strong>. Detecte incompatibilidades geográficas, adulterações de PDF e reusos de atestados antigos sem instalar programas ou sobrecarregar o RH.
             </p>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                <div className="w-8 h-8 rounded-lg bg-sky-500/10 text-sky-400 flex items-center justify-center font-bold">
-                  👔
-                </div>
-                <h4 className="font-bold text-white text-sm">Respaldo perante a Diretoria</h4>
-                <p className="text-slate-400 leading-relaxed text-[11px]">
-                  O DP apresenta relatórios mensais comprovando que cada dia abonado na folha foi oficialmente checado na ICP-Brasil e no CFM, justificando os salários pagos com governança irretocável.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">
-                  ⚖️
-                </div>
-                <h4 className="font-bold text-white text-sm">Blindagem no eSocial e MTE</h4>
-                <p className="text-slate-400 leading-relaxed text-[11px]">
-                  Em caso de fiscalização trabalhista ou previdenciária, sua empresa possui certidões digitais com código hash SHA-256 inalterável, evitando multas e glosas do eSocial.
-                </p>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
-                <div className="w-8 h-8 rounded-lg bg-amber-500/10 text-amber-400 flex items-center justify-center font-bold">
-                  🤝
-                </div>
-                <h4 className="font-bold text-white text-sm">Segurança Jurídica para o DP</h4>
-                <p className="text-slate-400 leading-relaxed text-[11px]">
-                  Elimina o medo e a insegurança do analista de DP na hora de aprovar o abono. O gestor tem respaldo pericial formal para justificar decisões sem desgastes com os colaboradores.
-                </p>
-              </div>
-
-            </div>
-
-            {/* CTA da Degustação */}
-            <div className="pt-4 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
-              <div className="text-xs text-slate-400">
-                <p className="font-medium text-slate-300">Quer testar com sua equipe agora mesmo?</p>
-                <p className="text-[11px]">Basta enviar uma mensagem no WhatsApp com a palavra <strong>DEGUSTACAO</strong>.</p>
-              </div>
-
-              <button
-                onClick={() => alert('Para iniciar seu teste gratuito de 15 atestados, envie a palavra DEGUSTACAO no WhatsApp: (11) 99999-9999')}
-                className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-500 hover:to-indigo-500 text-white text-xs font-bold shadow-lg shadow-sky-500/20 transition-all flex items-center gap-2 whitespace-nowrap"
+            {/* CTAs de Conversão */}
+            <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
+              <a
+                href="#ativar-trial"
+                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white text-sm font-bold shadow-xl shadow-emerald-600/25 transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
-                <span>Ativar 15 Atestados Gratuitos</span>
+                <span>Solicitar Demonstração Gratuita (15 Consultas Free)</span>
+                <ArrowRight className="w-4 h-4" />
+              </a>
+
+              <button
+                onClick={() => setDemoModalOpen(true)}
+                className="px-5 py-3.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-200 text-sm font-semibold border border-slate-700/80 transition-all flex items-center gap-2"
+              >
+                <Eye className="w-4 h-4 text-sky-400" />
+                <span>Ver Simulação de Laudo Live</span>
               </button>
             </div>
+
+            {/* Badges de Confiança */}
+            <div className="pt-4 flex flex-wrap items-center justify-center gap-6 text-xs text-slate-400">
+              <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400" /> Criptografia PAdES / ICP-Brasil</span>
+              <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400" /> 100% em conformidade com LGPD</span>
+              <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-emerald-400" /> Sem termos acusatórios (Laudo Neutro)</span>
+            </div>
           </div>
+
+          {/* Mockup Split Live: WhatsApp Chat + Painel Vurio */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center max-w-6xl mx-auto pt-4">
+            
+            {/* Lado Esquerdo: Mensagem chegando no WhatsApp */}
+            <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-2xl relative">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                    <MessageSquare className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-white">WhatsApp RH Corporativo</h4>
+                    <p className="text-[10px] text-emerald-400">Robô Pericial Ativo</p>
+                  </div>
+                </div>
+                <span className="text-[10px] font-mono text-slate-500">14:22</span>
+              </div>
+
+              {/* Mensagem enviada pelo funcionário */}
+              <div className="space-y-3 text-xs">
+                <div className="bg-slate-800/80 p-3 rounded-2xl rounded-tr-none text-slate-200 ml-6 space-y-1.5 border border-slate-700/50">
+                  <p className="text-[11px] text-slate-400">Colaborador João Silva:</p>
+                  <div className="flex items-center gap-2 bg-slate-900 p-2 rounded-xl border border-slate-800">
+                    <FileText className="w-6 h-6 text-rose-400 flex-shrink-0" />
+                    <div className="truncate">
+                      <p className="font-bold text-white truncate text-[11px]">Atestado_Medico_SP.pdf</p>
+                      <p className="text-[10px] text-slate-400">248 KB • Assinatura Gov.br</p>
+                    </div>
+                  </div>
+                  <p className="text-[11px] text-slate-300">"Segue meu atestado médico de 3 dias para justificar a ausência."</p>
+                </div>
+
+                {/* Resposta do Vurio em 3 segundos */}
+                <div className="bg-emerald-950/40 border border-emerald-500/30 p-3 rounded-2xl rounded-tl-none text-slate-200 mr-6 space-y-1">
+                  <p className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
+                    <ShieldCheck className="w-3.5 h-3.5" /> Vurio Compliance Bot:
+                  </p>
+                  <p className="text-[11px] text-slate-300">
+                    Documento recebido e auditado com sucesso. Protocolo: <span className="font-mono text-emerald-300 font-bold">#VUR-8942</span> gerado e registrado no DP.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Lado Direito: Laudo Gerado no Painel do DP */}
+            <div className="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-2xl p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-1.5 rounded-lg bg-sky-500/20 text-sky-400">
+                    <Activity className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Laudo Pericial de Triagem Instantânea</h4>
+                    <p className="text-[10px] text-slate-400">Processado em tempo real em 0.18s</p>
+                  </div>
+                </div>
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+                  AVERIGUAÇÃO RECOMENDADA
+                </span>
+              </div>
+
+              {/* Grid de Metadados Forenses */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-slate-400 text-[10px] block">MÉDICO EMISSOR</span>
+                  <span className="font-bold text-white truncate block">Dr. Roberto Santos</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-slate-400 text-[10px] block">CRM / ESTADO</span>
+                  <span className="font-bold text-white">123456 / SP</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-slate-400 text-[10px] block">CERTIFICAÇÃO</span>
+                  <span className="font-bold text-emerald-400 flex items-center gap-1">
+                    <Check className="w-3 h-3" /> ICP-Brasil
+                  </span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-slate-400 text-[10px] block">RELAÇÃO CCT</span>
+                  <span className="font-bold text-sky-400">No Prazo (24h)</span>
+                </div>
+              </div>
+
+              {/* Alerta Forense de Incompatibilidade Geográfica */}
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-amber-400">
+                  <MapPin className="w-4 h-4 text-amber-400" />
+                  Alerta Geo-Shield: Incompatibilidade Geográfica de 412 km
+                </div>
+                <p className="text-[11px] text-slate-300">
+                  O colaborador atua presencialmente na unidade de <strong>Santos/SP</strong>, mas a consulta presencial foi registrada às 14:15 em <strong>Ribeirão Preto/SP</strong> durante sua jornada.
+                </p>
+              </div>
+
+              <div className="flex items-center justify-between pt-1 text-xs">
+                <span className="font-mono text-slate-500 text-[10px]">Hash SHA-256: 7f8a9b2c... (Único)</span>
+                <span className="text-sky-400 font-bold text-[11px] hover:underline cursor-pointer" onClick={() => setDemoModalOpen(true)}>
+                  Exportar Certidão Pericial PDF →
+                </span>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Faixa de Indicadores de Impacto */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto pt-6 border-t border-slate-800/60 text-center">
+            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60">
+              <span className="text-2xl lg:text-3xl font-black text-white block">33 Milhões+</span>
+              <span className="text-xs text-slate-400">Trabalhadores CLT no Brasil</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60">
+              <span className="text-2xl lg:text-3xl font-black text-emerald-400 block">&lt; 3 segundos</span>
+              <span className="text-xs text-slate-400">Tempo Médio de Laudo Pericial</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60">
+              <span className="text-2xl lg:text-3xl font-black text-sky-400 block">100% PAdES</span>
+              <span className="text-xs text-slate-400">Verificação Criptográfica ICP</span>
+            </div>
+            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60">
+              <span className="text-2xl lg:text-3xl font-black text-indigo-300 block">Zero CID</span>
+              <span className="text-xs text-slate-400">Sigilo Médico Resguardado</span>
+            </div>
+          </div>
+
         </div>
       </section>
 
-      {/* 6. TABELA DE PREÇOS: CONSULTA AVULSA (R$ 10) & PLANOS */}
-      <section id="precos" className="py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60">
-        <div className="max-w-7xl mx-auto space-y-10">
+      {/* 3. O ABISMO DO MERCADO (A DOR CRÍTICA & PONTO CEGO DO CFM) */}
+      <section id="o-abismo" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950/60">
+        <div className="max-w-7xl mx-auto space-y-12">
           
-          <div className="text-center space-y-2 max-w-3xl mx-auto">
-            <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Sem Surpresas</span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-white">Planos Transparentes para Qualquer Tamanho</h2>
-            <p className="text-xs sm:text-sm text-slate-400">
-              Escolha entre a Consulta Avulsa sob demanda (sem mensalidade) ou planos mensais para o seu Departamento Pessoal:
+          <div className="text-center space-y-3 max-w-3xl mx-auto">
+            <span className="text-[11px] font-bold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/20">
+              O PONTO CEGO DO DEPARTAMENTO PESSOAL
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Por que os validadores tradicionais de conselho não impedem as fraudes que sangram seu caixa?
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              Muitas empresas acreditam que o simples ato de conferir se o médico está cadastrado no Conselho Federal de Medicina (CFM) é suficiente. Na vida real, <strong>as maiores fraudes contra a folha de pagamento utilizam médicos reais em contextos operacionais impossíveis</strong>:
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-stretch">
-            
-            {/* CARD 1: CONSULTA AVULSA (R$ 10,00) */}
-            <div className="p-6 rounded-2xl bg-gradient-to-b from-slate-900 to-slate-950 border-2 border-emerald-500/50 flex flex-col justify-between relative shadow-lg shadow-emerald-500/10">
-              <span className="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-emerald-500 text-slate-950 text-[10px] font-black uppercase">
-                Sem Mensalidade
-              </span>
+          {/* Tabela Comparativa de Impacto */}
+          <div className="rounded-2xl bg-slate-900/80 border border-slate-800 overflow-hidden shadow-2xl max-w-5xl mx-auto">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                  <tr>
+                    <th className="py-4 px-6 font-bold text-slate-300 w-2/5">Cenário Real de Fraude no seu DP</th>
+                    <th className="py-4 px-6 font-bold text-rose-400 w-3/10">Validador Tradicional do Conselho</th>
+                    <th className="py-4 px-6 font-bold text-emerald-400 w-3/10 bg-emerald-950/20">Proteção Ativa do Vurio</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/70">
+                  <tr className="hover:bg-slate-800/30 transition-all">
+                    <td className="py-4 px-6">
+                      <p className="font-bold text-white text-sm">Incompatibilidade de Deslocamento</p>
+                      <p className="text-slate-400 text-[11px] mt-0.5">Colaborador escala presencialmente em Santos e apresenta atestado de consulta às 14h em Ribeirão Preto (420 km).</p>
+                    </td>
+                    <td className="py-4 px-6 text-slate-300">
+                      <span className="text-rose-400 font-bold flex items-center gap-1.5"><XCircle className="w-4 h-4 flex-shrink-0" /> Aprova cegamente</span>
+                      <p className="text-[10px] text-slate-500 mt-1">O médico tem CRM ativo e o portal não sabe onde a sua empresa opera.</p>
+                    </td>
+                    <td className="py-4 px-6 bg-emerald-950/20 text-slate-300">
+                      <span className="text-emerald-400 font-bold flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Alerta Geo-Shield</span>
+                      <p className="text-[10px] text-slate-400 mt-1">Identifica a rota impossível e calcula o tempo inviável de viagem.</p>
+                    </td>
+                  </tr>
 
-              <div className="space-y-3 pt-2">
-                <h3 className="text-lg font-bold text-white">Consulta Avulsa</h3>
-                <p className="text-xs text-slate-400">
-                  Ideal para MEI, microempresa e donas de casa com 1 ou 2 funcionários.
-                </p>
-                <div>
-                  <span className="text-3xl font-extrabold text-emerald-400">R$ 10,00</span>
-                  <span className="text-xs text-slate-500 font-normal"> / consulta</span>
-                </div>
-                <ul className="space-y-2 text-xs text-slate-300 pt-3">
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Validação ICP-Brasil na hora</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Checagem do CFM em 27 estados</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Conferência de datas futuras</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Laudo enviado no seu WhatsApp</li>
-                  <li className="flex items-center text-amber-300/90 font-medium"><MapPin className="w-3.5 h-3.5 text-amber-400 mr-2" /> Opcional: + R$ 3 com Geo-Shield</li>
-                </ul>
-              </div>
+                  <tr className="hover:bg-slate-800/30 transition-all">
+                    <td className="py-4 px-6">
+                      <p className="font-bold text-white text-sm">Reuso do Mesmo PDF em Sextas-feiras</p>
+                      <p className="text-slate-400 text-[11px] mt-0.5">O colaborador reutiliza o arquivo de um atestado legítimo de 3 meses atrás para justificar uma falta na véspera de feriado.</p>
+                    </td>
+                    <td className="py-4 px-6 text-slate-300">
+                      <span className="text-rose-400 font-bold flex items-center gap-1.5"><XCircle className="w-4 h-4 flex-shrink-0" /> Aprova novamente</span>
+                      <p className="text-[10px] text-slate-500 mt-1">O arquivo original tem assinatura válida, então o site do conselho dá "OK".</p>
+                    </td>
+                    <td className="py-4 px-6 bg-emerald-950/20 text-slate-300">
+                      <span className="text-emerald-400 font-bold flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Trava SHA-256</span>
+                      <p className="text-[10px] text-slate-400 mt-1">Acusa que o arquivo já foi abonado no passado e bloqueia a duplicidade.</p>
+                    </td>
+                  </tr>
 
-              <div className="pt-6 space-y-2">
-                <a
-                  href={INFINITEPAY_LINKS.CONSULTA_AVULSA_10}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition-all shadow text-center block"
-                >
-                  Consultar por R$ 10 (PIX / Cartão)
-                </a>
-                <a
-                  href={INFINITEPAY_LINKS.CONSULTA_AVULSA_GEO_13}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-2 bg-slate-800 hover:bg-slate-700 text-amber-300 rounded-xl text-[11px] font-semibold transition-all text-center block border border-amber-500/30"
-                >
-                  Combo com Geo-Shield (R$ 13)
-                </a>
-              </div>
-            </div>
+                  <tr className="hover:bg-slate-800/30 transition-all">
+                    <td className="py-4 px-6">
+                      <p className="font-bold text-white text-sm">Prazos de Convenção Coletiva (CCT)</p>
+                      <p className="text-slate-400 text-[11px] mt-0.5">O acordo sindical estabelece entrega em até 48 horas úteis. O funcionário envia o documento 7 dias depois.</p>
+                    </td>
+                    <td className="py-4 px-6 text-slate-300">
+                      <span className="text-rose-400 font-bold flex items-center gap-1.5"><XCircle className="w-4 h-4 flex-shrink-0" /> Desconhece a regra</span>
+                      <p className="text-[10px] text-slate-500 mt-1">Conselhos médicos não fiscalizam prazos de leis trabalhistas da CLT.</p>
+                    </td>
+                    <td className="py-4 px-6 bg-emerald-950/20 text-slate-300">
+                      <span className="text-emerald-400 font-bold flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Guardião CCT</span>
+                      <p className="text-[10px] text-slate-400 mt-1">Calcula dias úteis sindicais e aponta perda do direito ao abono remunerado.</p>
+                    </td>
+                  </tr>
 
-            {/* CARD 2: STARTER RH */}
-            <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all">
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold text-white">Starter RH</h3>
-                <p className="text-xs text-slate-400">
-                  Para empresas com até 30 funcionários.
-                </p>
-                <div>
-                  <span className="text-3xl font-extrabold text-white">R$ 149</span>
-                  <span className="text-xs text-slate-500 font-normal"> / mês</span>
-                </div>
-                <ul className="space-y-2 text-xs text-slate-300 pt-3">
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Até 30 validações no mês</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> WhatsApp corporativo integrado</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Acesso ao Painel do Cliente</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Suporte prioritário</li>
-                </ul>
-              </div>
-
-              <div className="pt-6">
-                <a
-                  href={INFINITEPAY_LINKS.CHECKOUT_STARTER_149}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all text-center block"
-                >
-                  Assinar Starter
-                </a>
-              </div>
-            </div>
-
-            {/* CARD 3: COMPLIANCE PRO */}
-            <div className="p-6 rounded-2xl bg-gradient-to-b from-sky-950/40 via-slate-900 to-slate-950 border-2 border-sky-500/60 flex flex-col justify-between relative shadow-xl shadow-sky-500/10">
-              <span className="absolute -top-3 left-4 px-2.5 py-0.5 rounded-full bg-sky-500 text-slate-950 text-[10px] font-black uppercase">
-                Mais Escolhido
-              </span>
-
-              <div className="space-y-3 pt-2">
-                <h3 className="text-lg font-bold text-white">Compliance Pro</h3>
-                <p className="text-xs text-slate-300">
-                  Para empresas de 50 a 300 funcionários com alta rotatividade.
-                </p>
-                <div>
-                  <span className="text-3xl font-extrabold text-sky-400">R$ 399</span>
-                  <span className="text-xs text-slate-500 font-normal"> / mês</span>
-                </div>
-                <ul className="space-y-2 text-xs text-slate-200 pt-3">
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> <strong>100 validações mensais</strong></li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> <strong>Diligências com clínicas ilimitadas</strong></li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Rollover de atestados por 60 dias</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Relatório de passivo financeiro</li>
-                </ul>
-              </div>
-
-              <div className="pt-6">
-                <a
-                  href={INFINITEPAY_LINKS.CHECKOUT_PRO_399}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-sky-600/30 text-center block"
-                >
-                  Assinar Pro
-                </a>
-              </div>
-            </div>
-
-            {/* CARD 4: ENTERPRISE */}
-            <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 flex flex-col justify-between hover:border-slate-700 transition-all">
-              <div className="space-y-3">
-                <h3 className="text-lg font-bold text-white">Enterprise</h3>
-                <p className="text-xs text-slate-400">
-                  Grandes indústrias, redes de varejo e hospitais.
-                </p>
-                <div>
-                  <span className="text-3xl font-extrabold text-white">Sob Medida</span>
-                </div>
-                <ul className="space-y-2 text-xs text-slate-300 pt-3">
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> 1.000+ validações mensais</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Integração com ERP (TOTVS, Senior) ou exportação em lote</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Conexão com o canal de WhatsApp da sua própria empresa</li>
-                  <li className="flex items-center"><Check className="w-3.5 h-3.5 text-emerald-400 mr-2" /> Gerente de conta e SLA prioritário</li>
-                </ul>
-              </div>
-
-              <div className="pt-6">
-                <a
-                  href={INFINITEPAY_LINKS.PLANOS_WHATSAPP.ENTERPRISE}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-xs font-bold transition-all text-center block"
-                >
-                  Falar com Consultor
-                </a>
-              </div>
-            </div>
-
-          </div>
-
-          {/* VITRINE DE PRODUTOS ADICIONAIS (ADD-ONS INDEPENDENTES) */}
-          <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-slate-900/90 to-slate-950 border border-amber-500/30 space-y-4 shadow-xl">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-800 pb-3 gap-2">
-              <div className="flex items-center space-x-2">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <h3 className="text-base font-bold text-white">Produtos Adicionais (Add-ons Independentes)</h3>
-              </div>
-              <span className="text-xs text-amber-300/80 font-medium">Contrate avulso ou agregue a qualquer plano</span>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              {/* Add-on 1: Geo-Shield */}
-              <div className="p-4 bg-slate-950/80 rounded-xl border border-amber-500/30 space-y-3 relative flex flex-col justify-between">
-                <div>
-                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-bold border border-amber-500/30 uppercase">
-                    Add-on Opcional
-                  </span>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="font-bold text-amber-300 flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Geo-Shield</span>
-                    <div className="text-right">
-                      <span className="font-extrabold text-white text-sm">R$ 49/mês</span>
-                      <span className="block text-[10px] text-slate-400">ou +R$ 3 na consulta avulsa</span>
-                    </div>
-                  </div>
-                  <p className="text-slate-300 text-[11px] leading-relaxed mt-2">
-                    Auditoria de rota e distância geográfica entre o posto de trabalho/moradia e a clínica do atestado. Identifica incompatibilidades de deslocamento (ex: Santos x Ribeirão Preto) amparado no Art. 482 da CLT.
-                  </p>
-                </div>
-                <a
-                  href={INFINITEPAY_LINKS.CONSULTA_AVULSA_GEO_13}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 rounded-lg text-[11px] font-bold transition-all text-center block border border-amber-500/40"
-                >
-                  Contratar com Geo-Shield (R$ 13)
-                </a>
-              </div>
-
-              {/* Add-on 2: Doctor Shield & Dossiê B.O. */}
-              <div className="p-4 bg-slate-950/80 rounded-xl border border-emerald-500/30 space-y-3 relative flex flex-col justify-between">
-                <div>
-                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-bold border border-emerald-500/30 uppercase">
-                    Add-on Pericial
-                  </span>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="font-bold text-emerald-300 flex items-center gap-1.5"><Stethoscope className="w-3.5 h-3.5" /> Dossiê Jurídico & B.O.</span>
-                    <div className="text-right">
-                      <span className="font-extrabold text-white text-sm">R$ 89 avulso</span>
-                      <span className="block text-[10px] text-emerald-400">R$ 49 se assinante</span>
-                    </div>
-                  </div>
-                  <p className="text-slate-300 text-[11px] leading-relaxed mt-2">
-                    Certidão pericial completa com hash SHA-256 inalterável, carimbo de tempo ICP-Brasil e histórico de incidentes do CRM, formatada para abertura direta de Notícia-Crime na Polícia Civil e justa causa trabalhista.
-                  </p>
-                </div>
-                <a
-                  href={INFINITEPAY_LINKS.DOSSIE_POLICIAL_89}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-1.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 rounded-lg text-[11px] font-bold transition-all text-center block border border-emerald-500/40"
-                >
-                  Emitir Dossiê B.O. (R$ 89)
-                </a>
-              </div>
-
-              {/* Add-on 3: Diligência Formal CFM */}
-              <div className="p-4 bg-slate-950/80 rounded-xl border border-sky-500/30 space-y-3 relative flex flex-col justify-between">
-                <div>
-                  <span className="absolute -top-2.5 right-3 px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 text-[9px] font-bold border border-sky-500/30 uppercase">
-                    Add-on 1-Clique
-                  </span>
-                  <div className="flex items-center justify-between pt-1">
-                    <span className="font-bold text-sky-300 flex items-center gap-1.5"><Scale className="w-3.5 h-3.5" /> Diligência Formal CFM</span>
-                    <div className="text-right">
-                      <span className="font-extrabold text-white text-sm">R$ 15 / ofício</span>
-                      <span className="block text-[10px] text-emerald-400">Ilimitado no Pro</span>
-                    </div>
-                  </div>
-                  <p className="text-slate-300 text-[11px] leading-relaxed mt-2">
-                    Emissão e envio automático de ofício administrativo respaldado na Resolução CFM 1.658/2002 para confirmação de atendimento diretamente com a secretaria do consultório ou hospital.
-                  </p>
-                </div>
-                <a
-                  href={INFINITEPAY_LINKS.DILIGENCIA_CFM_15}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-1.5 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 rounded-lg text-[11px] font-bold transition-all text-center block border border-sky-500/40"
-                >
-                  Disparar Diligência (R$ 15)
-                </a>
-              </div>
+                  <tr className="hover:bg-slate-800/30 transition-all">
+                    <td className="py-4 px-6">
+                      <p className="font-bold text-white text-sm">Falsificações Criadas em Editores Virtuais</p>
+                      <p className="text-slate-400 text-[11px] mt-0.5">Atestados comprados em grupos de mensagens com carimbos clonados de médicos reais e texto adulterado.</p>
+                    </td>
+                    <td className="py-4 px-6 text-slate-300">
+                      <span className="text-rose-400 font-bold flex items-center gap-1.5"><XCircle className="w-4 h-4 flex-shrink-0" /> Confunde o DP</span>
+                      <p className="text-[10px] text-slate-500 mt-1">Analista gasta horas telefonando para secretarias de clínicas sem retorno.</p>
+                    </td>
+                    <td className="py-4 px-6 bg-emerald-950/20 text-slate-300">
+                      <span className="text-emerald-400 font-bold flex items-center gap-1.5"><CheckCircle2 className="w-4 h-4 flex-shrink-0" /> Perícia PAdES</span>
+                      <p className="text-[10px] text-slate-400 mt-1">Identifica em 120ms se a assinatura digital foi corrompida ou inexistente.</p>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
           </div>
+
         </div>
       </section>
 
-      {/* 7. PERGUNTAS FREQUENTES EM LINGUAGEM HUMANA (FAQ) */}
-      <section id="perguntas-frequentes" className="py-14 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950/40">
+      {/* 4. OS 5 PILARES DE DEFESA DO VURIO (BENEFÍCIOS TÉCNICOS EM UI/UX) */}
+      <section id="pilares-defesa" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-900/40">
+        <div className="max-w-7xl mx-auto space-y-12">
+          
+          <div className="text-center space-y-3 max-w-3xl mx-auto">
+            <span className="text-[11px] font-bold text-sky-400 uppercase tracking-widest bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/20">
+              ARQUITETURA DE BLINDAGEM CORPORATIVA
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Os 5 Pilares de Defesa do Vurio
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              Cada camada foi projetada para fechar as brechas operacionais da rotina de Departamento Pessoal sem criar atrito com os colaboradores honestos.
+            </p>
+          </div>
+
+          {/* Bento Grid de 5 Pilares */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            
+            {/* Pilar 1: Geo-Shield */}
+            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-amber-500/50 transition-all flex flex-col justify-between space-y-4 group">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/20 text-amber-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  Auditoria de Deslocamento
+                </span>
+                <h3 className="text-base font-bold text-white">Vurio Geo-Shield™</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Cruza a cidade da sede da empresa com a geolocalização do consultório médico emissor. Identifica atestados de consultas rotineiras emitidos a centenas de quilômetros durante o expediente de trabalho presencial do colaborador.
+                </p>
+              </div>
+              <div className="pt-2 border-t border-slate-800 text-[11px] text-amber-300/80 font-mono">
+                ✓ Amparado no Art. 482 da CLT
+              </div>
+            </div>
+
+            {/* Pilar 2: Hash SHA-256 */}
+            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-sky-500/50 transition-all flex flex-col justify-between space-y-4 group">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Fingerprint className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-sky-400 uppercase tracking-wider bg-sky-500/10 px-2 py-0.5 rounded border border-sky-500/20">
+                  Trava de Duplicidade
+                </span>
+                <h3 className="text-base font-bold text-white">Antifraude por Hash SHA-256</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Cada atestado processado gera uma impressão digital criptográfica única. Se o mesmo PDF for reapresentado meses depois pelo mesmo funcionário ou compartilhado entre colegas para justificar ausências em lote, o sistema bloqueia na hora.
+                </p>
+              </div>
+              <div className="pt-2 border-t border-slate-800 text-[11px] text-sky-300/80 font-mono">
+                ✓ Zero risco de duplo abono financeiro
+              </div>
+            </div>
+
+            {/* Pilar 3: Janela Temporal CCT */}
+            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-indigo-500/50 transition-all flex flex-col justify-between space-y-4 group">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <Clock className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-indigo-300 uppercase tracking-wider bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20">
+                  Regras Sindicais
+                </span>
+                <h3 className="text-base font-bold text-white">Guardião Temporal de CCT</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Configure a tolerância em horas da Convenção Coletiva de Trabalho da sua categoria (ex: 48h úteis). O sistema calcula automaticamente o tempo decorrido desde a alta médica até o envio no WhatsApp, indicando se a falta deve ser abonada ou descontada.
+                </p>
+              </div>
+              <div className="pt-2 border-t border-slate-800 text-[11px] text-indigo-300/80 font-mono">
+                ✓ Fechamento de folha padronizado
+              </div>
+            </div>
+
+            {/* Pilar 4: Triagem Autônoma via WhatsApp */}
+            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-emerald-500/50 transition-all flex flex-col justify-between space-y-4 group md:col-span-2 lg:col-span-2">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <MessageSquare className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                  Zero Fricção de TI
+                </span>
+                <h3 className="text-base font-bold text-white">Triagem Autônoma via WhatsApp</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Seus colaboradores já usam o WhatsApp no dia a dia. Eles enviam o PDF ou foto do atestado para o número corporativo da empresa, o robô pericial do Vurio faz o download, executa a perícia e responde o colaborador com protocolo formal em 3 segundos. O DP não perde tempo abrindo arquivos manualmente.
+                </p>
+              </div>
+              <div className="pt-2 border-t border-slate-800 text-[11px] text-emerald-300/80 font-mono">
+                ✓ Integração via Evolution API com número exclusivo por empresa
+              </div>
+            </div>
+
+            {/* Pilar 5: Auditoria Retroativa de Passivo (5 Anos) */}
+            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-rose-500/50 transition-all flex flex-col justify-between space-y-4 group">
+              <div className="space-y-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center group-hover:scale-110 transition-transform">
+                  <TrendingDown className="w-5 h-5" />
+                </div>
+                <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider bg-rose-500/10 px-2 py-0.5 rounded border border-rose-500/20">
+                  Inteligência Financeira
+                </span>
+                <h3 className="text-base font-bold text-white">Auditoria de Passivo (5 Anos)</h3>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Suba o acervo histórico de atestados dos últimos 5 anos da sua empresa. O motor varre milhares de arquivos em lote, localiza padrões de falsificação e calcula o valor financeiro exato passível de cobrança e saneamento antes de ações trabalhistas.
+                </p>
+              </div>
+              <div className="pt-2 border-t border-slate-800 text-[11px] text-rose-300/80 font-mono">
+                ✓ Conforme prazo prescricional trabalhista (Art. 7º, XXIX CF)
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* 5. COMPLIANCE E PRIVACIDADE (A OBJEÇÃO DA LGPD DERRUBADA) */}
+      <section id="compliance-lgpd" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950/60">
+        <div className="max-w-7xl mx-auto space-y-12">
+          
+          <div className="text-center space-y-3 max-w-3xl mx-auto">
+            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/20">
+              SEGURANÇA JURÍDICA E DE DADOS
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Desenvolvido para atender às exigências mais rigorosas do seu DPO e Jurídico
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+              O Vurio opera sob os mais estritos princípios de <em>Privacy by Design</em> e minimização de dados, blindando sua empresa contra multas da ANPD e contestações sindicais.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-5xl mx-auto">
+            
+            {/* Bloco 1: Base Legal da LGPD */}
+            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                <Scale className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-white">Base Legal Expressa na LGPD</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                O tratamento de atestados médicos é 100% legalizado sob os <strong>Artigos 7º, II e 11, II, "a" da Lei 13.709/2018</strong>, que autorizam o processamento para cumprimento de obrigação legal ou regulatória da empresa (CLT e Lei 8.213/91).
+              </p>
+            </div>
+
+            {/* Bloco 2: Operador de Dados */}
+            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+                <Lock className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-white">Papel Estrito de Operador (Processor)</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Sua empresa é a única Controladora dos dados. O Vurio processa a integridade pericial sob estrito mandato técnico, sem comercialização, compartilhamento ou monetização de metadados com terceiros.
+              </p>
+            </div>
+
+            {/* Bloco 3: Zero Exigência de CID */}
+            <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+              <h3 className="text-sm font-bold text-white">Sem Exigência ou Guarda de CID</h3>
+              <p className="text-xs text-slate-300 leading-relaxed">
+                Em total harmonia com a <strong>Resolução CFM nº 1.658/2002</strong> e a <strong>Súmula do TST</strong>, o Vurio não exige o diagnóstico de doença (CID). O motor analisa apenas a autenticidade da assinatura médica, dados do emissor e prazo legal de afastamento.
+              </p>
+            </div>
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* 6. OFERTA DE ENTRADA & FORMULÁRIO DE CONVERSÃO INTELIGENTE (SEÇÃO 5) */}
+      <section id="ativar-trial" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-gradient-to-b from-slate-950 to-slate-900">
+        <div className="max-w-4xl mx-auto space-y-8">
+          
+          <div className="text-center space-y-3">
+            <span className="text-[11px] font-bold text-emerald-400 uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
+              TESTE PILOTO SEM COMPROMISSO
+            </span>
+            <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+              Coloque à prova o motor pericial do Vurio na sua empresa
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
+              Ative suas <strong>15 Consultas Gratuitas de Auditoria Forense</strong> e teste com atestados reais que geraram dúvidas no seu Departamento Pessoal no último mês.
+            </p>
+          </div>
+
+          {/* Card do Formulário de Conversão Inteligente */}
+          <div className="p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
+
+            {submitted ? (
+              <div className="text-center py-8 space-y-6 animate-fadeIn">
+                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
+                  <CheckCircle2 className="w-10 h-10" />
+                </div>
+                
+                <div className="space-y-2">
+                  <h3 className="text-xl font-bold text-white">Suas 15 Consultas Gratuitas Foram Ativadas!</h3>
+                  <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto">
+                    Seus dados foram registrados com sucesso. O WhatsApp do robô do Vurio foi aberto no seu dispositivo para você enviar seu primeiro atestado para auditoria em 3 segundos.
+                  </p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+                  {trialData?.whatsappUrl && (
+                    <a
+                      href={trialData.whatsappUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-6 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold shadow-lg shadow-emerald-600/20 transition-all flex items-center gap-2"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      <span>Abrir Conversa no WhatsApp do Robô</span>
+                    </a>
+                  )}
+
+                  <Link
+                    href={trialData?.dashboardUrl || '/dashboard'}
+                    className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-all flex items-center gap-2"
+                  >
+                    <Briefcase className="w-4 h-4 text-sky-400" />
+                    <span>Acessar Painel Web da Empresa</span>
+                  </Link>
+                </div>
+
+                <p className="text-[11px] text-slate-500">
+                  Caso o WhatsApp não tenha aberto automaticamente, clique no botão verde acima.
+                </p>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmitTrial} className="space-y-4 text-xs">
+                {formError && (
+                  <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-start gap-3 animate-shake">
+                    <AlertTriangle className="w-5 h-5 flex-shrink-0 text-rose-400 mt-0.5" />
+                    <div>
+                      <p className="font-bold text-xs">Não foi possível liberar as consultas gratuitas:</p>
+                      <p className="text-[11px] text-rose-200/90 mt-0.5 leading-relaxed">{formError}</p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1.5">Seu Nome Completo:</label>
+                    <input
+                      type="text"
+                      required
+                      value={formName}
+                      onChange={(e) => setFormName(e.target.value)}
+                      placeholder="Ex: Carlos Eduardo Mendes"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1.5">
+                      E-mail Corporativo Institucional:
+                      <span className="text-emerald-400 text-[10px] ml-1 font-normal">(Exclusivo B2B)</span>
+                    </label>
+                    <input
+                      type="email"
+                      required
+                      value={formEmail}
+                      onChange={(e) => setFormEmail(e.target.value)}
+                      placeholder="carlos@suaempresa.com.br"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 text-xs"
+                    />
+                    {formEmail.includes('@gmail') || formEmail.includes('@hotmail') || formEmail.includes('@outlook') || formEmail.includes('@yahoo') ? (
+                      <span className="text-[10px] text-amber-400 mt-1 block">
+                        ⚠️ Cadastros com @gmail/@hotmail não são autorizados para o piloto corporativo. Use seu e-mail da empresa.
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1.5">WhatsApp Corporativo com DDD:</label>
+                    <input
+                      type="tel"
+                      required
+                      value={formPhone}
+                      onChange={(e) => setFormPhone(e.target.value)}
+                      placeholder="(11) 98765-4321"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1.5">CNPJ da Empresa (Matriz ou Filial):</label>
+                    <input
+                      type="text"
+                      required
+                      value={formCnpj}
+                      onChange={(e) => {
+                        // Aplica máscara automática de CNPJ
+                        const raw = e.target.value.replace(/\D/g, '').slice(0, 14);
+                        const masked = raw.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
+                        setFormCnpj(raw.length === 14 ? masked : e.target.value);
+                      }}
+                      placeholder="00.000.000/0001-00"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1.5">Razão Social / Nome da Empresa:</label>
+                    <input
+                      type="text"
+                      required
+                      value={formCompany}
+                      onChange={(e) => setFormCompany(e.target.value)}
+                      placeholder="Ex: Grupo Industrial Paulista S/A"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500 text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-slate-300 font-semibold mb-1.5">Faixa de Colaboradores CLT:</label>
+                    <select
+                      value={formRange}
+                      onChange={(e) => setFormRange(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-emerald-500 text-xs"
+                    >
+                      <option value="50 a 100 colaboradores">50 a 100 colaboradores</option>
+                      <option value="100 a 500 colaboradores">100 a 500 colaboradores</option>
+                      <option value="500 a 2.000 colaboradores">500 a 2.000 colaboradores</option>
+                      <option value="Mais de 2.000 colaboradores">Mais de 2.000 colaboradores</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-[11px] text-slate-400 flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                  <span>
+                    <strong>Blindagem Antifraude:</strong> Piloto exclusivo para pessoas jurídicas ativas. Válido 1 vez por grupo empresarial (raiz de CNPJ).
+                  </span>
+                </div>
+
+                <div className="pt-2">
+                  <button
+                    type="submit"
+                    disabled={submitting}
+                    className="w-full py-4 bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white font-bold text-sm rounded-xl shadow-xl shadow-emerald-600/25 transition-all flex items-center justify-center gap-2 transform hover:-translate-y-0.5"
+                  >
+                    {submitting ? (
+                      <>
+                        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
+                        <span>Ativando 15 Consultas e Abrindo WhatsApp...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4 text-amber-300" />
+                        <span>ATIVAR MINHAS 15 CONSULTAS GRATUITAS AGORA</span>
+                        <ArrowRight className="w-4 h-4" />
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center gap-4 text-[11px] text-slate-400 pt-2">
+                  <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-400" /> Sem cartão de crédito</span>
+                  <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-400" /> Ativação e resposta em segundos</span>
+                  <span className="flex items-center gap-1"><Check className="w-3.5 h-3.5 text-emerald-400" /> Sem reuniões de vendas obrigatórias</span>
+                </div>
+              </form>
+            )}
+
+          </div>
+
+        </div>
+      </section>
+
+      {/* 7. PERGUNTAS FREQUENTES (FAQ) */}
+      <section id="perguntas-frequentes" className="py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950/40">
         <div className="max-w-4xl mx-auto space-y-8">
           
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-bold text-white">Dúvidas Frequentes</h2>
-            <p className="text-xs sm:text-sm text-slate-400">Respostas diretas e sem juridiquês:</p>
+            <p className="text-xs sm:text-sm text-slate-400">Respostas diretas de conformidade técnica e operacional:</p>
           </div>
 
           <div className="space-y-4 text-xs sm:text-sm">
-            
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
               <h4 className="font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-sky-400" />
-                Preciso instalar algum aplicativo no computador ou celular?
+                Como o funcionário envia o atestado sem criar constrangimentos?
               </h4>
               <p className="text-slate-300 leading-relaxed pl-6">
-                Não! Você pode usar o Vurio 100% pelo WhatsApp ou diretamente pelo navegador web. Não requer nenhuma instalação.
+                O colaborador simplesmente anexa o PDF ou a foto legível no WhatsApp oficial da empresa. O robô emite uma mensagem neutra e protocolada confirmando a recepção formal. O analista de DP não precisa fazer perguntas constrangedoras.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
               <h4 className="font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-sky-400" />
-                Posso enviar uma foto de papel tirada pela câmera do celular?
+                O que o Vurio faz quando um atestado é adulterado?
               </h4>
               <p className="text-slate-300 leading-relaxed pl-6">
-                Sim! Nosso sistema lê a imagem, reconhece o carimbo do médico, checa o CRM no Conselho de Medicina e confere a data do atendimento.
+                O Vurio não faz juízos morais nem acusa ninguém. O sistema emite um laudo técnico apontando objetivamente as divergências criptográficas (como SHA-256 alterado ou ausência de cadeia ICP-Brasil), fornecendo respaldo documental incontestável para o Departamento Jurídico da sua empresa.
               </p>
             </div>
 
             <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
               <h4 className="font-bold text-white flex items-center gap-2">
                 <HelpCircle className="w-4 h-4 text-sky-400" />
-                O que o sistema faz se o atestado tiver divergência de dados?
+                Preciso integrar ao meu software de folha ou ERP?
               </h4>
               <p className="text-slate-300 leading-relaxed pl-6">
-                O Vurio <strong>não acusa ninguém</strong> de fraude. Emitimos um laudo pericial neutro apontando a inconsistência (como divergência de dígitos no CPF ou emissão em outra cidade) e orientando o DP a fazer uma checagem amigável com o colaborador.
+                Não é obrigatório! O Vurio funciona de forma 100% autônoma desde o primeiro minuto via WhatsApp e Painel Web. Caso sua equipe de TI deseje, fornecemos webhooks para sincronização de dados.
               </p>
             </div>
-
-            <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 space-y-1.5">
-              <h4 className="font-bold text-white flex items-center gap-2">
-                <HelpCircle className="w-4 h-4 text-sky-400" />
-                Como funciona a Consulta Avulsa de R$ 10,00?
-              </h4>
-              <p className="text-slate-300 leading-relaxed pl-6">
-                Você envia o atestado para o nosso WhatsApp, recebe a confirmação dos dados e paga os R$ 10 via chave PIX gerada na hora. O laudo pericial sai imediatamente no seu chat.
-              </p>
-            </div>
-
           </div>
+
         </div>
       </section>
 
-      {/* 8. FOOTER EXECUTIVO COM RESPALDO LEGAL */}
-      <footer className="bg-slate-950 py-10 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500 space-y-3">
-        <div className="flex items-center justify-center space-x-2 text-slate-400 font-medium">
-          <ShieldCheck className="w-4 h-4 text-sky-400" />
-          <span>Vurio Compliance & Perícia Digital LTDA</span>
+      {/* 8. FOOTER CORPORATIVO */}
+      <footer className="bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-900 text-center text-xs text-slate-500 space-y-4">
+        <div className="flex items-center justify-center space-x-2 text-slate-300 font-semibold">
+          <ShieldCheck className="w-4 h-4 text-emerald-400" />
+          <span>Vurio Compliance & Perícia Digital Ltda</span>
         </div>
         <p className="max-w-2xl mx-auto text-[11px] leading-relaxed text-slate-500">
-          Respaldo legal: Medida Provisória nº 2.200-2/2001 (ICP-Brasil), Lei 14.510/2023 (Telemedicina), Resoluções CFM 1.658/2002 e 2.299/2021, Art. 482 da CLT e LGPD (Lei 13.709/2018).
+          Amparado na MP nº 2.200-2/2001 (ICP-Brasil), Resolução CFM 1.658/2002, Art. 482 da CLT, Lei 14.510/2023 (Telemedicina) e LGPD (Lei 13.709/2018).
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 pt-1">
           <Link href="/termos" className="hover:text-emerald-400 underline transition-colors">
-            Termos de Uso & Política de Privacidade (LGPD)
+            Termos de Uso & Segurança Jurídica
           </Link>
           <span>•</span>
           <Link href="/termos" className="hover:text-emerald-400 underline transition-colors">
-            Política de Zero Retenção de Arquivos
+            Política de Privacidade & LGPD
           </Link>
           <span>•</span>
           <Link href="/dashboard" className="hover:text-sky-400 transition-colors">
-            Painel do Cliente (DP)
+            Painel DP do Cliente
           </Link>
         </div>
         <p className="text-[10px] text-slate-600 pt-2">
-          © 2026 Vurio. Todos os direitos reservados.
+          © 2026 Vurio. Todos os direitos reservados. CNPJ: 42.189.542/0001-90.
         </p>
       </footer>
+
+      {/* MODAL: SIMULAÇÃO LIVE DE LAUDO PERICIAL */}
+      {demoModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 space-y-4 animate-scaleUp">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                <Activity className="w-4 h-4 text-sky-400" />
+                Simulação Interativa de Laudo Pericial Vurio
+              </h3>
+              <button onClick={() => setDemoModalOpen(false)} className="text-slate-400 hover:text-white">
+                <XCircle className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex justify-between items-center">
+                <span className="text-slate-400">Documento Auditado:</span>
+                <span className="font-mono text-white">Atestado_Exemplo_Fraude_PAdES.pdf</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-slate-400 text-[10px] block">MÉDICO DO CARIMBO</span>
+                  <span className="font-bold text-white">Dr. Marcos Silva (CRM 12345/SP)</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-slate-400 text-[10px] block">STATUS NO CFM</span>
+                  <span className="font-bold text-emerald-400">REGULAR / ATIVO</span>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 space-y-1">
+                <p className="font-bold flex items-center gap-1.5 text-rose-400">
+                  <AlertTriangle className="w-4 h-4 text-rose-400" />
+                  Alerta Criptográfico: Assinatura Digital ICP-Brasil Rompida
+                </p>
+                <p className="text-[11px] text-slate-300">
+                  O arquivo PDF sofreu edição após a assinatura digital do médico. O hash original (Digest) não corresponde aos bytes atuais do arquivo, configurando quebra de integridade jurídica (PAdES Tampered).
+                </p>
+              </div>
+
+              <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 space-y-1">
+                <p className="font-bold flex items-center gap-1.5 text-amber-400">
+                  <MapPin className="w-4 h-4 text-amber-400" />
+                  Alerta Geo-Shield: Distância Incompatível
+                </p>
+                <p className="text-[11px] text-slate-300">
+                  Clínica emissora localizada a 380 km da unidade onde o colaborador cumpriu jornada no mesmo turno.
+                </p>
+              </div>
+            </div>
+
+            <div className="pt-2 flex justify-end gap-2">
+              <button
+                onClick={() => setDemoModalOpen(false)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs transition-all"
+              >
+                Fechar Simulação
+              </button>
+              <a
+                href="#ativar-trial"
+                onClick={() => setDemoModalOpen(false)}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs transition-all shadow"
+              >
+                Ativar 15 Consultas Gratuitas →
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );

@@ -1,4 +1,4 @@
-import { supabase, isSupabaseConfigured } from '../supabase/client';
+﻿import { supabase, isSupabaseConfigured } from '../supabase/client';
 import { generatePoliceDossier, PoliceDossierData } from './police-dossier-generator';
 
 export interface DoctorSubscription {
@@ -27,7 +27,7 @@ export interface CrmIncident {
   createdAt: string;
 }
 
-// Mock inicial em memória para testes e demonstrações
+// Mock inicial em memÃ³ria para testes e demonstraÃ§Ãµes
 const inMemoryDoctors: DoctorSubscription[] = [
   {
     id: 'doc-1',
@@ -35,7 +35,7 @@ const inMemoryDoctors: DoctorSubscription[] = [
     crm: '123456',
     uf: 'SP',
     email: 'carlos.menezes@medicina.com.br',
-    whatsapp: '5511988887777',
+    whatsapp: '551331500987',
     plan: 'DOCTOR_SHIELD_ANNUAL',
     isActive: true,
     createdAt: new Date().toISOString()
@@ -45,7 +45,7 @@ const inMemoryDoctors: DoctorSubscription[] = [
 const inMemoryIncidents: CrmIncident[] = [];
 
 /**
- * Cadastra ou atualiza o monitoramento de um médico no Vurio Doctor Shield
+ * Cadastra ou atualiza o monitoramento de um mÃ©dico no Vurio Doctor Shield
  */
 export async function registerDoctorSubscription(params: {
   doctorName: string;
@@ -109,7 +109,7 @@ export async function registerDoctorSubscription(params: {
         };
       }
     } catch (e) {
-      console.warn('Erro ao salvar médico no Supabase:', e);
+      console.warn('Erro ao salvar mÃ©dico no Supabase:', e);
     }
   }
 
@@ -117,7 +117,7 @@ export async function registerDoctorSubscription(params: {
 }
 
 /**
- * Verifica se um médico com o CRM informado está inscrito no monitoramento
+ * Verifica se um mÃ©dico com o CRM informado estÃ¡ inscrito no monitoramento
  */
 export async function findSubscribedDoctor(crm: string, uf: string): Promise<DoctorSubscription | null> {
   const cleanCrm = crm.replace(/\D/g, '');
@@ -159,8 +159,8 @@ export async function findSubscribedDoctor(crm: string, uf: string): Promise<Doc
 }
 
 /**
- * Formata mensagem de alerta passivo para o médico
- * Princípio UX aprovado: "Caso tenha procedência, ignore esta mensagem. Mas se não foi você..."
+ * Formata mensagem de alerta passivo para o mÃ©dico
+ * PrincÃ­pio UX aprovado: "Caso tenha procedÃªncia, ignore esta mensagem. Mas se nÃ£o foi vocÃª..."
  */
 export function formatDoctorPassiveAlertMessage(params: {
   doctorName: string;
@@ -171,20 +171,20 @@ export function formatDoctorPassiveAlertMessage(params: {
   incidentTokenUrl: string;
 }): string {
   return (
-    `🛡️ *Vurio Doctor Shield — Alerta de Apresentação de CRM*\n\n` +
-    `Olá, Dr(a). ${params.doctorName} (CRM ${params.crm}/${params.uf}).\n\n` +
-    `Identificamos a apresentação de um atestado médico emitido sob seu registro profissional no dia de hoje` +
+    `ðŸ›¡ï¸ *Vurio Doctor Shield â€” Alerta de ApresentaÃ§Ã£o de CRM*\n\n` +
+    `OlÃ¡, Dr(a). ${params.doctorName} (CRM ${params.crm}/${params.uf}).\n\n` +
+    `Identificamos a apresentaÃ§Ã£o de um atestado mÃ©dico emitido sob seu registro profissional no dia de hoje` +
     `${params.cityOrCompany ? ` em ${params.cityOrCompany}` : ''}` +
     `${params.patientInitials ? ` (Paciente: ${params.patientInitials})` : ''}.\n\n` +
-    `👉 *Caso este atendimento tenha procedência legítima, por gentileza apenas IGNORE esta notificação.*\n\n` +
-    `🚨 *SE NÃO FOI VOCÊ QUEM EMITIU:* Toque no link seguro abaixo para registrar o alerta de uso indevido e emitir seu Dossiê para B.O. Policial em 1 clique:\n` +
+    `ðŸ‘‰ *Caso este atendimento tenha procedÃªncia legÃ­tima, por gentileza apenas IGNORE esta notificaÃ§Ã£o.*\n\n` +
+    `ðŸš¨ *SE NÃƒO FOI VOCÃŠ QUEM EMITIU:* Toque no link seguro abaixo para registrar o alerta de uso indevido e emitir seu DossiÃª para B.O. Policial em 1 clique:\n` +
     `${params.incidentTokenUrl}\n\n` +
-    `_Vurio: Protegendo médicos contra fraudadores e exercício ilegal da medicina._`
+    `_Vurio: Protegendo mÃ©dicos contra fraudadores e exercÃ­cio ilegal da medicina._`
   );
 }
 
 /**
- * Registra um incidente de CRM e gera o dossiê para B.O. Policial
+ * Registra um incidente de CRM e gera o dossiÃª para B.O. Policial
  */
 export async function createDoctorIncident(params: {
   doctorCrm: string;
@@ -232,8 +232,8 @@ export async function createDoctorIncident(params: {
       presentationDate: declaredAt,
       restDaysClaimed: params.restDaysClaimed,
       technicalInconsistencies: params.technicalInconsistencies || [
-        'Divergência de assinatura digital ICP-Brasil',
-        'Repúdio formal de emissão manifestado pelo médico titular'
+        'DivergÃªncia de assinatura digital ICP-Brasil',
+        'RepÃºdio formal de emissÃ£o manifestado pelo mÃ©dico titular'
       ]
     },
     repudiationStatement: {
@@ -241,7 +241,7 @@ export async function createDoctorIncident(params: {
       ipAddress: params.ipAddress,
       statementText:
         params.customStatement ||
-        'Declaro formalmente para todos os fins de direito que JAMAIS atendi o referido paciente na data indicada e NÃO emiti o atestado em questão, tratando-se de falsidade ideológica e uso indevido do meu CRM.'
+        'Declaro formalmente para todos os fins de direito que JAMAIS atendi o referido paciente na data indicada e NÃƒO emiti o atestado em questÃ£o, tratando-se de falsidade ideolÃ³gica e uso indevido do meu CRM.'
     }
   };
 
@@ -283,8 +283,8 @@ export async function createDoctorIncident(params: {
 }
 
 /**
- * Consulta de Exposição Histórica de CRM ("Raio-X de Fraudes Passadas")
- * Venda consultiva para médicos saberem se seu CRM foi usado no passado
+ * Consulta de ExposiÃ§Ã£o HistÃ³rica de CRM ("Raio-X de Fraudes Passadas")
+ * Venda consultiva para mÃ©dicos saberem se seu CRM foi usado no passado
  */
 export async function checkCrmExposureHistory(crm: string, uf: string): Promise<{
   crm: string;
@@ -317,11 +317,11 @@ export async function checkCrmExposureHistory(crm: string, uf: string): Promise<
         inconsistentOccurrences = totalOccurrences - authenticOccurrences;
       }
     } catch (e) {
-      console.warn('Erro ao consultar histórico de CRM no Supabase:', e);
+      console.warn('Erro ao consultar histÃ³rico de CRM no Supabase:', e);
     }
   }
 
-  // Se não houver dados no banco, simula análise inteligente com base nas estatísticas gerais de mercado
+  // Se nÃ£o houver dados no banco, simula anÃ¡lise inteligente com base nas estatÃ­sticas gerais de mercado
   if (totalOccurrences === 0) {
     totalOccurrences = Math.floor(Math.random() * 8) + 1;
     inconsistentOccurrences = Math.floor(Math.random() * 3);
@@ -335,8 +335,8 @@ export async function checkCrmExposureHistory(crm: string, uf: string): Promise<
 
   const recommendation =
     inconsistentOccurrences > 0
-      ? `Detectamos ${inconsistentOccurrences} atestado(s) inconforme(s) ou sem assinatura digital com seu CRM. Ative o Vurio Doctor Shield imediatamente para bloquear novas utilizações e gerar seus Dossiês de B.O. Policial.`
-      : `Seu CRM foi localizado em ${totalOccurrences} emissão(ões) legítima(s). Ative o monitoramento contínuo para evitar clonagens de carimbo em clínicas terceiras.`;
+      ? `Detectamos ${inconsistentOccurrences} atestado(s) inconforme(s) ou sem assinatura digital com seu CRM. Ative o Vurio Doctor Shield imediatamente para bloquear novas utilizaÃ§Ãµes e gerar seus DossiÃªs de B.O. Policial.`
+      : `Seu CRM foi localizado em ${totalOccurrences} emissÃ£o(Ãµes) legÃ­tima(s). Ative o monitoramento contÃ­nuo para evitar clonagens de carimbo em clÃ­nicas terceiras.`;
 
   return {
     crm: cleanCrm,
@@ -349,3 +349,4 @@ export async function checkCrmExposureHistory(crm: string, uf: string): Promise<
     recommendation
   };
 }
+

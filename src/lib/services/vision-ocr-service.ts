@@ -1,9 +1,10 @@
 /**
  * Vurio - Serviço de OCR e Visão Computacional para Atestados Físicos
- * Utiliza o Google Gemini 1.5 Flash (Google AI Studio PRO) para leitura pericial de fotos de receituários.
+ * Utiliza o Google Gemini 3.8 Flash para leitura pericial de fotos de receituários e documentos médicos.
  */
 
 export interface ExtractedAttestationData {
+  isMedicalAttestation: boolean;
   doctorName: string | null;
   crm: string | null;
   uf: string | null;
@@ -22,10 +23,11 @@ export interface ExtractedAttestationData {
  * Prompt pericial de alta precisão para extração médica
  */
 const FORENSIC_OCR_PROMPT = `
-Você é um perito forense e auditor médico do Vurio. Sua tarefa é analisar minuciosamente esta imagem de atestado médico físico / receituário manuscrito ou carimbado e extrair os dados em formato JSON estrito.
+Você é um perito forense e auditor médico do Vurio. Sua tarefa é analisar minuciosamente esta imagem e verificar se trata-se de um atestado médico físico, receituário, declaração de comparecimento ou documento de saúde.
 
 Retorne EXCLUSIVAMENTE um objeto JSON válido (sem blocos de markdown, sem explicações extras) com a seguinte estrutura:
 {
+  "isMedicalAttestation": true,
   "doctorName": "Nome completo do médico identificado no carimbo ou cabeçalho (sem título Dr.)",
   "crm": "Apenas os números do CRM",
   "uf": "Duas letras da sigla do estado do CRM (ex: SP, RJ, MG)",
@@ -38,7 +40,9 @@ Retorne EXCLUSIVAMENTE um objeto JSON válido (sem blocos de markdown, sem expli
   "clinicName": "Nome da clínica, hospital ou consultório impresso"
 }
 
-Se algum campo não estiver legível ou ausente na imagem, defina seu valor como null.
+REGRAS CRÍTICAS:
+1. Se a imagem NÃO for um atestado médico, receituário, declaração clínica ou documento da área da saúde (por exemplo: for uma foto comum, contrato, comprovante de pagamento, holerite, nota fiscal ou documento aleatório), defina "isMedicalAttestation": false e defina todos os outros campos como null.
+2. Se for um atestado médico, defina "isMedicalAttestation": true. Se algum campo específico não estiver legível ou ausente na imagem, defina seu valor como null.
 `.trim();
 
 /**
@@ -54,94 +58,99 @@ export async function extractAttestationFromImageBuffer(
     process.env.GOOGLE_API_KEY ||
     '';
 
-  // 1. Se possuir chave do Google AI Studio configurada, utiliza o Gemini 1.5 Flash
+  // 1. Se possuir chave do Google AI Studio configurada, utiliza o Gemini Vision (com fallback resiliente)
   if (apiKey) {
-    try {
-      const base64Image = imageBuffer.toString('base64');
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    const base64Image = imageBuffer.toString('base64');
+    const modelsToTry = ['gemini-3.8-flash', 'gemini-flash-latest'];
 
-      const response = await fetch(url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: FORENSIC_OCR_PROMPT },
-                {
-                  inlineData: {
-                    mimeType: mimeType || 'image/jpeg',
-                    data: base64Image
+    for (const model of modelsToTry) {
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [
+              {
+                parts: [
+                  { text: FORENSIC_OCR_PROMPT },
+                  {
+                    inlineData: {
+                      mimeType: mimeType || 'image/jpeg',
+                      data: base64Image
+                    }
                   }
-                }
-              ]
+                ]
+              }
+            ],
+            generationConfig: {
+              temperature: 0.1,
+              responseMimeType: 'application/json'
             }
-          ],
-          generationConfig: {
-            temperature: 0.1,
-            responseMimeType: 'application/json'
+          })
+        });
+
+        if (response.ok) {
+          const json = await response.json();
+          const rawContent = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
+          
+          if (rawContent) {
+            const cleanJson = rawContent
+              .replace(/```json/gi, '')
+              .replace(/```/g, '')
+              .trim();
+            const parsed = JSON.parse(cleanJson);
+
+            const isMedical = parsed.isMedicalAttestation !== false;
+
+            return {
+              isMedicalAttestation: isMedical,
+              doctorName: isMedical ? (parsed.doctorName || null) : null,
+              crm: isMedical && parsed.crm ? String(parsed.crm).replace(/\D/g, '') : null,
+              uf: isMedical && parsed.uf ? String(parsed.uf).toUpperCase() : (isMedical ? 'SP' : null),
+              patientName: isMedical ? (parsed.patientName || null) : null,
+              patientCpf: isMedical ? (parsed.patientCpf || null) : null,
+              emissionDate: isMedical ? (parsed.emissionDate || null) : null,
+              startDate: isMedical ? (parsed.startDate || parsed.emissionDate || null) : null,
+              days: isMedical && parsed.days ? parseInt(parsed.days, 10) : null,
+              cid: isMedical ? (parsed.cid || null) : null,
+              clinicName: isMedical ? (parsed.clinicName || null) : null,
+              rawExtractedText: rawContent,
+              source: 'GEMINI_VISION'
+            };
           }
-        })
-      });
-
-      if (response.ok) {
-        const json = await response.json();
-        const rawContent = json.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        
-        if (rawContent) {
-          const cleanJson = rawContent
-            .replace(/```json/gi, '')
-            .replace(/```/g, '')
-            .trim();
-          const parsed = JSON.parse(cleanJson);
-
-          return {
-            doctorName: parsed.doctorName || null,
-            crm: parsed.crm ? String(parsed.crm).replace(/\D/g, '') : null,
-            uf: parsed.uf ? String(parsed.uf).toUpperCase() : 'SP',
-            patientName: parsed.patientName || null,
-            patientCpf: parsed.patientCpf || null,
-            emissionDate: parsed.emissionDate || null,
-            startDate: parsed.startDate || parsed.emissionDate || null,
-            days: parsed.days ? parseInt(parsed.days, 10) : null,
-            cid: parsed.cid || null,
-            clinicName: parsed.clinicName || null,
-            rawExtractedText: rawContent,
-            source: 'GEMINI_VISION'
-          };
+        } else {
+          console.warn(`[VisionOCR] Modelo ${model} retornou status ${response.status}. Tentando modelo alternativo...`);
         }
-      } else {
-        console.warn(`[VisionOCR] Chamada Gemini falhou com status ${response.status}:`, await response.text());
+      } catch (err) {
+        console.warn(`[VisionOCR] Erro ao chamar modelo ${model}:`, err);
       }
-    } catch (err) {
-      console.warn('[VisionOCR] Exceção na chamada Gemini Vision:', err);
     }
   }
 
-  // 2. Fallback Inteligente Heurístico:
-  // Se a chave não estiver no ambiente (ou falha de rede), reconhece a amostra real
-  // "04_foto_atestado_papel.jpg" e formatos padrão para manter o sistema operacional
+  // 2. Fallback sem chave ou em erro de rede:
+  // Retorna seguro sem inventar médicos ou CRMs fictícios
   return parseHeuristicFromImage(imageBuffer);
 }
 
 /**
- * Fallback de extração para fotos médicas conhecidas e testes
+ * Fallback seguro quando a visão computacional não estiver acessível
  */
 function parseHeuristicFromImage(imageBuffer: Buffer): ExtractedAttestationData {
-  // A foto de teste "04_foto_atestado_papel.jpg" contém:
-  // Dr. Roberto Santos, CRM 54321/SP, Clínica Médica São José, 3 dias, CID J00, 07 de outubro de 2023
   return {
-    doctorName: 'Roberto Santos',
-    crm: '54321',
-    uf: 'SP',
-    patientName: 'Marcos Vinicius Silva',
-    patientCpf: '12.345.678-9',
-    emissionDate: '07/10/2023',
-    startDate: '07/10/2023',
-    days: 3,
-    cid: 'CID J00 (Nasofaringite aguda)',
-    clinicName: 'Clínica Médica São José',
-    rawExtractedText: 'Clínica Médica São José - Dr. Roberto Santos CRM 54321/SP - Paciente Marcos Vinicius Silva - 3 dias - CID J00 - Data: 07/10/2023',
+    isMedicalAttestation: false,
+    doctorName: null,
+    crm: null,
+    uf: null,
+    patientName: null,
+    patientCpf: null,
+    emissionDate: null,
+    startDate: null,
+    days: null,
+    cid: null,
+    clinicName: null,
+    rawExtractedText: '',
     source: 'HEURISTIC_FALLBACK'
   };
 }

@@ -18,7 +18,8 @@ export type AttestationValidationStatus =
   | 'TAMPERED'              // Caso C1: Documento Adulterado (Hash do PDF não confere)
   | 'DUPLICATE_DOCUMENT'    // Caso C2: Documento já submetido anteriormente na empresa
   | 'NO_DIGITAL_SIGNATURE'  // PDF comum sem assinatura digital
-  | 'INVALID_CERTIFICATE';  // Assinatura corrompida ou certificado revogado/inválido
+  | 'INVALID_CERTIFICATE'   // Assinatura corrompida ou certificado revogado/inválido
+  | 'NOT_AN_ATTESTATION';   // Documento não é atestado ou declaração médica (ex: contrato, nota fiscal, foto comum)
 
 export interface AttestationValidationReport {
   status: AttestationValidationStatus;
@@ -124,6 +125,27 @@ export async function validateMedicalAttestation(
       }, extracted);
     }
 
+    // Se o Gemini indicou que a imagem NÃO é um documento médico e não há QR Code médico oficial
+    if (extracted.isMedicalAttestation === false) {
+      return {
+        status: 'NOT_AN_ATTESTATION',
+        isAuthentic: false,
+        fileSha256,
+        doctor: { name: null, crm: null, uf: null, cpf: null },
+        signature: {
+          hasSignature: false,
+          isIcpBrasil: false,
+          issuer: null,
+          signingTime: null,
+          integrityConfirmed: false,
+          calculatedSha256: null,
+          expectedSha256: null
+        },
+        restPeriod: { days: null, startDate: null },
+        details: 'A imagem enviada não foi identificada como um atestado médico, receituário ou declaração de saúde.'
+      };
+    }
+
     // Foto tradicional de papel (sem QR Code oficial)
     return await finalizeReport({
       status: 'PHOTO_MANUAL_PAPER',
@@ -189,16 +211,43 @@ export async function validateMedicalAttestation(
     pdfText = '';
   }
 
+  // Fallback seguro caso o parser de XRef/fontes falhe: extrai strings literais presentes nos operadores Tj
   if (!pdfText.trim()) {
-    pdfText = fileBuffer.toString('latin1');
+    const streamMatches = fileBuffer.toString('latin1').match(/\(([^)]+)\)\s*Tj/g);
+    if (streamMatches) {
+      pdfText = streamMatches.map(m => m.replace(/^\(|\)\s*Tj$/g, '')).join(' ');
+    }
   }
 
+  const hasMedicalContext = checkMedicalVocabulary(pdfText);
   const restPeriod = extractRestDaysAndPeriod(pdfText);
   const crmInfo = await extractCrmAndUf(fileBuffer);
   const patientInfo = extractPatientInfoFromText(pdfText);
 
   // 5. Extrair blocos de assinatura digital PAdES
   const signatures = extractPdfSignatures(fileBuffer);
+
+  // Se o PDF tem texto legível, mas não possui vocabulário médico nem CRM
+  if (pdfText.trim().length > 20 && !hasMedicalContext && !crmInfo.crm) {
+    return {
+      status: 'NOT_AN_ATTESTATION',
+      isAuthentic: false,
+      fileSha256,
+      doctor: { name: null, crm: null, uf: null, cpf: null },
+      signature: {
+        hasSignature: signatures.length > 0,
+        isIcpBrasil: false,
+        issuer: null,
+        signingTime: null,
+        integrityConfirmed: false,
+        calculatedSha256: null,
+        expectedSha256: null
+      },
+      restPeriod: { days: null, startDate: null },
+      details: 'O documento PDF enviado não contém termos característicos de um atestado médico ou declaração de saúde.'
+    };
+  }
+
   if (signatures.length === 0) {
     return await finalizeReport({
       status: 'NO_DIGITAL_SIGNATURE',
@@ -304,6 +353,32 @@ export async function validateMedicalAttestation(
   // 9. Documento Autêntico e Íntegro (ICP-Brasil)
   const doctorData = p7Result.doctorInfo;
 
+  // Se o PDF tem assinatura digital, mas NÃO possui nenhum vocabulário médico e NÃO possui CRM válido:
+  if (pdfText.trim().length > 20 && !hasMedicalContext && !crmInfo.crm) {
+    return {
+      status: 'NOT_AN_ATTESTATION',
+      isAuthentic: false,
+      fileSha256,
+      doctor: {
+        name: doctorData?.doctorName || null,
+        crm: null,
+        uf: null,
+        cpf: doctorData?.cpf || null
+      },
+      signature: {
+        hasSignature: true,
+        isIcpBrasil: doctorData?.isIcpBrasil || false,
+        issuer: doctorData?.issuerName || null,
+        signingTime: doctorData?.signingTime || null,
+        integrityConfirmed: true,
+        calculatedSha256,
+        expectedSha256
+      },
+      restPeriod: { days: null, startDate: null },
+      details: 'Documento assinado digitalmente, porém não identificado como atestado médico (ausência de termos médicos e CRM).'
+    };
+  }
+
   return await finalizeReport({
     status: 'VALID_INTACT',
     isAuthentic: true,
@@ -331,6 +406,28 @@ export async function validateMedicalAttestation(
     restPeriod,
     details: 'Atestado autêntico e íntegro. Assinatura digital válida e inviolabilidade confirmada.'
   }, patientInfo);
+}
+
+/**
+ * Verifica se o texto do documento possui termos essenciais do universo médico / atestados
+ */
+function checkMedicalVocabulary(text: string): boolean {
+  if (!text || text.trim().length === 0) return false;
+  const lower = text.toLowerCase();
+  const medicalWords = [
+    'atestado', 'atesto', 'declaracao de comparecimento', 'declaração de comparecimento',
+    'repouso', 'afastamento', 'dispensa do trabalho', 'dispensa laboral',
+    'paciente', 'medico', 'médico', 'medica', 'médica', 'cid-10', 'cid10', 'cid:',
+    'receituario', 'receituário', 'posologia', 'diagnostico', 'diagnóstico',
+    'clinica medica', 'clínica médica', 'consulta medica', 'consulta médica',
+    'atendimento medico', 'atendimento médico', 'crm/'
+  ];
+  for (const word of medicalWords) {
+    if (lower.includes(word)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 /**

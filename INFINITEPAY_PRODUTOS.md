@@ -89,5 +89,5 @@ Por favor, confirme a criação e me forneça os links de pagamento de cada um p
 * **Plano Compliance Pro (R$ 399,00/mês):** Slug `dmAxCSaySf`
 * **Add-on Geo-Shield Mensal (R$ 49,00/mês):** Slug `CoQoJ6Bb5Z`
 
-> 📲 **Fluxo de Assinatura:** O cliente clica no site, chama no WhatsApp (`551331500987`), passa seus dados e a InfinitePay envia a cobrança automática no WhatsApp e e-mail dele.
+> 📲 **Fluxo de Assinatura:** O cliente clica no site, chama no WhatsApp (`5511999990000` - máscara fictícia temporária), passa seus dados e a InfinitePay envia a cobrança automática no WhatsApp e e-mail dele.
 
