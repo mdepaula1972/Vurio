@@ -24,10 +24,14 @@ export async function GET(req: NextRequest) {
     });
 
     if (!stateRes.ok) {
+      const errText = await stateRes.text().catch(() => '');
       return NextResponse.json({
         online: true,
         state: 'close',
         instance,
+        httpStatus: stateRes.status,
+        apiResponse: errText,
+        keyUsed: apiKey ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}` : 'none',
         message: 'Instância desconectada ou inexistente.'
       });
     }
