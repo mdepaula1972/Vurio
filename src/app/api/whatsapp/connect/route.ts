@@ -64,7 +64,11 @@ export async function GET(req: NextRequest) {
       online: false,
       state: 'offline',
       instance,
-      error: error?.message || 'Servidor Evolution API inacessível em localhost:8080.',
+      targetUrl: `${apiUrl}/instance/connectionState/${instance}`,
+      envApiUrl: process.env.WHATSAPP_API_URL || 'NOT_DEFINED',
+      envProvider: process.env.WHATSAPP_PROVIDER || 'NOT_DEFINED',
+      error: error?.message || 'Servidor Evolution API inacessível.',
+      errorCause: error?.cause ? String(error.cause) : null,
       dockerCommand: 'docker-compose up -d'
     });
   }
