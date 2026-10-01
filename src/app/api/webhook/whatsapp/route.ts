@@ -93,22 +93,16 @@ export async function POST(req: NextRequest) {
         });
       }
 
-      if (lowerText.includes('olá') || lowerText.includes('ola') || lowerText.includes('oi') || lowerText.includes('bom dia') || lowerText.includes('boa tarde') || lowerText.includes('boa noite') || lowerText.includes('ajuda')) {
-        await sendWhatsAppMessage({
-          phone,
-          message: 'Olá! Sou o assistente pericial do *Vurio Compliance* 🛡️\n\nComo posso ajudar você hoje?\n\n📄 *Para auditar um atestado médico:* envie diretamente o arquivo PDF ou foto legível por aqui.\n🏢 *Para assinar um plano corporativo:* me diga qual plano deseja (Starter RH, Compliance Pro ou Enterprise) ou acesse https://www.vurio.com.br.'
-        });
-
-        return NextResponse.json({
-          received: true,
-          type: 'greeting',
-          message: 'Saudação respondida automaticamente.'
-        });
-      }
+      // Qualquer mensagem de texto sem anexo orienta o colaborador sobre o envio do atestado
+      await sendWhatsAppMessage({
+        phone,
+        message: 'Olá! Sou o assistente de recepção e validação de atestados do *Vurio* 🛡️\n\nPara entregar seu atestado médico ao Departamento Pessoal, basta enviar por aqui:\n📄 O arquivo *PDF* original ou uma *foto nítida e bem iluminada* do documento.\n\nAssim que você enviar, faremos a leitura e confirmação do recebimento em instantes.'
+      });
 
       return NextResponse.json({
         received: true,
-        message: 'Mensagem de texto recebida sem anexo de atestado.'
+        type: 'greeting',
+        message: 'Orientação de envio de atestado respondida automaticamente.'
       });
     }
 
