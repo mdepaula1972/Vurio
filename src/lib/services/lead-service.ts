@@ -1,6 +1,23 @@
 import { supabase, isSupabaseConfigured } from '../supabase/client';
 
 /**
+ * Conexão do banco para leads e placar:
+ * Considera conectado SOMENTE se existirem NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY
+ * (sem aceitar chave anônima como alternativa).
+ */
+export function isLeadDatabaseConnected(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+  return Boolean(
+    url && 
+    serviceKey && 
+    !url.includes('placeholder') && 
+    isSupabaseConfigured && 
+    supabase
+  );
+}
+
+/**
  * ==============================================================================
  * SERVIÇO DE GESTÃO DE LEADS & PLACAR VURIO (LGPD COMPLIANT)
  * ==============================================================================
@@ -119,7 +136,7 @@ export async function isDuplicateMessage(messageId: string, phone: string): Prom
   }
 
   // Deduplicação persistente no Supabase
-  if (isSupabaseConfigured && supabase) {
+  if (isLeadDatabaseConnected() && supabase) {
     try {
       const { error } = await supabase
         .from('webhook_processed_messages')
@@ -238,7 +255,7 @@ export async function registerOrUpdateLead(
   }
 
   // 2. AMBIENTE NORMAL / PREVIEW / PRODUÇÃO (VIA SUPABASE)
-  if (!isSupabaseConfigured || !supabase) {
+  if (!isLeadDatabaseConnected() || !supabase) {
     console.warn('[LeadService] Supabase não conectado para persistir lead.');
     return {
       isNewLead: false,
@@ -324,8 +341,8 @@ export async function registerOrUpdateLead(
 export async function generateLeadScoreboard(commandText: string): Promise<string> {
   const isTest = process.env.NODE_ENV === 'test';
 
-  // Se fora do ambiente de teste local e sem Supabase conectado:
-  if (!isTest && (!isSupabaseConfigured || !supabase)) {
+  // Se fora do ambiente de teste local e sem Supabase conectado com service role:
+  if (!isTest && !isLeadDatabaseConnected()) {
     return 'Placar indisponível: banco não conectado';
   }
 
@@ -344,11 +361,13 @@ export async function generateLeadScoreboard(commandText: string): Promise<strin
         .order('first_message_at', { ascending: true });
 
       if (error || !data) {
-        return 'Placar indisponível: banco não conectado';
+        console.error('[Scoreboard] Erro ao consultar banco:', error);
+        return 'Placar indisponível: erro ao consultar o banco';
       }
       leads = data as LeadRecord[];
-    } catch {
-      return 'Placar indisponível: banco não conectado';
+    } catch (err) {
+      console.error('[Scoreboard] Exceção ao consultar banco:', err);
+      return 'Placar indisponível: erro ao consultar o banco';
     }
   }
 
@@ -463,7 +482,7 @@ export async function purgeExpiredLeads(retentionDays = LEAD_RETENTION_DAYS): Pr
     return { deletedCount: count, success: true };
   }
 
-  if (!isSupabaseConfigured || !supabase) {
+  if (!isLeadDatabaseConnected() || !supabase) {
     return { deletedCount: 0, success: false, error: 'Supabase não conectado para executar expurgo' };
   }
 

@@ -1,12 +1,19 @@
-'use client';
-
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, ArrowLeft, Lock, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
+import { 
+  ShieldCheck, 
+  ArrowLeft, 
+  Lock, 
+  FileText, 
+  AlertCircle, 
+  CheckCircle2,
+  MessageSquare
+} from 'lucide-react';
+import { LEAD_RETENTION_DAYS } from '@/lib/services/lead-service';
 
 export default function TermosPage() {
   return (
-    <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-[#02c1db]/30 selection:text-[#02c1db]">
+    <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-[#02c1db]/30 selection:text-[#02c1db] bg-[#040c18]">
       
       {/* Top Navbar */}
       <header className="border-b border-slate-800/60 bg-[#040c18]/90 backdrop-blur-xl sticky top-0 z-50">
@@ -37,7 +44,7 @@ export default function TermosPage() {
             <span>Conformidade Legal & LGPD (Lei nº 13.709/2018)</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
-            Termos de Uso, Política de Privacidade e Não Custódia de Documentos
+            Termos de Uso, Política de Privacidade e Retenção de Dados
           </h1>
           <p className="text-slate-400 text-xs">
             Vurio Tecnologia & Triagem Digital LTDA • Atualizado em Outubro de 2026
@@ -53,62 +60,81 @@ export default function TermosPage() {
           </div>
         </div>
 
-        {/* DESTAQUE PRINCIPAL: POLÍTICA DE ZERO RETENÇÃO */}
-        <div className="p-6 rounded-2xl bg-emerald-950/20 border border-emerald-500/30 space-y-3">
-          <div className="flex items-center space-x-2 text-emerald-300 font-bold text-base">
+        {/* 1. PROCESSAMENTO DE ARQUIVOS DE ATESTADOS (RETENÇÃO REAL) */}
+        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
+          <div className="flex items-center space-x-2 text-emerald-400 font-bold text-base">
             <CheckCircle2 className="w-5 h-5" />
-            <span>Política de Processamento Efêmero (Zero Retenção de Arquivos)</span>
+            <span>1. Processamento Efêmero do Arquivo Original (Sem Armazenamento de Binários)</span>
           </div>
-          <p className="text-slate-200 leading-relaxed">
-            O Vurio opera sob o princípio da <strong>estrita necessidade e minimização de dados da LGPD (Art. 6º, III)</strong>. 
-            Não armazenamos cópias de atestados médicos em nossos servidores.
+          <p className="text-slate-300 leading-relaxed">
+            O Vurio opera sob o princípio da estrita necessidade e minimização de dados da LGPD (Art. 6º, III):
           </p>
-          <ul className="space-y-2 text-xs text-slate-300 pt-1">
-            <li>• <strong>Processamento em Memória Volátil:</strong> O atestado enviado (PDF ou foto) é processado apenas pelo tempo estritamente necessário para extrair as assinaturas, verificar integridade de metadados e consultar os registros públicos do CFM.</li>
-            <li>• <strong>Expurgo Imediato:</strong> Assim que o relatório de alertas de triagem é gerado e entregue ao solicitante (via WhatsApp ou Painel Web), o arquivo original é <strong>definitivamente expurgado e destruído</strong> da memória de nossos servidores.</li>
-            <li>• <strong>Entrega do Relatório Substitui a Custódia:</strong> A entrega do relatório de alertas ao empregador/solicitante exaure qualquer custódia documental pelo Vurio. A guarda documental legal perante a Justiça do Trabalho, INSS e eSocial compete exclusivamente à empresa contratante (Controladora).</li>
+          <ul className="space-y-2 text-xs text-slate-300 pl-2">
+            <li>• <strong>Arquivo Original (PDF ou Foto):</strong> O documento recebido pelo WhatsApp é mantido exclusivamente em memória volátil durante a execução da análise criptográfica e cadastral. Concluída a validação e emitido o relatório para o DP, o arquivo original <strong>não é gravado em disco, servidores de arquivo ou bucket de storage</strong>.</li>
+            <li>• <strong>Não Custódia Documental:</strong> A guarda legal do atestado perante o eSocial, Previdência e Justiça do Trabalho compete exclusivamente à empresa empregadora (Controladora).</li>
           </ul>
         </div>
 
-        {/* SEÇÃO 1: DADOS COLETADOS */}
+        {/* 2. LOGS TÉCNICOS DE VALIDAÇÃO GRAVADOS */}
         <div className="space-y-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <FileText className="w-4 h-4 text-sky-400" />
-            1. O Que Armazenamos (Logs Técnicos Criptográficos)
+            2. O Que Fica Gravado na Análise do Atestado (Logs Técnicos)
           </h3>
           <p>
-            Para evitar que o mesmo atestado seja apresentado em duplicidade (prevenção de inconsistências e duplicidades autorizada pelo Art. 7º, IX e Art. 11, II da LGPD), armazenamos unicamente:
+            Após o processamento de um atestado médico enviado por colaborador de empresa contratante, são registrados em banco de dados exclusivamente os seguintes metadados técnicos de auditoria para visualização no Painel do DP e prevenção de duplicidades:
           </p>
           <ul className="list-disc pl-5 space-y-1 text-xs text-slate-400">
-            <li><strong>Hash SHA-256 do arquivo:</strong> Uma sequência matemática irreversível (resumo criptográfico) que funciona como identificador único do documento, sem guardar o conteúdo nem o arquivo original;</li>
-            <li><strong>Dados Públicos do Médico:</strong> Nome público no CFM, CRM e Unidade da Federação;</li>
-            <li><strong>Período de Afastamento:</strong> Quantidade de dias prescritos para verificação de regras de CCT e limites legais;</li>
-            <li><strong>Carimbo de Tempo:</strong> Data e horário exatos em que a triagem automatizada foi solicitada.</li>
+            <li><strong>Hash SHA-256 do arquivo:</strong> Identificador matemático irreversível utilizado como trava técnica contra reapresentação do mesmo arquivo em períodos distintos;</li>
+            <li><strong>Nome do arquivo original recebido:</strong> Metadado de identificação fornecido no envio (ex.: atestado.pdf);</li>
+            <li><strong>Dados públicos do médico emissor:</strong> Nome completo, número do CRM e UF conferidos no CFM;</li>
+            <li><strong>Parâmetros da assinatura digital:</strong> Emissor do certificado (ICP-Brasil), hash calculado e hash esperado da cadeia PAdES;</li>
+            <li><strong>Período de repouso prescrito:</strong> Quantidade de dias e data de início do afastamento;</li>
+            <li><strong>Resultado da triagem e carimbo de tempo:</strong> Status técnico apurado (autêntico, divergência detectada, etc.) e data/hora da emissão.</li>
           </ul>
-          <p className="text-xs text-amber-300/90 pt-1">
-            ⚠️ <strong>Importante:</strong> Não armazenamos em banco de dados o diagnóstico clínico (CID) do paciente, resguardando integralmente o sigilo médico previsto na Resolução CFM nº 1.658/2002.
+          <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
+            <p className="text-emerald-400 font-semibold">
+              ✓ Dados que NÃO são gravados na tabela de auditoria de validação:
+            </p>
+            <p className="text-slate-400">
+              O sistema <strong>não grava</strong> o nome do colaborador/paciente, o telefone pessoal do colaborador nem o diagnóstico clínico (CID) na tabela de logs de validação, respeitando o sigilo médico (Resolução CFM nº 1.658/2002).
+            </p>
+          </div>
+        </div>
+
+        {/* 3. PRIVACIDADE DOS LEADS COMERCIAIS VIA WHATSAPP (EXIGÊNCIA ETAPA 3) */}
+        <div className="p-6 rounded-2xl bg-slate-900/80 border border-sky-500/30 space-y-3">
+          <div className="flex items-center space-x-2 text-[#02c1db] font-bold text-base">
+            <MessageSquare className="w-5 h-5" />
+            <span>3. Privacidade e Retenção de Contatos Comerciais (Leads via WhatsApp)</span>
+          </div>
+          <p className="text-slate-300 leading-relaxed">
+            Quem entrar em contato pelo WhatsApp tem o número e a mensagem armazenados por até <strong>{LEAD_RETENTION_DAYS} dias</strong>, com finalidade de atendimento comercial, e pode pedir a exclusão respondendo "sair" ou entrando em contato.
+          </p>
+          <p className="text-[11px] text-slate-400 leading-relaxed">
+            Após o período de retenção de {LEAD_RETENTION_DAYS} dias, os registros de leads inativos são automaticamente destruídos por rotina programada de expurgo seguro em conformidade com o Art. 16 da LGPD.
           </p>
         </div>
 
-        {/* SEÇÃO 2: PAPÉIS SOB A LGPD */}
+        {/* 4. PAPÉIS SOB A LGPD */}
         <div className="space-y-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <Lock className="w-4 h-4 text-sky-400" />
-            2. Papéis sob a LGPD: Controlador x Operador
+            4. Papéis sob a LGPD: Controlador x Operador
           </h3>
           <p>
-            A empresa contratante figura como <strong>Controladora</strong> dos dados de seus colaboradores, sendo a única responsável pela base legal e legitimidade da recepção do atestado no âmbito do vínculo de emprego. O Vurio atua exclusivamente como <strong>Operador técnico</strong>, executando a triagem automatizada de metadados sob instrução técnica e descartando o arquivo original imediatamente após o processamento.
+            A empresa contratante figura como <strong>Controladora</strong> dos dados de seus colaboradores, sendo a responsável pela base legal do recebimento do atestado no âmbito das obrigações da relação de emprego (CLT e Lei 8.213/91). O Vurio atua como <strong>Operador técnico</strong> sob mandato, realizando a triagem automatizada e entregando o relatório de alertas ao Departamento Pessoal.
           </p>
         </div>
 
-        {/* SEÇÃO 3: CARÁTER CONSULTIVO */}
+        {/* 5. CARÁTER CONSULTIVO */}
         <div className="space-y-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            3. Postura de Triagem Neutra e Não Punitiva
+            5. Postura de Triagem Técnica Neutra
           </h3>
           <p>
-            O Vurio não formula acusações de dolo, má-fé ou qualquer juízo condenatório. Os relatórios de triagem limitam-se a apontar conformidades técnicas ou indícios de divergência matemática e cadastral (ex.: ausência de cadeia ICP-Brasil válida, carimbo de tempo posterior ou CRM divergente). A análise e quaisquer medidas administrativas ou disciplinares competem exclusivamente aos profissionais humanos habilitados da empresa empregadora.
+            O Vurio não formula juízos de valor nem acusações de dolo. A ferramenta sinaliza indícios objetivos de conformidade ou inconsistência documental para subsidiar a deliberação dos profissionais de RH e Medicina do Trabalho da empresa.
           </p>
         </div>
 

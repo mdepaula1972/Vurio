@@ -33,7 +33,8 @@ import {
   registerOrUpdateLead, 
   generateLeadScoreboard, 
   purgeExpiredLeads,
-  extractRefCode
+  extractRefCode,
+  isLeadDatabaseConnected
 } from '../src/lib/services/lead-service';
 import { POST as webhookPost } from '../src/app/api/webhook/whatsapp/route';
 import { GET as cronGet } from '../src/app/api/cron/purge-leads/route';
