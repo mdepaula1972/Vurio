@@ -2,7 +2,7 @@
 
 Pelo presente instrumento particular, de um lado:
 
-**CONTRATADA:** **VURIO COMPLIANCE & PERÍCIA DIGITAL LTDA**, sociedade empresária limitada, inscrita no CNPJ/ME sob o nº 00.000.000/0001-00, com sede administrativa em território nacional, doravante denominada simplesmente **"VURIO"**;
+**CONTRATADA:** **VURIO TECNOLOGIA & TRIAGEM DIGITAL LTDA**, sociedade empresária limitada, inscrita no CNPJ/ME sob o nº 00.000.000/0001-00, com sede administrativa em território nacional, doravante denominada simplesmente **"VURIO"**;
 
 E, de outro lado:
 
@@ -13,14 +13,14 @@ Têm, entre si, justo e acordado o presente Contrato de Prestação de Serviços
 ---
 
 ### CLÁUSULA PRIMEIRA – DO OBJETO
-1.1. O presente contrato tem por objeto a disponibilização de licença de uso temporário, não exclusiva e revogável de software (SaaS) e serviços automatizados de perícia e auditoria de atestados médicos e documentos de saúde, operados via interface Web, API REST e canal de mensageria WhatsApp.
+1.1. O presente contrato tem por objeto a disponibilização de licença de uso temporário, não exclusiva e revogável de software (SaaS) e serviços automatizados de triagem técnica e auditoria de atestados médicos e documentos de saúde, operados via interface Web, API REST e canal de mensageria WhatsApp.
 
 1.2. O escopo dos serviços compreende, conforme o plano ou modalidade contratada:
 a) Auditoria criptográfica de assinaturas digitais no padrão ICP-Brasil (MP nº 2.200-2/2001);
 b) Consulta automatizada de situação cadastral e especialidade médica junto ao Conselho Federal de Medicina (CFM) e aos 27 Conselhos Regionais (CRMs);
 c) Motor de consistência cronológica e parametrização de prazos da Convenção Coletiva de Trabalho (CCT);
 d) Módulo Geo-Shield para cálculo de coerência geográfica entre posto de trabalho e clínica emissora (quando contratado);
-e) Emissão de Laudos Periciais de Auditoria com travas de duplicidade via hash SHA-256;
+e) Emissão de Relatórios de Alertas de Auditoria com travas de duplicidade via hash SHA-256;
 f) Esteira de diligências administrativas junto a clínicas médicas e geração de Dossiê para Notícia-Crime (quando contratados como Add-ons).
 
 ---
@@ -39,11 +39,11 @@ f) Esteira de diligências administrativas junto a clínicas médicas e geraçã
 ---
 
 ### CLÁUSULA TERCEIRA – DA ARQUITETURA DE EFEMERIDADE, NÃO CUSTÓDIA E ISENÇÃO DE RISCO POR PERDA DE ARQUIVOS
-3.1. **Da Natureza Pericial em Tempo Real:** As partes reconhecem expressamente que o VURIO opera como motor pericial analítico e **NÃO como custodiante, depositário ou cofre permanente de prontuários médicos**.
+3.1. **Da Natureza Pericial em Tempo Real:** As partes reconhecem expressamente que o VURIO opera como motor de triagem analítico e **NÃO como custodiante, depositário ou cofre permanente de prontuários médicos**.
 
-3.2. **Da Exaustão e Quitação pela Entrega do Laudo:** A entrega do Laudo Pericial de Auditoria (disponibilizado ao CONTRATANTE em formato de texto estruturado no WhatsApp ou via download em painel Web) **aperfeiçoa, consuma e encerra a prestação do serviço pericial relativo àquele documento específico**.
+3.2. **Da Exaustão e Quitação pela Entrega do Relatório de Alertas:** A entrega do Relatório de Alertas de Auditoria (disponibilizado ao CONTRATANTE em formato de texto estruturado no WhatsApp ou via download em painel Web) **aperfeiçoa, consuma e encerra a prestação do serviço de triagem relativo àquele documento específico**.
 
-3.3. **Do Descarte Imediato do Binário Original:** Tão logo processada a análise matemática e transmitido o laudo ao CONTRATANTE, o arquivo original (seja PDF ou fotografia) é **IMEDIATAMENTE PURGADO E DESTRUÍDO da memória volátil dos servidores do VURIO**, não remanescendo qualquer cópia integral ou parcial armazenada em bancos de dados do VURIO.
+3.3. **Do Descarte Imediato do Binário Original:** Tão logo processada a análise matemática e transmitido o relatório de alertas ao CONTRATANTE, o arquivo original (seja PDF ou fotografia) é **IMEDIATAMENTE PURGADO E DESTRUÍDO da memória volátil dos servidores do VURIO**, não remanescendo qualquer cópia integral ou parcial armazenada em bancos de dados do VURIO.
 
 3.4. **Da Guarda Exclusiva pelo CONTRATANTE:** O CONTRATANTE declara-se ciente de que **a obrigação legal de guarda, arquivamento e gestão probatória dos atestados de seus colaboradores perante a Justiça do Trabalho, INSS e Ministério do Trabalho compete única e exclusivamente ao próprio CONTRATANTE**. O VURIO resta integralmente exonerado de qualquer dever de reemissão de arquivos brutos ou responsabilidade civil por perda de documentos ocorrida nas dependências ou servidores do CONTRATANTE.
 
@@ -53,7 +53,7 @@ f) Esteira de diligências administrativas junto a clínicas médicas e geraçã
 4.1. Nos termos da Lei Geral de Proteção de Dados (Lei nº 13.709/2018), o CONTRATANTE figura como **CONTROLADOR** e o VURIO como **OPERADOR**.
 
 4.2. O VURIO compromete-se a:
-a) Tratar os dados dos atestados unicamente para a execução da perícia e auditoria contratada;
+a) Tratar os dados dos atestados unicamente para a execução da triagem técnica e auditoria contratada;
 b) Não comercializar, transferir ou compartilhar dados sensíveis com terceiros alheios à operação;
 c) Manter apenas o hash criptográfico SHA-256 e os metadados técnicos de emissão estritamente necessários para a trava de duplicidade e controle de franquia;
 d) Não gravar em banco de dados relacional o diagnóstico clínico (CID) do colaborador, respeitando a privacidade médica (Resolução CFM 1.658/2002).

@@ -152,7 +152,7 @@ export default function DiligenciaPage({ params }: { params: { token: string } }
                 </h2>
                 <div className="p-4 bg-emerald-950/40 border border-emerald-800/50 rounded-xl text-left text-sm text-emerald-200">
                   <p className="font-semibold mb-2 flex items-center">
-                    <Shield className="w-4 h-4 mr-1 text-emerald-400" /> Certidão de Confirmação Emitida
+                    <Shield className="w-4 h-4 mr-1 text-emerald-400" /> Confirmação do Emissor Registrada
                   </p>
                   <p className="leading-relaxed text-xs opacity-90">{result.officialStatement}</p>
                 </div>

@@ -318,7 +318,7 @@ export default function DashboardClientPage() {
       fetchLogs();
     } catch (err) {
       console.error('Erro ao analisar arquivo:', err);
-      alert('Falha na conexão com o servidor de validação pericial.');
+      alert('Falha na conexão com o servidor de triagem técnica.');
     } finally {
       setAnalyzing(false);
     }
@@ -411,7 +411,7 @@ export default function DashboardClientPage() {
       }
     } catch (err) {
       console.error('Erro ao emitir dossiê:', err);
-      alert('Falha ao comunicar com o gerador forense de Notícia-Crime.');
+      alert('Falha ao comunicar com o gerador técnico de Notícia-Crime.');
     } finally {
       setGeneratingDossier(false);
     }
@@ -744,7 +744,7 @@ export default function DashboardClientPage() {
                 {analyzing ? (
                   <div className="h-64 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col items-center justify-center text-center p-6 space-y-3">
                     <div className="w-8 h-8 border-2 border-sky-500 border-t-transparent rounded-full animate-spin"></div>
-                    <p className="text-sm font-semibold text-white">Executando Perícia Documental...</p>
+                    <p className="text-sm font-semibold text-white">Executando Análise Técnica de Integridade...</p>
                     <p className="text-xs text-slate-400">Checando ICP-Brasil, CFM Nacional, datas e regras da CCT.</p>
                   </div>
                 ) : lastResult ? (
@@ -769,7 +769,7 @@ export default function DashboardClientPage() {
                   <div className="h-64 rounded-2xl bg-slate-900/40 border border-slate-800 flex flex-col items-center justify-center text-center p-6 text-slate-400 text-xs">
                     <FileText className="w-8 h-8 text-slate-600 mb-2" />
                     <p>Nenhum documento analisado nesta sessão.</p>
-                    <p className="text-slate-500">Faça o upload ou envie pelo WhatsApp para visualizar o laudo técnico.</p>
+                    <p className="text-slate-500">Faça o upload ou envie pelo WhatsApp para visualizar o relatório técnico.</p>
                   </div>
                 )}
               </div>
@@ -871,7 +871,7 @@ export default function DashboardClientPage() {
                 {/* Add-on 2: Dossiê Jurídico & B.O. */}
                 <div className="p-5 bg-slate-950/80 rounded-2xl border border-emerald-500/30 space-y-3 relative flex flex-col justify-between hover:border-emerald-500/50 transition-all">
                   <span className="absolute -top-2.5 right-4 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[9px] font-black border border-emerald-500/40 uppercase tracking-wider">
-                    ADD-ON PERICIAL
+                    ADD-ON DE TRIAGEM
                   </span>
 
                   <div className="space-y-2 pt-1">
@@ -885,7 +885,7 @@ export default function DashboardClientPage() {
                       </div>
                     </div>
                     <p className="text-slate-300 text-[11px] leading-relaxed">
-                      Certidão pericial completa com hash SHA-256 inalterável, carimbo de tempo ICP-Brasil e histórico de incidentes do CRM, formatada para abertura direta de Notícia-Crime na Polícia Civil e justa causa trabalhista.
+                      Relatório técnico completa com hash SHA-256 inalterável, carimbo de tempo ICP-Brasil e histórico de incidentes do CRM, formatada para abertura direta de Notícia-Crime na Polícia Civil e justa causa trabalhista.
                     </p>
                   </div>
 
@@ -1045,7 +1045,7 @@ export default function DashboardClientPage() {
                     <div>
                       <h4 className="text-base font-bold text-white">WhatsApp 100% Conectado & Operacional</h4>
                       <p className="text-xs text-slate-400 mt-1">
-                        O robô pericial do Vurio está conectado ao número <strong className="text-emerald-300">{waData?.phone}</strong>.
+                        O robô de triagem do Vurio está conectado ao número <strong className="text-emerald-300">{waData?.phone}</strong>.
                       </p>
                     </div>
 
@@ -1473,7 +1473,7 @@ export default function DashboardClientPage() {
                   Políticas Internas de RH & CCT
                 </h2>
                 <p className="text-xs text-slate-400">
-                  Defina os prazos e parâmetros para que os laudos reflitam a convenção coletiva da sua categoria.
+                  Defina os prazos e parâmetros para que os relatórios reflitam a convenção coletiva da sua categoria.
                 </p>
               </div>
 
@@ -1768,7 +1768,7 @@ export default function DashboardClientPage() {
         </div>
       )}
 
-      {/* MODAL: EMISSÃO PERICIAL DE DOSSIÊ & B.O. POLICIAL */}
+      {/* MODAL: EMISSÃO DE RELATÓRIO TÉCNICO & B.O. POLICIAL */}
       {dossierModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-emerald-500/30 rounded-3xl max-w-2xl w-full p-6 space-y-5 animate-scaleUp max-h-[90vh] overflow-y-auto">
@@ -1779,7 +1779,7 @@ export default function DashboardClientPage() {
                 </span>
                 <div>
                   <h3 className="text-base font-bold text-white">Dossiê Jurídico & Notícia-Crime (B.O.)</h3>
-                  <p className="text-xs text-slate-400">Certidão pericial formatada para protocolo na Delegacia Eletrônica da Polícia Civil e Justa Causa (CLT 482)</p>
+                  <p className="text-xs text-slate-400">Relatório técnico formatada para protocolo na Delegacia Eletrônica da Polícia Civil e Justa Causa (CLT 482)</p>
                 </div>
               </div>
               <button onClick={() => setDossierModalOpen(false)} className="text-slate-400 hover:text-white">
@@ -1794,7 +1794,7 @@ export default function DashboardClientPage() {
                     <ShieldCheck className="w-4 h-4" /> Tipificação Penal Automatizada:
                   </p>
                   <p className="text-[11px] leading-relaxed">
-                    O motor forense compila os Arts. 299 (Falsidade Ideológica) e 304 (Uso de Documento Falso) do Código Penal com hash SHA-256 e declaração formal do médico vítima da clonagem de CRM.
+                    O motor técnica compila os Arts. 299 (Falsidade Ideológica) e 304 (Uso de Documento Falso) do Código Penal com hash SHA-256 e declaração formal do médico vítima da clonagem de CRM.
                   </p>
                 </div>
 
@@ -1864,7 +1864,7 @@ export default function DashboardClientPage() {
                     className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow-lg shadow-emerald-600/20 flex items-center gap-2"
                   >
                     {generatingDossier ? (
-                      <span>Compilando Relatório Forense...</span>
+                      <span>Compilando Relatório Técnica...</span>
                     ) : (
                       <>
                         <Sparkles className="w-4 h-4 text-amber-300" />
@@ -1878,14 +1878,14 @@ export default function DashboardClientPage() {
               <div className="space-y-4 text-xs animate-fadeIn">
                 <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-between">
                   <span className="text-emerald-300 font-bold flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4" /> Dossiê Pericial Emitido com Sucesso!
+                    <CheckCircle2 className="w-4 h-4" /> Dossiê de Triagem Emitido com Sucesso!
                   </span>
                   <span className="font-mono text-[11px] text-slate-300 bg-slate-950 px-2 py-0.5 rounded border border-slate-800">
                     {generatedDossierData.dossier?.incidentCode || 'VURIO-BO-SP'}
                   </span>
                 </div>
 
-                {/* Visualizador de Texto Forense */}
+                {/* Visualizador de Texto Técnica */}
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-[10px] text-slate-300 max-h-72 overflow-y-auto whitespace-pre-wrap leading-relaxed select-all">
                   {generatedDossierData.dossier?.plainTextReport}
                 </div>

@@ -2,14 +2,14 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { ShieldCheck, ArrowLeft, Lock, FileText, CheckCircle2 } from 'lucide-react';
+import { ShieldCheck, ArrowLeft, Lock, FileText, CheckCircle2, AlertCircle } from 'lucide-react';
 
 export default function TermosPage() {
   return (
-    <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-sky-500/30 selection:text-sky-200">
+    <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-[#02c1db]/30 selection:text-[#02c1db]">
       
       {/* Top Navbar */}
-      <header className="border-b border-slate-800/60 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-50">
+      <header className="border-b border-slate-800/60 bg-[#040c18]/90 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           <Link 
             href="/"
@@ -40,8 +40,17 @@ export default function TermosPage() {
             Termos de Uso, Política de Privacidade e Não Custódia de Documentos
           </h1>
           <p className="text-slate-400 text-xs">
-            Vurio Compliance & Perícia Digital LTDA • Atualizado em Setembro de 2026
+            Vurio Tecnologia & Triagem Digital LTDA • Atualizado em Outubro de 2026
           </p>
+        </div>
+
+        {/* AVISO LEGAL CRÍTICO */}
+        <div className="p-4 rounded-xl bg-sky-950/30 border border-sky-500/30 text-sky-200 text-xs flex items-start gap-3">
+          <AlertCircle className="w-5 h-5 flex-shrink-0 text-[#02c1db] mt-0.5" />
+          <div>
+            <strong className="block text-white mb-0.5">Aviso Legal sobre a Natureza da Triagem:</strong>
+            O Vurio sinaliza indícios técnicos e divergências para apoiar a análise do RH e Departamento Pessoal. A decisão final é sempre humana e não substitui parecer médico ou jurídico.
+          </div>
         </div>
 
         {/* DESTAQUE PRINCIPAL: POLÍTICA DE ZERO RETENÇÃO */}
@@ -55,9 +64,9 @@ export default function TermosPage() {
             Não armazenamos cópias de atestados médicos em nossos servidores.
           </p>
           <ul className="space-y-2 text-xs text-slate-300 pt-1">
-            <li>• <strong>Processamento em Memória Volátil:</strong> O atestado enviado (PDF ou foto) é processado apenas pelo tempo estritamente necessário para extrair as assinaturas e consultar o CFM.</li>
-            <li>• <strong>Expurgo Imediato:</strong> Assim que o laudo pericial é emitido e entregue ao solicitante (via WhatsApp ou Web), o arquivo original é <strong>definitivamente apagado e destruído</strong> de nossos servidores.</li>
-            <li>• <strong>Entrega do Laudo Substitui a Custódia:</strong> A entrega do laudo pericial ao empregador/solicitante exaure qualquer obrigação de guarda pelo Vurio. A custódia documental legal perante a Justiça do Trabalho, INSS e eSocial compete exclusivamente à empresa contratante.</li>
+            <li>• <strong>Processamento em Memória Volátil:</strong> O atestado enviado (PDF ou foto) é processado apenas pelo tempo estritamente necessário para extrair as assinaturas, verificar integridade de metadados e consultar os registros públicos do CFM.</li>
+            <li>• <strong>Expurgo Imediato:</strong> Assim que o relatório de alertas de triagem é gerado e entregue ao solicitante (via WhatsApp ou Painel Web), o arquivo original é <strong>definitivamente expurgado e destruído</strong> da memória de nossos servidores.</li>
+            <li>• <strong>Entrega do Relatório Substitui a Custódia:</strong> A entrega do relatório de alertas ao empregador/solicitante exaure qualquer custódia documental pelo Vurio. A guarda documental legal perante a Justiça do Trabalho, INSS e eSocial compete exclusivamente à empresa contratante (Controladora).</li>
           </ul>
         </div>
 
@@ -68,16 +77,16 @@ export default function TermosPage() {
             1. O Que Armazenamos (Logs Técnicos Criptográficos)
           </h3>
           <p>
-            Para evitar que o mesmo atestado seja apresentado em duplicidade (prevenção a fraudes autorizada pelo Art. 7º, IX e Art. 11, II da LGPD), armazenamos unicamente:
+            Para evitar que o mesmo atestado seja apresentado em duplicidade (prevenção de inconsistências e duplicidades autorizada pelo Art. 7º, IX e Art. 11, II da LGPD), armazenamos unicamente:
           </p>
           <ul className="list-disc pl-5 space-y-1 text-xs text-slate-400">
-            <li><strong>Hash SHA-256 do arquivo:</strong> Uma sequência matemática irreversível que funciona como a "impressão digital" do documento, sem guardar o arquivo em si;</li>
-            <li><strong>Dados do Médico:</strong> Nome público no CFM, CRM e Estado;</li>
-            <li><strong>Período de Afastamento:</strong> Quantidade de dias prescritos para aplicação de regras da CCT;</li>
-            <li><strong>Carimbo de Tempo:</strong> Data e horário exatos em que a perícia foi solicitada.</li>
+            <li><strong>Hash SHA-256 do arquivo:</strong> Uma sequência matemática irreversível (resumo criptográfico) que funciona como identificador único do documento, sem guardar o conteúdo nem o arquivo original;</li>
+            <li><strong>Dados Públicos do Médico:</strong> Nome público no CFM, CRM e Unidade da Federação;</li>
+            <li><strong>Período de Afastamento:</strong> Quantidade de dias prescritos para verificação de regras de CCT e limites legais;</li>
+            <li><strong>Carimbo de Tempo:</strong> Data e horário exatos em que a triagem automatizada foi solicitada.</li>
           </ul>
           <p className="text-xs text-amber-300/90 pt-1">
-            ⚠️ <strong>Importante:</strong> Não salvamos em banco de dados o diagnóstico clínico (CID) do paciente, resguardando integralmente o sigilo médico.
+            ⚠️ <strong>Importante:</strong> Não armazenamos em banco de dados o diagnóstico clínico (CID) do paciente, resguardando integralmente o sigilo médico previsto na Resolução CFM nº 1.658/2002.
           </p>
         </div>
 
@@ -88,7 +97,7 @@ export default function TermosPage() {
             2. Papéis sob a LGPD: Controlador x Operador
           </h3>
           <p>
-            A empresa contratante figura como <strong>Controladora</strong> dos dados de seus colaboradores, sendo a responsável pela legalidade da coleta do atestado no âmbito do contrato de trabalho. O Vurio atua exclusivamente como <strong>Operador técnico</strong>, executando a perícia e descartando o arquivo original imediatamente após a conclusão.
+            A empresa contratante figura como <strong>Controladora</strong> dos dados de seus colaboradores, sendo a única responsável pela base legal e legitimidade da recepção do atestado no âmbito do vínculo de emprego. O Vurio atua exclusivamente como <strong>Operador técnico</strong>, executando a triagem automatizada de metadados sob instrução técnica e descartando o arquivo original imediatamente após o processamento.
           </p>
         </div>
 
@@ -96,18 +105,21 @@ export default function TermosPage() {
         <div className="space-y-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            3. Postura de Auditoria Independente
+            3. Postura de Triagem Neutra e Não Punitiva
           </h3>
           <p>
-            O Vurio não formula acusações de dolo ou crime. Os laudos técnicos limitam-se a apontar conformidades ou inconsistências matemáticas e cadastrais (ex: ausência de certificado ICP-Brasil ou divergência de dígitos no CPF). Quaisquer medidas disciplinares ou administrativas são de deliberação exclusiva da empresa empregadora.
+            O Vurio não formula acusações de dolo, má-fé ou qualquer juízo condenatório. Os relatórios de triagem limitam-se a apontar conformidades técnicas ou indícios de divergência matemática e cadastral (ex.: ausência de cadeia ICP-Brasil válida, carimbo de tempo posterior ou CRM divergente). A análise e quaisquer medidas administrativas ou disciplinares competem exclusivamente aos profissionais humanos habilitados da empresa empregadora.
           </p>
         </div>
 
       </main>
 
       {/* Footer */}
-      <footer className="border-t border-slate-800/80 bg-slate-950 py-8 px-4 text-center text-xs text-slate-500">
-        <p>© 2026 Vurio Compliance & Perícia Digital LTDA. Todos os direitos reservados.</p>
+      <footer className="border-t border-slate-800/80 bg-slate-950 py-8 px-4 text-center text-xs text-slate-500 space-y-2">
+        <p className="text-[11px] text-slate-400">
+          O Vurio sinaliza indícios para apoiar a análise do RH. A decisão final é sempre humana e não substitui parecer médico ou jurídico.
+        </p>
+        <p>© 2026 Vurio Tecnologia & Triagem Digital LTDA. Todos os direitos reservados.</p>
       </footer>
     </div>
   );

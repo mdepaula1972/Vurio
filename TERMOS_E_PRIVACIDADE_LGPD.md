@@ -1,5 +1,5 @@
 # TERMOS DE USO E POLÍTICA DE PRIVACIDADE E SEGURANÇA DA INFORMAÇÃO (LGPD)
-### VURIO COMPLIANCE & PERÍCIA DIGITAL LTDA
+### VURIO TECNOLOGIA & TRIAGEM DIGITAL LTDA
 
 **Data da Última Atualização:** 07 de Setembro de 2026  
 **Vigência:** Imediata para todas as consultas avulsas, assinaturas de planos e integrações de API.
@@ -8,7 +8,7 @@
 
 ## 1. NATUREZA JURÍDICA E ESCOPO DOS SERVIÇOS
 
-1.1. O **VURIO** é uma plataforma tecnológica de conformidade, perícia forense e auditoria documental em tempo real, desenvolvida para auxiliar empregadores, departamentos de Recursos Humanos (DP/RH), microempreendedores e profissionais de saúde na conferência técnica de autenticidade, integridade criptográfica e validade cadastral de atestados médicos.
+1.1. O **VURIO** é uma plataforma tecnológica de conformidade, triagem técnica e auditoria documental em tempo real, desenvolvida para auxiliar empregadores, departamentos de Recursos Humanos (DP/RH), microempreendedores e profissionais de saúde na conferência técnica de autenticidade, integridade criptográfica e validade cadastral de atestados médicos.
 
 1.2. O **VURIO atua estritamente como auditor técnico consultivo independente**, emitindo pareceres algorítmicos com base nos padrões públicos da Infraestrutura de Chaves Públicas Brasileira (**ICP-Brasil - MP nº 2.200-2/2001**), nos registros públicos do **Conselho Federal de Medicina (CFM / CRMs)**, na **Lei Federal nº 14.510/2023** (Telemedicina), na **Consolidação das Leis do Trabalho (CLT - Decreto-Lei nº 5.452/1943)** e nas diretrizes da **Lei Geral de Proteção de Dados Pessoais (LGPD - Lei nº 13.709/2018)**.
 
@@ -22,9 +22,9 @@
 >
 > 2.1. **Processamento Efêmero em Memória:** O VURIO adota a política de estrita necessidade e minimização de dados (**Art. 6º, III da LGPD**). Todos os arquivos de atestados médicos enviados para auditoria (sejam arquivos digitais em formato PDF ou fotografias de receituários físicos) são processados **exclusivamente em memória volátil temporária** pelo tempo estritamente necessário para a extração criptográfica e análise cadastral.
 >
-> 2.2. **Expurgo Imediato:** Uma vez finalizada a perícia e transmitido o Laudo Pericial de Auditoria ao USUÁRIO/CONTRATANTE (seja via WhatsApp, API ou download no painel Web), **o arquivo original (PDF ou imagem) é sumariamente DESTRUÍDO e PURGADO de nossos servidores e memórias temporárias**.
+> 2.2. **Expurgo Imediato:** Uma vez finalizada a triagem técnica e transmitido o Relatório de Alertas de Auditoria ao USUÁRIO/CONTRATANTE (seja via WhatsApp, API ou download no painel Web), **o arquivo original (PDF ou imagem) é sumariamente DESTRUÍDO e PURGADO de nossos servidores e memórias temporárias**.
 >
-> 2.3. **Ausência de Banco de Documentos / Não Custódia:** O VURIO **NÃO mantém cópia, espelho, backup ou custódia contínua dos arquivos de atestados médicos em bancos de dados**. A entrega do Laudo Pericial ao CONTRATANTE substitui e exaure integralmente qualquer necessidade ou obrigação do VURIO de conservar arquivos brutos.
+> 2.3. **Ausência de Banco de Documentos / Não Custódia:** O VURIO **NÃO mantém cópia, espelho, backup ou custódia contínua dos arquivos de atestados médicos em bancos de dados**. A entrega do Relatório de Alertas ao CONTRATANTE substitui e exaure integralmente qualquer necessidade ou obrigação do VURIO de conservar arquivos brutos.
 >
 > 2.4. **Exoneração de Responsabilidade por Perda:** Compete exclusiva e indelevelmente ao CONTRATANTE providenciar a guarda física e digital, o arquivamento e a gestão probatória dos atestados médicos de seus colaboradores em seus próprios repositórios internos, nos termos da legislação trabalhista e fiscal. O VURIO resta expressamente isento de qualquer responsabilidade decorrente da perda, exclusão ou extravio de arquivos que ocorram no âmbito dos sistemas internos do CONTRATANTE.
 
@@ -39,7 +39,7 @@
 * **Período de Afastamento Concedido:** Quantidade de dias prescritos e data de início do repouso, necessários para a parametrização de prazos da CCT e limites de 15 dias para o INSS.
 
 3.2. **Proteção Rigorosa de Dados Sensíveis de Saúde:**
-* O VURIO **NÃO armazena diagnósticos médicos ou códigos da CID (Classificação Internacional de Doenças) em banco de dados relacional permanente**. Caso o CID conste no documento, ele é processado de forma efêmera e devolvido no laudo ao DP, preservando a intimidade e a privacidade médica do paciente (**Art. 5º, II da LGPD e Resolução CFM nº 1.658/2002**).
+* O VURIO **NÃO armazena diagnósticos médicos ou códigos da CID (Classificação Internacional de Doenças) em banco de dados relacional permanente**. Caso o CID conste no documento, ele é processado de forma efêmera e devolvido no relatório de alertas ao DP, preservando a intimidade e a privacidade médica do paciente (**Art. 5º, II da LGPD e Resolução CFM nº 1.658/2002**).
 * Números de CPF de pacientes com proteção por máscara LGPD (ex: `***.456.789-**`) são respeitados e protegidos por sigilo cadastral.
 
 ---
@@ -48,7 +48,7 @@
 
 4.1. **O CONTRATANTE (Empregador / Empresa / Usuário):** Qualifica-se como **CONTROLADOR** dos dados pessoais de seus colaboradores e dependentes, sendo o único responsável por possuir base legal válida (execução de contrato de trabalho, cumprimento de obrigação legal da CLT/eSocial e exercício regular de direitos).
 
-4.2. **O VURIO COMPLIANCE:** Qualifica-se como **OPERADOR**, realizando o tratamento técnico e pericial dos dados estritamente sob as instruções do CONTRATANTE e nos limites operacionais do serviço contratado.
+4.2. **O VURIO COMPLIANCE:** Qualifica-se como **OPERADOR**, realizando o tratamento técnico e de triagem dos dados estritamente sob as instruções do CONTRATANTE e nos limites operacionais do serviço contratado.
 
 ---
 
@@ -57,7 +57,7 @@
 5.1. **Consulta Avulsa (Sem Mensalidade):**
 * Destinada a microempreendedores (MEI), empregadores domésticos e microempresas;
 * Cobrança sob demanda de **R$ 10,00 por documento auditado** (ou R$ 13,00 na opção com auditoria de deslocamento Geo-Shield), liquidada via PIX ou Cartão através do link seguro oficial da InfinitePay;
-* A emissão do laudo pericial no WhatsApp conclui e aperfeiçoa a prestação do serviço contratado.
+* A emissão do relatório de alertas no WhatsApp conclui e aperfeiçoa a prestação do serviço contratado.
 
 5.2. **Planos Corporativos Mensais (Starter RH e Compliance Pro):**
 * Cobrança recorrente mensal via InfinitePay para créditos mensais de auditoria, acesso ao Painel do Cliente (`/dashboard`) e esteira de diligências;
@@ -65,7 +65,7 @@
 
 5.3. **Produtos Adicionais (Add-ons Independentes):**
 * **Geo-Shield:** Módulo de auditoria de compatibilidade de rota e deslocamento geográfico entre o posto de trabalho e a clínica médica (R$ 49/mês ou R$ 3 avulso);
-* **Dossiê Notícia-Crime para B.O.:** Emissão de certidão pericial forense com carimbo de tempo ICP-Brasil para protocolo policial (R$ 89 avulso ou R$ 49 para assinantes);
+* **Dossiê Notícia-Crime para B.O.:** Emissão de certidão de triagem técnica com carimbo de tempo ICP-Brasil para protocolo policial (R$ 89 avulso ou R$ 49 para assinantes);
 * **Diligência Formal CFM:** Emissão de ofício administrativo formal 1-clique (R$ 15 por ofício).
 
 ---

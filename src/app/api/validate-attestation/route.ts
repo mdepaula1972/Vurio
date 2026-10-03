@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Conteúdo do arquivo vazio ou não reconhecido.' }, { status: 400 });
     }
 
-    // 3. Buscar hashes existentes da empresa para Trava Antifraude de Duplicidade
+    // 3. Buscar hashes existentes da empresa para Trava de Duplicidade por Hash SHA-256
     const existingHashes = await getCompanyDocumentHashes(companyId);
 
     // 4. Executar Validação Criptográfica e Triagem Inteligente

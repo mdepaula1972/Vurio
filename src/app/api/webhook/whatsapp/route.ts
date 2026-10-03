@@ -3,6 +3,15 @@ import { validateMedicalAttestation } from '@/lib/crypto/validator';
 import { formatWhatsAppResponse } from '@/lib/whatsapp/message-formatter';
 import { sendWhatsAppMessage } from '@/lib/whatsapp/client';
 import { getCompanyDocumentHashes, saveValidationLog, deductCredit } from '@/lib/supabase/service';
+import { 
+  isAdminPhone, 
+  isRegisteredCompanyPhone, 
+  isDuplicateMessage, 
+  registerOrUpdateLead, 
+  generateLeadScoreboard, 
+  LEAD_GREETING_MESSAGE,
+  normalizePhone
+} from '@/lib/services/lead-service';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -22,177 +31,289 @@ export async function POST(req: NextRequest) {
     const payload = await req.json();
 
     // Extrair remetente e detalhes da mídia ou texto
-    const { phone, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData, text } = extractMediaInfoFromPayload(payload);
+    const { 
+      phone, 
+      mediaUrl, 
+      mimeType, 
+      fileName, 
+      mediaBase64, 
+      rawEvolutionData, 
+      text, 
+      messageId, 
+      fromMe, 
+      isGroup 
+    } = extractMediaInfoFromPayload(payload);
 
-    if (!phone) {
-      return NextResponse.json({ received: true, ignored: 'Sem número de telefone no payload' });
+    // 1. FILTRO DE DESCARTE IMEDIATO:
+    // Ignora mensagens de grupos ou originadas do próprio número da instância
+    const botPhone = process.env.WHATSAPP_BOT_PHONE || '';
+    const isBotSelf = botPhone && normalizePhone(botPhone) === normalizePhone(phone);
+    if (!phone || isGroup || fromMe || isBotSelf) {
+      return NextResponse.json({ 
+        received: true, 
+        ignored: 'Mensagem de grupo, própria instância ou sem telefone identificado' 
+      });
     }
 
-    // Se for mensagem de texto sem anexo (ex: pedido de assinatura de plano ou dúvida)
-    if (!mediaUrl && !mediaBase64) {
-      const lowerText = (text || '').toLowerCase().trim();
+    // 2. DEDUPLICAÇÃO DE WEBHOOK:
+    // Impede que reenvios do provedor de WhatsApp inflem message_count ou disparem ações duplicadas
+    if (messageId && await isDuplicateMessage(messageId, phone)) {
+      return NextResponse.json({ 
+        received: true, 
+        deduplicated: true, 
+        messageId 
+      });
+    }
 
-      if (
-        lowerText.includes('assinar') || 
-        lowerText.includes('plano') || 
-        lowerText.includes('starter') || 
-        lowerText.includes('compliance') || 
-        lowerText.includes('enterprise') || 
-        lowerText.includes('proposta')
-      ) {
-        await sendWhatsAppMessage({
-          phone,
-          message: 'Olá! Seja muito bem-vindo ao *Vurio Compliance*! 🛡️\n\nRecebemos seu pedido de ativação! Para gerarmos sua fatura oficial na InfinitePay (*Pix ou Cartão de Crédito*) e liberarmos o acesso da sua empresa, por favor nos informe:\n\n1️⃣ *Razão Social ou Nome Completo*\n2️⃣ *CNPJ ou CPF*\n3️⃣ *E-mail corporativo (para envio de faturas e laudos)*\n\nAssim que enviar, vincularemos sua empresa e você receberá a cobrança oficial aqui no WhatsApp e por e-mail. Caso prefira falar diretamente com nossa equipe humana, basta aguardar que responderemos em instantes!'
-        });
+    // Flag de controle do experimento de leads / placar
+    const LEAD_SCOREBOARD_ENABLED = process.env.LEAD_SCOREBOARD_ENABLED === 'true';
 
-        return NextResponse.json({
-          received: true,
-          type: 'subscription_inquiry',
-          message: 'Mensagem de interesse em plano respondida automaticamente.'
-        });
-      }
+    // =========================================================================
+    // FLUXO COM A FLAG LEAD_SCOREBOARD_ENABLED ATIVADA
+    // =========================================================================
+    if (LEAD_SCOREBOARD_ENABLED) {
+      const cleanText = (text || '').trim();
+      const lowerText = cleanText.toLowerCase();
 
-      // Ativação automática de 15 consultas gratuitas originadas do formulário da landing page
-      if (
-        lowerText.includes('15 consultas') || 
-        lowerText.includes('cadastrei') || 
-        lowerText.includes('ativar minhas') ||
-        lowerText.includes('gratuita') ||
-        lowerText.includes('trial')
-      ) {
-        // Extrai e-mail corporativo se presente na mensagem
-        const emailMatch = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-        const extractedEmail = emailMatch ? emailMatch[1].toLowerCase() : null;
-        
-        let companyGreeting = '';
-        if (extractedEmail) {
-          try {
-            const { getAllCompanies, updateCompany } = await import('@/lib/services/company-service');
-            const companies = await getAllCompanies();
-            const matched = companies.find(c => c.contactEmail?.toLowerCase() === extractedEmail);
-            if (matched) {
-              companyGreeting = ` para a *${matched.tradeName || matched.name}*`;
-              await updateCompany(matched.id, { whatsappPhone: phone, whatsappStatus: 'connected' });
-            }
-          } catch (e) {
-            console.warn('Erro ao associar empresa ao trial WhatsApp:', e);
-          }
+      // -----------------------------------------------------------------------
+      // PRIORIDADE A: ADMIN_WHATSAPP (COMANDOS DO PLACAR)
+      // -----------------------------------------------------------------------
+      if (isAdminPhone(phone)) {
+        // Aceita variações sem acento e case-insensitive: score, score de leads, score hoje, score 7d, score ref, placar
+        const isScoreCommand = 
+          lowerText === 'score' ||
+          lowerText.includes('score de leads') ||
+          lowerText.includes('score hoje') ||
+          lowerText.includes('score 7d') ||
+          lowerText.includes('score ref') ||
+          lowerText === 'placar' ||
+          lowerText.includes('placar de leads');
+
+        if (isScoreCommand) {
+          const scoreboardText = await generateLeadScoreboard(lowerText);
+          await sendWhatsAppMessage({
+            phone,
+            message: scoreboardText
+          });
+
+          return NextResponse.json({
+            received: true,
+            type: 'admin_scoreboard_sent',
+            phone
+          });
         }
 
-        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://www.vurio.com.br';
+        // Se o admin enviar qualquer outro comando/texto
         await sendWhatsAppMessage({
           phone,
-          message: `🎉 *Parabéns! Suas 15 Consultas Gratuitas no Vurio já estão ativas${companyGreeting}!* 🛡️\n\n✅ *E-mail corporativo validado:* ${extractedEmail || 'Conta verificada com sucesso'}\n🎁 *Saldo inicial liberado:* 15 créditos de auditoria forense instantânea.\n\n🚀 *Como testar agora mesmo (em 3 segundos):*\n1️⃣ Envie por aqui qualquer arquivo *PDF ou foto de atestado médico* que gerou dúvida no seu DP.\n2️⃣ Nosso motor pericial emitirá o laudo técnico com checagem de ICP-Brasil, distância física (Geo-Shield) e regras da CCT em instantes.\n\n💻 *Seu Painel Web já está liberado:* Você também pode acompanhar todos os laudos pelo navegador acessando:\n${appUrl}/dashboard\n\nFique à vontade para enviar seu primeiro atestado para teste!`
+          message: 'Comandos disponíveis para o Admin:\n• *score* (placar geral)\n• *score hoje* (placar com foco de hoje)\n• *score 7d* (últimos 7 dias)\n• *score ref* (placar com detalhamento por código ref)'
         });
 
         return NextResponse.json({
           received: true,
-          type: 'trial_activated',
-          matchedEmail: extractedEmail,
-          message: 'Ativação de 15 consultas gratuitas confirmada com sucesso via WhatsApp.'
+          type: 'admin_command_guide',
+          phone
         });
       }
 
-      // Qualquer mensagem de texto sem anexo orienta o colaborador sobre o envio do atestado
-      await sendWhatsAppMessage({
-        phone,
-        message: 'Olá! Sou o assistente de recepção e validação de atestados do *Vurio* 🛡️\n\nPara entregar seu atestado médico ao Departamento Pessoal, basta enviar por aqui:\n📄 O arquivo *PDF* original ou uma *foto nítida e bem iluminada* do documento.\n\nAssim que você enviar, faremos a leitura e confirmação do recebimento em instantes.'
-      });
+      // -----------------------------------------------------------------------
+      // PRIORIDADE B: CLIENTE JÁ CADASTRADO (EMPRESA EXISTENTE)
+      // Mantém o fluxo atual de atestados SEM nenhuma alteração
+      // -----------------------------------------------------------------------
+      const isClient = await isRegisteredCompanyPhone(phone);
+      if (isClient) {
+        return await processClientAttestationFlow({
+          payload,
+          phone,
+          text,
+          mediaUrl,
+          mimeType,
+          fileName,
+          mediaBase64,
+          rawEvolutionData
+        });
+      }
+
+      // -----------------------------------------------------------------------
+      // PRIORIDADE C: QUALQUER OUTRO NÚMERO (TRATADO COMO LEAD DO VURIO)
+      // Mensagens e anexos de leads NUNCA são processados como atestado médico
+      // -----------------------------------------------------------------------
+      const leadResult = await registerOrUpdateLead(phone, cleanText);
+
+      // Resposta automática do Marcos apenas na 1ª mensagem do lead
+      if (leadResult.shouldSendAutoReply && !leadResult.isOptOut) {
+        await sendWhatsAppMessage({
+          phone,
+          message: LEAD_GREETING_MESSAGE
+        });
+      }
 
       return NextResponse.json({
         received: true,
-        type: 'greeting',
-        message: 'Orientação de envio de atestado respondida automaticamente.'
-      });
-    }
-
-    // 1. Enviar mensagem automática instantânea de processamento
-    await sendWhatsAppMessage({
-      phone,
-      message: '🔍 *Processando e analisando documento recebido...*'
-    });
-
-    // 2. Obter buffer do arquivo (Base64 direto, descriptografia Evolution API ou download da URL)
-    let fileBuffer: Buffer | null = null;
-    if (mediaBase64) {
-      fileBuffer = Buffer.from(mediaBase64, 'base64');
-    } else if (rawEvolutionData) {
-      try {
-        const apiUrl = process.env.WHATSAPP_API_URL || '';
-        const instanceId = process.env.WHATSAPP_INSTANCE_ID || 'vurio';
-        const apiKey = process.env.WHATSAPP_API_TOKEN || '';
-        if (apiUrl && instanceId) {
-          const decryptRes = await fetch(`${apiUrl}/chat/getBase64FromMediaMessage/${instanceId}`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'apikey': apiKey
-            },
-            body: JSON.stringify({
-              message: rawEvolutionData,
-              convertToMp4: false
-            })
-          });
-          const decryptData = await decryptRes.json();
-          if (decryptData && decryptData.base64) {
-            fileBuffer = Buffer.from(decryptData.base64, 'base64');
-          }
-        }
-      } catch (err) {
-        console.error('Falha ao descriptografar mídia via Evolution API:', err);
-      }
-    }
-
-    if (!fileBuffer && mediaUrl && !mediaUrl.includes('whatsapp.net')) {
-      const response = await fetch(mediaUrl);
-      const arrayBuffer = await response.arrayBuffer();
-      fileBuffer = Buffer.from(arrayBuffer);
-    }
-
-    if (!fileBuffer) {
-      await sendWhatsAppMessage({
+        type: 'lead_processed',
         phone,
-        message: '⚠️ Não foi possível processar o arquivo enviado. Por favor, tente enviar novamente em PDF ou foto legível.'
+        isNewLead: leadResult.isNewLead,
+        messageCount: leadResult.messageCount,
+        optOut: leadResult.isOptOut
       });
-      return NextResponse.json({ error: 'Falha no download da mídia' }, { status: 400 });
     }
 
-    const companyId = payload.companyId || 'demo-company-1';
-
-    // 3. Buscar hashes para trava de duplicidade
-    const existingHashes = await getCompanyDocumentHashes(companyId);
-
-    // 4. Executar validação criptográfica e triagem do documento
-    const startTime = Date.now();
-    const report = await validateMedicalAttestation(fileBuffer, mimeType, fileName, existingHashes);
-    const executionTimeMs = Date.now() - startTime;
-
-    // 5. Salvar auditoria LGPD e debitar crédito (somente para atestados médicos válidos para auditoria)
-    await saveValidationLog(companyId, report, fileName, executionTimeMs);
-    if (report.status !== 'NOT_AN_ATTESTATION') {
-      await deductCredit(companyId);
-    }
-
-    // 6. Formatar mensagem de resposta de acordo com a regra de negócio
-    const whatsappResponse = formatWhatsAppResponse(report);
-
-    // 7. Enviar resposta para o WhatsApp do colaborador/RH
-    await sendWhatsAppMessage({
+    // =========================================================================
+    // FLUXO PADRÃO (QUANDO LEAD_SCOREBOARD_ENABLED === FALSE)
+    // Comportamento original preservado
+    // =========================================================================
+    return await processClientAttestationFlow({
+      payload,
       phone,
-      message: whatsappResponse
+      text,
+      mediaUrl,
+      mimeType,
+      fileName,
+      mediaBase64,
+      rawEvolutionData
     });
 
-    return NextResponse.json({
-      success: true,
-      phone,
-      status: report.status,
-      executionTimeMs,
-      whatsappResponse
-    });
   } catch (error: any) {
     console.error('Erro no processamento do webhook WhatsApp:', error);
     return NextResponse.json({ error: error?.message || 'Erro no webhook' }, { status: 500 });
   }
+}
+
+/**
+ * Fluxo de recepção e análise de atestados médicos de clientes cadastrados
+ */
+async function processClientAttestationFlow(params: {
+  payload: any;
+  phone: string;
+  text: string;
+  mediaUrl: string;
+  mimeType: string;
+  fileName: string;
+  mediaBase64: string;
+  rawEvolutionData: any;
+}) {
+  const { payload, phone, text, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData } = params;
+
+  // Se for mensagem de texto sem anexo
+  if (!mediaUrl && !mediaBase64) {
+    const lowerText = (text || '').toLowerCase().trim();
+
+    if (
+      lowerText.includes('assinar') || 
+      lowerText.includes('plano') || 
+      lowerText.includes('starter') || 
+      lowerText.includes('compliance') || 
+      lowerText.includes('enterprise') || 
+      lowerText.includes('proposta')
+    ) {
+      await sendWhatsAppMessage({
+        phone,
+        message: 'Olá! Seja muito bem-vindo ao *Vurio*! 🛡️\n\nRecebemos seu pedido de ativação! Para gerarmos sua fatura oficial na InfinitePay (*Pix ou Cartão de Crédito*) e liberarmos o acesso da sua empresa, por favor nos informe:\n\n1️⃣ *Razão Social ou Nome Completo*\n2️⃣ *CNPJ ou CPF*\n3️⃣ *E-mail corporativo*\n\nAssim que enviar, vincularemos sua empresa em instantes!'
+      });
+
+      return NextResponse.json({
+        received: true,
+        type: 'subscription_inquiry',
+        message: 'Mensagem de interesse em plano respondida automaticamente.'
+      });
+    }
+
+    // Qualquer mensagem de texto sem anexo orienta o colaborador sobre o envio do atestado
+    await sendWhatsAppMessage({
+      phone,
+      message: 'Olá! Sou o assistente de recepção e validação de atestados do *Vurio* 🛡️\n\nPara entregar seu atestado médico ao Departamento Pessoal, basta enviar por aqui:\n📄 O arquivo *PDF* original ou uma *foto nítida e bem iluminada* do documento.\n\nAssim que você enviar, faremos a leitura e confirmação do recebimento em instantes.'
+    });
+
+    return NextResponse.json({
+      received: true,
+      type: 'greeting',
+      message: 'Orientação de envio de atestado respondida automaticamente.'
+    });
+  }
+
+  // 1. Enviar mensagem automática instantânea de processamento
+  await sendWhatsAppMessage({
+    phone,
+    message: '🔍 *Processando e analisando documento recebido...*'
+  });
+
+  // 2. Obter buffer do arquivo (Base64 direto, descriptografia Evolution API ou download da URL)
+  let fileBuffer: Buffer | null = null;
+  if (mediaBase64) {
+    fileBuffer = Buffer.from(mediaBase64, 'base64');
+  } else if (rawEvolutionData) {
+    try {
+      const apiUrl = process.env.WHATSAPP_API_URL || '';
+      const instanceId = process.env.WHATSAPP_INSTANCE_ID || 'vurio';
+      const apiKey = process.env.WHATSAPP_API_TOKEN || '';
+      if (apiUrl && instanceId) {
+        const decryptRes = await fetch(`${apiUrl}/chat/getBase64FromMediaMessage/${instanceId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': apiKey
+          },
+          body: JSON.stringify({
+            message: rawEvolutionData,
+            convertToMp4: false
+          })
+        });
+        const decryptData = await decryptRes.json();
+        if (decryptData && decryptData.base64) {
+          fileBuffer = Buffer.from(decryptData.base64, 'base64');
+        }
+      }
+    } catch (err) {
+      console.error('Falha ao descriptografar mídia via Evolution API:', err);
+    }
+  }
+
+  if (!fileBuffer && mediaUrl && !mediaUrl.includes('whatsapp.net')) {
+    const response = await fetch(mediaUrl);
+    const arrayBuffer = await response.arrayBuffer();
+    fileBuffer = Buffer.from(arrayBuffer);
+  }
+
+  if (!fileBuffer) {
+    await sendWhatsAppMessage({
+      phone,
+      message: '⚠️ Não foi possível processar o arquivo enviado. Por favor, tente enviar novamente em PDF ou foto legível.'
+    });
+    return NextResponse.json({ error: 'Falha no download da mídia' }, { status: 400 });
+  }
+
+  const companyId = payload.companyId || 'demo-company-1';
+
+  // 3. Buscar hashes para trava de duplicidade
+  const existingHashes = await getCompanyDocumentHashes(companyId);
+
+  // 4. Executar validação criptográfica e triagem do documento
+  const startTime = Date.now();
+  const report = await validateMedicalAttestation(fileBuffer, mimeType, fileName, existingHashes);
+  const executionTimeMs = Date.now() - startTime;
+
+  // 5. Salvar auditoria LGPD e debitar crédito (somente para atestados médicos válidos)
+  await saveValidationLog(companyId, report, fileName, executionTimeMs);
+  if (report.status !== 'NOT_AN_ATTESTATION') {
+    await deductCredit(companyId);
+  }
+
+  // 6. Formatar mensagem de resposta de acordo com a regra de negócio
+  const whatsappResponse = formatWhatsAppResponse(report);
+
+  // 7. Enviar resposta para o WhatsApp do colaborador/RH
+  await sendWhatsAppMessage({
+    phone,
+    message: whatsappResponse
+  });
+
+  return NextResponse.json({
+    success: true,
+    phone,
+    status: report.status,
+    executionTimeMs,
+    whatsappResponse
+  });
 }
 
 /**
@@ -206,10 +327,17 @@ function extractMediaInfoFromPayload(payload: any) {
   let mediaBase64 = '';
   let rawEvolutionData: any = null;
   let text = '';
+  let messageId = '';
+  let fromMe = false;
+  let isGroup = false;
 
   // Formato Z-API
   if (payload.phone) {
     phone = String(payload.phone);
+    messageId = payload.messageId || payload.id || payload.wamid || '';
+    fromMe = Boolean(payload.fromMe || payload.isFromMe);
+    isGroup = Boolean(payload.isGroup || phone.includes('@g.us'));
+
     if (payload.text?.message) text = payload.text.message;
     else if (payload.message?.text) text = payload.message.text;
     else if (typeof payload.text === 'string') text = payload.text;
@@ -226,14 +354,18 @@ function extractMediaInfoFromPayload(payload: any) {
   }
   // Formato Evolution API
   else if (payload.data && payload.data.key) {
-    phone = String(payload.data.key.remoteJid || '').replace('@s.whatsapp.net', '');
+    const remoteJid = String(payload.data.key.remoteJid || '');
+    phone = remoteJid.replace('@s.whatsapp.net', '');
+    messageId = payload.data.key.id || '';
+    fromMe = Boolean(payload.data.key.fromMe);
+    isGroup = Boolean(remoteJid.includes('@g.us') || payload.data.key.participant);
     rawEvolutionData = payload.data;
     const message = payload.data.message || {};
 
     if (message.conversation) text = message.conversation;
     else if (message.extendedTextMessage?.text) text = message.extendedTextMessage.text;
     
-    // Captura base64 caso já venha injetado no webhook
+    // Captura base64 caso venha injetado no webhook
     if (message.base64) mediaBase64 = message.base64;
     else if (payload.data.base64) mediaBase64 = payload.data.base64;
     else if (message.documentMessage?.base64) mediaBase64 = message.documentMessage.base64;
@@ -258,11 +390,15 @@ function extractMediaInfoFromPayload(payload: any) {
   if (payload.fileName) fileName = payload.fileName;
   if (payload.number && !phone) phone = String(payload.number);
   if (payload.text && !text) text = typeof payload.text === 'string' ? payload.text : (payload.text.message || '');
+  if (payload.messageId && !messageId) messageId = payload.messageId;
+  if (payload.id && !messageId) messageId = payload.id;
+  if (payload.fromMe !== undefined) fromMe = Boolean(payload.fromMe);
+  if (payload.isGroup !== undefined) isGroup = Boolean(payload.isGroup);
 
   // Limpeza de prefixo Data-URI se existir
   if (mediaBase64 && mediaBase64.includes('base64,')) {
     mediaBase64 = mediaBase64.split('base64,')[1];
   }
 
-  return { phone, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData, text };
+  return { phone, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData, text, messageId, fromMe, isGroup };
 }
