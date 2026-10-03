@@ -110,20 +110,29 @@ export default function LandingHomePage() {
       <header className="border-b border-slate-800/60 bg-slate-900/90 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
           
-          {/* Logo & Badge */}
-          <div className="flex items-center space-x-3">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
-              <ShieldCheck className="w-5 h-5 text-white" />
+          {/* Logo & Slogan Oficial Vurio */}
+          <Link href="/" className="flex items-center space-x-3 group">
+            <div className="relative w-11 h-11 rounded-full p-0.5 bg-gradient-to-tr from-[#0077d1] via-[#02c1db] to-[#01cf9e] shadow-lg shadow-[#02c1db]/20 group-hover:scale-105 transition-transform duration-300 flex-shrink-0">
+              <img
+                src="/logo.png"
+                alt="Vurio Logo"
+                className="w-full h-full object-contain rounded-full bg-white"
+              />
             </div>
-            <div>
+            <div className="flex flex-col">
               <div className="flex items-center space-x-2">
-                <span className="font-extrabold text-xl tracking-tight text-white">VURIO</span>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
-                  Compliance & Perícia DP
+                <span className="font-black text-2xl tracking-tight bg-gradient-to-r from-white via-slate-100 to-[#02c1db] bg-clip-text text-transparent">
+                  Vurio
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[#02c1db]/10 text-[#02c1db] border border-[#02c1db]/30">
+                  Perícia Forense
                 </span>
               </div>
+              <span className="text-[10px] font-medium text-slate-400 leading-tight hidden sm:block">
+                Detecta divergências e incoerências em atestados médicos
+              </span>
             </div>
-          </div>
+          </Link>
 
           {/* Links de Navegação Institucional */}
           <nav className="hidden lg:flex items-center space-x-6 text-xs text-slate-300 font-medium">
@@ -146,7 +155,7 @@ export default function LandingHomePage() {
 
             <a
               href="#ativar-trial"
-              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-600/20 transition-all flex items-center gap-1.5"
+              className="px-4 py-1.5 rounded-xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] hover:from-[#02c1db] hover:to-[#0077d1] text-[#001c4e] text-xs font-black shadow-md shadow-[#02c1db]/20 transition-all flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
               <span>Testar 15 Atestados Free</span>
@@ -164,10 +173,19 @@ export default function LandingHomePage() {
         <div className="max-w-7xl mx-auto space-y-12">
           
           <div className="text-center space-y-6 max-w-4xl mx-auto">
-            {/* Badge de Destaque */}
-            <div className="inline-flex items-center space-x-2 px-3.5 py-1 rounded-full bg-slate-900 border border-slate-800 text-emerald-400 text-xs font-semibold shadow-inner">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              <span>Auditoria Forense Contínua de Atestados Médicos</span>
+            {/* Emblema Oficial & Slogan Vurio */}
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <div className="relative w-28 h-28 sm:w-36 sm:h-36 rounded-full p-1 bg-gradient-to-tr from-[#0077d1] via-[#02c1db] to-[#01cf9e] shadow-2xl shadow-[#02c1db]/25 animate-soft-pulse">
+                <img
+                  src="/logo.png"
+                  alt="Vurio - Detecta divergências e incoerências em atestados médicos"
+                  className="w-full h-full object-contain rounded-full bg-white shadow-inner"
+                />
+              </div>
+              <div className="inline-flex items-center space-x-2 px-4 py-1.5 rounded-full bg-[#052d6b]/40 border border-[#02c1db]/35 text-[#02c1db] text-xs font-semibold shadow-inner">
+                <span className="w-2 h-2 rounded-full bg-[#01cf9e] animate-pulse"></span>
+                <span>Detecta divergências e incoerências em atestados médicos</span>
+              </div>
             </div>
 
             {/* Headline de Alto Impacto */}
@@ -188,7 +206,7 @@ export default function LandingHomePage() {
             <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
               <a
                 href="#ativar-trial"
-                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 hover:from-emerald-500 hover:to-teal-400 text-white text-sm font-bold shadow-xl shadow-emerald-600/25 transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
+                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] hover:from-[#02c1db] hover:to-[#0077d1] text-[#001c4e] text-sm font-extrabold shadow-xl shadow-[#02c1db]/25 transition-all flex items-center gap-2 transform hover:-translate-y-0.5"
               >
                 <Sparkles className="w-4 h-4 text-amber-300" />
                 <span>Solicitar Demonstração Gratuita (15 Consultas Free)</span>
@@ -219,12 +237,12 @@ export default function LandingHomePage() {
             <div className="lg:col-span-5 bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-2xl relative">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
                 <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                    <MessageSquare className="w-4 h-4" />
+                  <div className="w-9 h-9 rounded-full p-0.5 bg-gradient-to-tr from-[#0077d1] via-[#02c1db] to-[#01cf9e] flex items-center justify-center flex-shrink-0">
+                    <img src="/logo.png" alt="Vurio" className="w-full h-full object-contain rounded-full bg-white" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">WhatsApp RH Corporativo</h4>
-                    <p className="text-[10px] text-emerald-400">Robô Pericial Ativo</p>
+                    <h4 className="text-xs font-bold text-white">Vurio - WhatsApp RH</h4>
+                    <p className="text-[10px] text-[#02c1db] font-medium">Robô Pericial Ativo</p>
                   </div>
                 </div>
                 <span className="text-[10px] font-mono text-slate-500">14:22</span>
@@ -860,23 +878,29 @@ export default function LandingHomePage() {
 
       {/* 8. FOOTER CORPORATIVO */}
       <footer className="bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-900 text-center text-xs text-slate-500 space-y-4">
-        <div className="flex items-center justify-center space-x-2 text-slate-300 font-semibold">
-          <ShieldCheck className="w-4 h-4 text-emerald-400" />
-          <span>Vurio Compliance & Perícia Digital Ltda</span>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 text-slate-200 font-semibold">
+          <div className="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-[#0077d1] via-[#02c1db] to-[#01cf9e]">
+            <img src="/logo.png" alt="Vurio" className="w-full h-full object-contain rounded-full bg-white" />
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:gap-2">
+            <span className="text-sm font-bold text-white">Vurio Compliance & Perícia Digital</span>
+            <span className="hidden sm:inline text-slate-600">•</span>
+            <span className="text-xs text-[#02c1db] font-medium">Detecta divergências e incoerências em atestados médicos</span>
+          </div>
         </div>
         <p className="max-w-2xl mx-auto text-[11px] leading-relaxed text-slate-500">
           Amparado na MP nº 2.200-2/2001 (ICP-Brasil), Resolução CFM 1.658/2002, Art. 482 da CLT, Lei 14.510/2023 (Telemedicina) e LGPD (Lei 13.709/2018).
         </p>
         <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 pt-1">
-          <Link href="/termos" className="hover:text-emerald-400 underline transition-colors">
+          <Link href="/termos" className="hover:text-[#02c1db] underline transition-colors">
             Termos de Uso & Segurança Jurídica
           </Link>
           <span>•</span>
-          <Link href="/termos" className="hover:text-emerald-400 underline transition-colors">
+          <Link href="/termos" className="hover:text-[#02c1db] underline transition-colors">
             Política de Privacidade & LGPD
           </Link>
           <span>•</span>
-          <Link href="/dashboard" className="hover:text-sky-400 transition-colors">
+          <Link href="/dashboard" className="hover:text-[#02c1db] transition-colors">
             Painel DP do Cliente
           </Link>
         </div>

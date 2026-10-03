@@ -20,10 +20,10 @@ export default function TermosPage() {
           </Link>
 
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 via-indigo-600 to-emerald-500 flex items-center justify-center">
-              <ShieldCheck className="w-5 h-5 text-white" />
+            <div className="w-8 h-8 rounded-full p-0.5 bg-gradient-to-tr from-[#0077d1] via-[#02c1db] to-[#01cf9e] flex items-center justify-center">
+              <img src="/logo.png" alt="Vurio" className="w-full h-full object-contain rounded-full bg-white" />
             </div>
-            <span className="font-extrabold text-base tracking-tight text-white">VURIO</span>
+            <span className="font-black text-base tracking-tight text-white">Vurio</span>
           </div>
         </div>
       </header>

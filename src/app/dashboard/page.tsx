@@ -458,14 +458,19 @@ export default function DashboardClientPage() {
 
             <div className="h-4 w-px bg-slate-800"></div>
 
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 via-indigo-600 to-emerald-500 flex items-center justify-center">
-                <ShieldCheck className="w-5 h-5 text-white" />
+            <div className="flex items-center space-x-3">
+              <div className="w-9 h-9 rounded-full p-0.5 bg-gradient-to-tr from-[#0077d1] via-[#02c1db] to-[#01cf9e] shadow-md shadow-[#02c1db]/20 flex items-center justify-center flex-shrink-0">
+                <img src="/logo.png" alt="Vurio" className="w-full h-full object-contain rounded-full bg-white" />
               </div>
-              <div>
-                <span className="font-extrabold text-base tracking-tight text-white">VURIO</span>
-                <span className="ml-1.5 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-400 border border-sky-500/30">
-                  Painel DP
+              <div className="flex flex-col">
+                <div className="flex items-center space-x-1.5">
+                  <span className="font-black text-base tracking-tight text-white">Vurio</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[#02c1db]/15 text-[#02c1db] border border-[#02c1db]/30">
+                    Painel DP
+                  </span>
+                </div>
+                <span className="text-[9.5px] text-slate-400 font-medium hidden md:block">
+                  Detecta divergências e incoerências em atestados médicos
                 </span>
               </div>
             </div>
