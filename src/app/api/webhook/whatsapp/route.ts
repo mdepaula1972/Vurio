@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
 
     // 1. FILTRO DE DESCARTE IMEDIATO:
     // Ignora mensagens de grupos ou originadas do próprio número da instância
-    const botPhone = process.env.WHATSAPP_BOT_PHONE || '';
+    const botPhone = process.env.WHATSAPP_BOT_PHONE || '551331500987';
     const isBotSelf = botPhone && normalizePhone(botPhone) === normalizePhone(phone);
     if (!phone || isGroup || fromMe || isBotSelf) {
       return NextResponse.json({ 
@@ -55,112 +55,123 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // 2. DEDUPLICAÇÃO DE WEBHOOK:
-    // Impede que reenvios do provedor de WhatsApp inflem message_count ou disparem ações duplicadas
-    if (messageId && await isDuplicateMessage(messageId, phone)) {
-      return NextResponse.json({ 
-        received: true, 
-        deduplicated: true, 
-        messageId 
-      });
-    }
-
     // Flag de controle do experimento de leads / placar
     const LEAD_SCOREBOARD_ENABLED = process.env.LEAD_SCOREBOARD_ENABLED === 'true';
 
     // =========================================================================
-    // FLUXO COM A FLAG LEAD_SCOREBOARD_ENABLED ATIVADA
+    // FLUXO DE LEADS / PLACAR (SOMENTE QUANDO LEAD_SCOREBOARD_ENABLED === TRUE)
     // =========================================================================
     if (LEAD_SCOREBOARD_ENABLED) {
-      const cleanText = (text || '').trim();
-      const lowerText = cleanText.toLowerCase();
+      try {
+        // DEDUPLICAÇÃO DE WEBHOOK (REQUISITO 3.1):
+        // Fica restrita ao escopo da flag. Impede reenvios do provedor de inflar message_count
+        if (messageId && await isDuplicateMessage(messageId, phone)) {
+          return NextResponse.json({ 
+            received: true, 
+            deduplicated: true, 
+            messageId 
+          });
+        }
 
-      // -----------------------------------------------------------------------
-      // PRIORIDADE A: ADMIN_WHATSAPP (COMANDOS DO PLACAR)
-      // -----------------------------------------------------------------------
-      if (isAdminPhone(phone)) {
-        // Aceita variações sem acento e case-insensitive: score, score de leads, score hoje, score 7d, score ref, placar
-        const isScoreCommand = 
-          lowerText === 'score' ||
-          lowerText.includes('score de leads') ||
-          lowerText.includes('score hoje') ||
-          lowerText.includes('score 7d') ||
-          lowerText.includes('score ref') ||
-          lowerText === 'placar' ||
-          lowerText.includes('placar de leads');
+        const cleanText = (text || '').trim();
+        const lowerText = cleanText.toLowerCase();
 
-        if (isScoreCommand) {
-          const scoreboardText = await generateLeadScoreboard(lowerText);
+        // ---------------------------------------------------------------------
+        // PRIORIDADE 1: ADMIN_WHATSAPP (COMANDOS DO PLACAR)
+        // ---------------------------------------------------------------------
+        if (isAdminPhone(phone)) {
+          const isScoreCommand = 
+            lowerText === 'score' ||
+            lowerText.includes('score de leads') ||
+            lowerText.includes('score hoje') ||
+            lowerText.includes('score 7d') ||
+            lowerText.includes('score ref') ||
+            lowerText === 'placar' ||
+            lowerText.includes('placar de leads');
+
+          if (isScoreCommand) {
+            const scoreboardText = await generateLeadScoreboard(lowerText);
+            await sendWhatsAppMessage({
+              phone,
+              message: scoreboardText
+            });
+
+            return NextResponse.json({
+              received: true,
+              type: 'admin_scoreboard_sent',
+              phone
+            });
+          }
+
+          // Se o admin enviar outro texto qualquer
           await sendWhatsAppMessage({
             phone,
-            message: scoreboardText
+            message: 'Comandos disponíveis para o Admin:\n• *score* (placar geral)\n• *score hoje* (foco em hoje)\n• *score 7d* (últimos 7 dias)\n• *score ref* (detalhamento por código ref)'
           });
 
           return NextResponse.json({
             received: true,
-            type: 'admin_scoreboard_sent',
+            type: 'admin_command_guide',
             phone
           });
         }
 
-        // Se o admin enviar qualquer outro comando/texto
-        await sendWhatsAppMessage({
-          phone,
-          message: 'Comandos disponíveis para o Admin:\n• *score* (placar geral)\n• *score hoje* (placar com foco de hoje)\n• *score 7d* (últimos 7 dias)\n• *score ref* (placar com detalhamento por código ref)'
-        });
+        // ---------------------------------------------------------------------
+        // PRIORIDADE 2: CLIENTE JÁ CADASTRADO (EMPRESA EXISTENTE)
+        // Mantém o fluxo atual de atestados SEM nenhuma alteração
+        // ---------------------------------------------------------------------
+        const isClient = await isRegisteredCompanyPhone(phone);
+        if (isClient) {
+          return await processClientAttestationFlow({
+            payload,
+            phone,
+            text,
+            mediaUrl,
+            mimeType,
+            fileName,
+            mediaBase64,
+            rawEvolutionData
+          });
+        }
+
+        // ---------------------------------------------------------------------
+        // PRIORIDADE 3: QUALQUER OUTRO NÚMERO (TRATADO COMO LEAD DO VURIO)
+        // Mensagens e anexos de leads NUNCA são processados como atestado médico
+        // ---------------------------------------------------------------------
+        const leadResult = await registerOrUpdateLead(phone, cleanText);
+
+        // Resposta automática do Marcos apenas na 1ª mensagem do lead
+        if (leadResult.shouldSendAutoReply && !leadResult.isOptOut) {
+          await sendWhatsAppMessage({
+            phone,
+            message: LEAD_GREETING_MESSAGE
+          });
+        }
 
         return NextResponse.json({
           received: true,
-          type: 'admin_command_guide',
-          phone
-        });
-      }
-
-      // -----------------------------------------------------------------------
-      // PRIORIDADE B: CLIENTE JÁ CADASTRADO (EMPRESA EXISTENTE)
-      // Mantém o fluxo atual de atestados SEM nenhuma alteração
-      // -----------------------------------------------------------------------
-      const isClient = await isRegisteredCompanyPhone(phone);
-      if (isClient) {
-        return await processClientAttestationFlow({
-          payload,
+          type: 'lead_processed',
           phone,
-          text,
-          mediaUrl,
-          mimeType,
-          fileName,
-          mediaBase64,
-          rawEvolutionData
+          isNewLead: leadResult.isNewLead,
+          messageCount: leadResult.messageCount,
+          optOut: leadResult.isOptOut
+        });
+
+      } catch (leadError) {
+        // REQUISITO 3.2: Qualquer erro no código novo (banco, rede, etc.)
+        // é capturado e NUNCA derruba o webhook, respondendo 200 ao provedor
+        console.error('[Webhook] Erro no fluxo de leads (capturado com segurança):', leadError);
+        return NextResponse.json({ 
+          received: true, 
+          status: 'fallback_handled', 
+          error: 'Falha interna absorvida no processador de leads' 
         });
       }
-
-      // -----------------------------------------------------------------------
-      // PRIORIDADE C: QUALQUER OUTRO NÚMERO (TRATADO COMO LEAD DO VURIO)
-      // Mensagens e anexos de leads NUNCA são processados como atestado médico
-      // -----------------------------------------------------------------------
-      const leadResult = await registerOrUpdateLead(phone, cleanText);
-
-      // Resposta automática do Marcos apenas na 1ª mensagem do lead
-      if (leadResult.shouldSendAutoReply && !leadResult.isOptOut) {
-        await sendWhatsAppMessage({
-          phone,
-          message: LEAD_GREETING_MESSAGE
-        });
-      }
-
-      return NextResponse.json({
-        received: true,
-        type: 'lead_processed',
-        phone,
-        isNewLead: leadResult.isNewLead,
-        messageCount: leadResult.messageCount,
-        optOut: leadResult.isOptOut
-      });
     }
 
     // =========================================================================
-    // FLUXO PADRÃO (QUANDO LEAD_SCOREBOARD_ENABLED === FALSE)
-    // Comportamento original preservado
+    // FLUXO ORIGINAL DE CLIENTES (QUANDO LEAD_SCOREBOARD_ENABLED === FALSE)
+    // Nenhuma consulta nem gravação em leads é executada
     // =========================================================================
     return await processClientAttestationFlow({
       payload,
@@ -174,8 +185,12 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Erro no processamento do webhook WhatsApp:', error);
-    return NextResponse.json({ error: error?.message || 'Erro no webhook' }, { status: 500 });
+    console.error('Erro geral no webhook WhatsApp:', error);
+    // Sempre responde 200 com status de erro tratado para evitar loops de retentativa do provedor
+    return NextResponse.json({ 
+      received: true, 
+      error: error?.message || 'Erro no webhook' 
+    });
   }
 }
 
@@ -365,7 +380,6 @@ function extractMediaInfoFromPayload(payload: any) {
     if (message.conversation) text = message.conversation;
     else if (message.extendedTextMessage?.text) text = message.extendedTextMessage.text;
     
-    // Captura base64 caso venha injetado no webhook
     if (message.base64) mediaBase64 = message.base64;
     else if (payload.data.base64) mediaBase64 = payload.data.base64;
     else if (message.documentMessage?.base64) mediaBase64 = message.documentMessage.base64;
@@ -395,7 +409,6 @@ function extractMediaInfoFromPayload(payload: any) {
   if (payload.fromMe !== undefined) fromMe = Boolean(payload.fromMe);
   if (payload.isGroup !== undefined) isGroup = Boolean(payload.isGroup);
 
-  // Limpeza de prefixo Data-URI se existir
   if (mediaBase64 && mediaBase64.includes('base64,')) {
     mediaBase64 = mediaBase64.split('base64,')[1];
   }

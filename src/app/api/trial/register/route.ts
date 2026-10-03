@@ -5,11 +5,25 @@ import { verifyTrialEligibility, recordTrialGrant } from '@/lib/security/anti-ab
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-// Armazenamento em memória de leads para campanhas futuras e CRM
+// Armazenamento em memória de leads para campanhas futuras e CRM (quando trial ativo)
 const inMemoryLeads: any[] = [];
 
 export async function POST(req: NextRequest) {
   try {
+    // FLAG DO TRIAL (Padrão: false)
+    const TRIAL_ENABLED = process.env.TRIAL_ENABLED === 'true';
+
+    if (!TRIAL_ENABLED) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          trialEnabled: false,
+          message: 'Teste grátis em breve. Fale conosco pelo WhatsApp.' 
+        },
+        { status: 503 }
+      );
+    }
+
     const body = await req.json();
     const { fullName, email, phone, companyName, employeeRange, cnpj } = body;
 
@@ -69,7 +83,7 @@ export async function POST(req: NextRequest) {
         eligibility.cleanCnpj.replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5') : 
         '00.000.000/0001-00',
       plan: 'STARTER',
-      creditsBalance: 15, // 15 consultas de validação gratuitas
+      creditsBalance: 15,
       workCity: 'São Paulo',
       workState: 'SP',
       contactEmail: email.trim(),
@@ -87,6 +101,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
+      trialEnabled: true,
       lead: leadRecord,
       company,
       whatsappUrl,
@@ -99,5 +114,11 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET() {
-  return NextResponse.json({ success: true, leadsCount: inMemoryLeads.length, leads: inMemoryLeads });
+  const TRIAL_ENABLED = process.env.TRIAL_ENABLED === 'true';
+  return NextResponse.json({ 
+    success: true, 
+    trialEnabled: TRIAL_ENABLED,
+    leadsCount: inMemoryLeads.length, 
+    leads: inMemoryLeads 
+  });
 }

@@ -165,12 +165,17 @@ export async function isRegisteredCompanyPhone(phone: string): Promise<boolean> 
 }
 
 /**
- * Extrai código opcional de rastreio de campanha [ref:xxx]
+ * Extrai e sanitiza código opcional de rastreio de campanha [ref:xxx]:
+ * - Minúsculas
+ * - Apenas letras, números, hífen e sublinhado (remove caracteres inválidos)
+ * - Trunca em no máximo 50 caracteres
  */
 export function extractRefCode(text: string): string | null {
   if (!text) return null;
-  const match = text.match(/\[ref:([a-zA-Z0-9_\-]+)\]/i);
-  return match ? match[1].toLowerCase().trim() : null;
+  const match = text.match(/\[ref:([^\]]+)\]/i);
+  if (!match) return null;
+  const sanitized = match[1].toLowerCase().replace(/[^a-z0-9_-]/g, '').slice(0, 50);
+  return sanitized || null;
 }
 
 /**
@@ -192,7 +197,7 @@ export async function registerOrUpdateLead(
   const now = new Date();
   const lowerText = (messageText || '').toLowerCase().trim();
 
-  // Tratamento de Opt-Out ('sair', 'parar')
+  // Tratamento de Opt-Out ('sair', 'parar', 'cancelar')
   const wantsOptOut = lowerText === 'sair' || lowerText === 'parar' || lowerText === 'cancelar';
 
   // 1. AMBIENTE DE TESTE LOCAL (NODE_ENV === 'test')
@@ -282,16 +287,6 @@ export async function registerOrUpdateLead(
       const newCount = (existingLead.message_count || 1) + 1;
       const isAlreadyOptOut = existingLead.opt_out || wantsOptOut;
 
-      // Trava de 24 horas para repetição de saudação
-      let canReplyAgain = false;
-      if (!isAlreadyOptOut && existingLead.last_auto_reply_at) {
-        const lastReplyTime = new Date(existingLead.last_auto_reply_at).getTime();
-        const diffHours = (now.getTime() - lastReplyTime) / (1000 * 60 * 60);
-        if (diffHours >= 24) {
-          canReplyAgain = false; // Manter strict: não enviar se for apenas resposta à pergunta
-        }
-      }
-
       await supabase
         .from('leads')
         .update({
@@ -309,7 +304,7 @@ export async function registerOrUpdateLead(
       };
     }
   } catch (err) {
-    console.error('[LeadService] Falha ao processar lead:', err);
+    console.error('[LeadService] Falha ao processar lead no Supabase:', err);
     return {
       isNewLead: false,
       messageCount: 1,
@@ -323,7 +318,7 @@ export async function registerOrUpdateLead(
  * Gera o texto formatado do PLACAR VURIO para o ADMIN_WHATSAPP.
  * 
  * REQUISITO CRÍTICO:
- * Se o Supabase não estiver conectado fora de teste local, responde:
+ * Se o Supabase não estiver conectado fora de teste local, responde EXATAMENTE:
  * "Placar indisponível: banco não conectado"
  */
 export async function generateLeadScoreboard(commandText: string): Promise<string> {
@@ -349,11 +344,11 @@ export async function generateLeadScoreboard(commandText: string): Promise<strin
         .order('first_message_at', { ascending: true });
 
       if (error || !data) {
-        return 'Placar indisponível: erro ao consultar dados no banco';
+        return 'Placar indisponível: banco não conectado';
       }
       leads = data as LeadRecord[];
     } catch {
-      return 'Placar indisponível: falha na conexão com o banco';
+      return 'Placar indisponível: banco não conectado';
     }
   }
 
@@ -363,7 +358,6 @@ export async function generateLeadScoreboard(commandText: string): Promise<strin
   // 3. Excluir clientes já cadastrados
   const adminPhone = process.env.ADMIN_WHATSAPP || '';
   
-  // Lista de empresas cadastradas para exclusão do placar
   let registeredClientPhones: string[] = [];
   try {
     const { getAllCompanies } = await import('./company-service');
@@ -500,7 +494,7 @@ export async function purgeExpiredLeads(retentionDays = LEAD_RETENTION_DAYS): Pr
 }
 
 /**
- * Função utilitária para limpar dados de teste da memória (somente em testes)
+ * Limpa dados de teste da memória (somente em testes)
  */
 export function resetTestLeads() {
   inMemoryTestLeads.clear();

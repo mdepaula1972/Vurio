@@ -10,28 +10,11 @@ import {
   Activity, 
   Check, 
   HelpCircle,
-  Sparkles,
-  TrendingDown,
-  Building2,
   Stethoscope,
-  Send,
   MapPin,
-  Sliders,
-  Zap,
-  ArrowRight,
-  Eye,
-  Scale,
-  UserCheck,
-  Briefcase,
-  Clock,
-  ChevronDown,
   FileText,
   Lock,
-  ExternalLink,
   AlertTriangle,
-  Fingerprint,
-  Smartphone,
-  PhoneCall,
   AlertCircle
 } from 'lucide-react';
 
@@ -40,16 +23,19 @@ import {
 // ==========================================
 // 1. Prova social permanece oculta até aprovação de clientes reais
 const SHOW_PROVA_SOCIAL = false;
-// 2. Seção de planos oculta por padrão para não expor marcadores [PREENCHER] em produção
+// 2. Seção de planos oculta por padrão
 const SHOW_PLANOS = false;
-// 3. Tópicos complementares de LGPD com marcadores jurídicos [PREENCHER] (modo preview apenas)
+// 3. Tópicos complementares de LGPD com marcadores jurídicos (modo preview apenas)
 const SHOW_LGPD_EXTENDED = false;
+// 4. FLAG DO TRIAL (Padrão: false). Quando false, o formulário não é renderizado
+// e todas as CTAs direcionam para conversa no WhatsApp corporativo
+const TRIAL_ENABLED = process.env.NEXT_PUBLIC_TRIAL_ENABLED === 'true';
 
-// Número corporativo de atendimento/robô do Vurio
+// Número corporativo oficial de atendimento do Vurio
 const WHATSAPP_NUMBER = '551331500987';
 
 export default function LandingHomePage() {
-  // Estado do formulário de 15 consultas gratuitas (Seção de Teste Grátis)
+  // Estado do formulário (utilizado somente se TRIAL_ENABLED === true)
   const [formName, setFormName] = useState('');
   const [formEmail, setFormEmail] = useState('');
   const [formPhone, setFormPhone] = useState('');
@@ -65,47 +51,46 @@ export default function LandingHomePage() {
   // Modal de Simulação Interativa de Relatório
   const [demoModalOpen, setDemoModalOpen] = useState(false);
 
-  // Link de WhatsApp dinâmico com preservação de parâmetros UTM
-  const [waLinkTrial, setWaLinkTrial] = useState(
-    `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Quero testar o Vurio com 15 consultas grátis')}`
-  );
-  const [waLinkPlans, setWaLinkPlans] = useState(
-    `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Quero entender os planos do Vurio')}`
+  // Link de WhatsApp dinâmico com suporte ao código [ref:<utm_campaign>]
+  const [waLink, setWaLink] = useState(
+    `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Quero saber mais sobre o Vurio')}`
   );
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
       try {
         const params = new URLSearchParams(window.location.search);
-        const utmSource = params.get('utm_source');
         const utmCampaign = params.get('utm_campaign');
-        const utmMedium = params.get('utm_medium');
         
-        let extra = '';
-        if (utmSource || utmCampaign) {
-          const parts = [];
-          if (utmSource) parts.push(`Origem: ${utmSource}`);
-          if (utmCampaign) parts.push(`Campanha: ${utmCampaign}`);
-          if (utmMedium) parts.push(`Mídia: ${utmMedium}`);
-          extra = ` [${parts.join(' | ')}]`;
+        let refSuffix = '';
+        if (utmCampaign) {
+          // Sanitização: minúsculas, apenas a-z, 0-9, hífen e sublinhado; máx 50 chars
+          const cleanRef = utmCampaign
+            .toLowerCase()
+            .replace(/[^a-z0-9_-]/g, '')
+            .slice(0, 50);
+
+          if (cleanRef) {
+            refSuffix = ` [ref:${cleanRef}]`;
+          }
         }
 
-        const msgTrial = `Quero testar o Vurio com 15 consultas grátis${extra}`;
-        const msgPlans = `Quero entender os planos do Vurio${extra}`;
+        const baseMsg = 'Quero saber mais sobre o Vurio';
+        const finalMsg = `${baseMsg}${refSuffix}`;
 
-        setWaLinkTrial(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msgTrial)}`);
-        setWaLinkPlans(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(msgPlans)}`);
-      } catch (e) {
-        // Fallback para os links padrão já inicializados
+        setWaLink(`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(finalMsg)}`);
+      } catch {
+        // Mantém o link padrão
       }
     }
   }, []);
 
-  // Ação de Conversão Inteligente do Formulário
+  // Submissão do formulário (apenas se TRIAL_ENABLED === true)
   const handleSubmitTrial = async (e: React.FormEvent) => {
     e.preventDefault();
-    setFormError(null);
+    if (!TRIAL_ENABLED) return;
 
+    setFormError(null);
     if (!formEmail || !formCompany || !formPhone) {
       setFormError('Por favor, preencha todos os campos obrigatórios.');
       return;
@@ -134,14 +119,13 @@ export default function LandingHomePage() {
           dashboardUrl: data.dashboardUrl || '/dashboard'
         });
 
-        // Abre o WhatsApp com a mensagem parametrizada
         if (data.whatsappUrl) {
           window.open(data.whatsappUrl, '_blank');
         }
       } else {
-        setFormError(data.error || 'Não foi possível concluir o registro. Verifique os dados e tente novamente.');
+        setFormError(data.error || data.message || 'Não foi possível concluir o registro.');
       }
-    } catch (err: any) {
+    } catch {
       setFormError('Erro de conexão ao ativar o teste. Tente novamente em alguns instantes.');
     } finally {
       setSubmitting(false);
@@ -155,12 +139,6 @@ export default function LandingHomePage() {
     name: 'Vurio',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web, WhatsApp',
-    offers: {
-      '@type': 'Offer',
-      price: '0',
-      priceCurrency: 'BRL',
-      description: '15 consultas gratuitas para teste corporativo'
-    },
     description: 'Triagem automatizada de atestados médicos pelo WhatsApp corporativo para apoiar a análise do RH e Departamento Pessoal.',
     publisher: {
       '@type': 'Organization',
@@ -201,7 +179,7 @@ export default function LandingHomePage() {
             </div>
           </Link>
 
-          {/* Links de Navegação com Nomenclatura Direcionada */}
+          {/* Links de Navegação */}
           <nav className="hidden lg:flex items-center space-x-8 text-xs font-semibold text-slate-300">
             <a href="#o-abismo" className="hover:text-white transition-colors">
               Por que validar o CRM não basta
@@ -229,13 +207,13 @@ export default function LandingHomePage() {
             </Link>
 
             <a
-              href={waLinkTrial}
+              href={waLink}
               target="_blank"
               rel="noopener noreferrer"
               className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] text-white text-xs font-bold shadow-lg shadow-[#0077d1]/25 hover:opacity-95 transition-all flex items-center space-x-2 transform hover:-translate-y-0.5"
             >
               <MessageSquare className="w-3.5 h-3.5" />
-              <span>Teste grátis</span>
+              <span>Falar com o Vurio</span>
             </a>
           </div>
 
@@ -280,13 +258,13 @@ export default function LandingHomePage() {
             {/* CTAs Principais */}
             <div className="pt-4 flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto">
               <a
-                href={waLinkTrial}
+                href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-full sm:w-auto px-8 py-4 rounded-2xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] hover:opacity-95 text-white font-bold text-sm shadow-xl shadow-[#0077d1]/25 transition-all flex items-center justify-center space-x-2.5 transform hover:-translate-y-0.5 cursor-pointer"
               >
                 <MessageSquare className="w-4 h-4" />
-                <span>Testar 15 consultas grátis</span>
+                <span>Falar com o Vurio</span>
               </a>
 
               <button
@@ -301,10 +279,10 @@ export default function LandingHomePage() {
             {/* Benefícios Rápidos */}
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-slate-400 pt-2 font-medium">
               <span className="flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-[#01cf9e]" /> Sem cartão de crédito
+                <Check className="w-4 h-4 text-[#01cf9e]" /> Atendimento direto no WhatsApp
               </span>
               <span className="flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-[#01cf9e]" /> Triagem em 3 segundos
+                <Check className="w-4 h-4 text-[#01cf9e]" /> Triagem técnica em 3 segundos
               </span>
               <span className="flex items-center gap-1.5">
                 <Check className="w-4 h-4 text-[#01cf9e]" /> Em conformidade com a LGPD
@@ -471,7 +449,6 @@ export default function LandingHomePage() {
                 </thead>
                 <tbody className="divide-y divide-slate-800/60 text-slate-300 text-xs">
                   
-                  {/* Linha 1 */}
                   <tr className="hover:bg-slate-800/30 transition-colors">
                     <td className="p-4 sm:p-5">
                       <div className="font-bold text-white mb-0.5">PDF alterado após a assinatura digital do médico</div>
@@ -490,7 +467,6 @@ export default function LandingHomePage() {
                     </td>
                   </tr>
 
-                  {/* Linha 2 */}
                   <tr className="hover:bg-slate-800/30 transition-colors">
                     <td className="p-4 sm:p-5">
                       <div className="font-bold text-white mb-0.5">Reenvio do mesmo atestado em períodos diferentes</div>
@@ -509,7 +485,6 @@ export default function LandingHomePage() {
                     </td>
                   </tr>
 
-                  {/* Linha 3 */}
                   <tr className="hover:bg-slate-800/30 transition-colors">
                     <td className="p-4 sm:p-5">
                       <div className="font-bold text-white mb-0.5">Distância geográfica incompatível com o turno</div>
@@ -528,7 +503,6 @@ export default function LandingHomePage() {
                     </td>
                   </tr>
 
-                  {/* Linha 4 */}
                   <tr className="hover:bg-slate-800/30 transition-colors">
                     <td className="p-4 sm:p-5">
                       <div className="font-bold text-white mb-0.5">CRM em estado diferente sem inscrição secundária</div>
@@ -573,7 +547,6 @@ export default function LandingHomePage() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             
-            {/* Pilar 1: Criptografia ICP-Brasil */}
             <div className="p-7 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4 hover:border-[#02c1db]/40 transition-all shadow-xl group">
               <div className="w-12 h-12 rounded-2xl bg-[#0077d1]/20 text-[#02c1db] flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Lock className="w-6 h-6" />
@@ -588,7 +561,6 @@ export default function LandingHomePage() {
               </div>
             </div>
 
-            {/* Pilar 2: Regularidade Cadastral no CFM */}
             <div className="p-7 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4 hover:border-[#02c1db]/40 transition-all shadow-xl group">
               <div className="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Stethoscope className="w-6 h-6" />
@@ -603,7 +575,6 @@ export default function LandingHomePage() {
               </div>
             </div>
 
-            {/* Pilar 3: Consistência Geo-Temporal */}
             <div className="p-7 rounded-3xl bg-slate-900/80 border border-slate-800 space-y-4 hover:border-[#02c1db]/40 transition-all shadow-xl group">
               <div className="w-12 h-12 rounded-2xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <MapPin className="w-6 h-6" />
@@ -624,7 +595,6 @@ export default function LandingHomePage() {
       </section>
 
       {/* 5. BLOCO DE PROVA SOCIAL (OCULTO EM PRODUÇÃO ATÉ AUTORIZAÇÃO) */}
-      {/* Ativar quando tivermos os primeiros depoimentos e logos autorizados */}
       <section 
         id="prova-social" 
         style={{ display: SHOW_PROVA_SOCIAL ? 'block' : 'none' }}
@@ -637,35 +607,6 @@ export default function LandingHomePage() {
           <h2 className="text-xl sm:text-3xl font-extrabold text-white">
             Resultados comprovados na rotina de RHs e Departamentos Pessoais
           </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4 text-left">
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-              <p className="text-xs text-slate-300 italic">
-                "[Depoimento de demonstração: Reduzimos em 90% o tempo gasto na checagem manual de atestados e passamos a agir com segurança jurídica amparada em relatórios técnicos objetivos.]"
-              </p>
-              <div className="pt-2 border-t border-slate-800">
-                <p className="text-xs font-bold text-white">[Gerente de RH - Setor Varejo]</p>
-                <p className="text-[11px] text-slate-500">[Empresa com 1.200 colaboradores]</p>
-              </div>
-            </div>
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-              <p className="text-xs text-slate-300 italic">
-                "[Depoimento de demonstração: O fluxo pelo WhatsApp corporativo organizou os prazos da CCT e eliminou o atrito entre DP e colaboradores.]"
-              </p>
-              <div className="pt-2 border-t border-slate-800">
-                <p className="text-xs font-bold text-white">[Coordenador de DP - Indústria]</p>
-                <p className="text-[11px] text-slate-500">[Empresa com 850 colaboradores]</p>
-              </div>
-            </div>
-            <div className="p-6 rounded-2xl bg-slate-900 border border-slate-800 space-y-3">
-              <p className="text-xs text-slate-300 italic">
-                "[Depoimento de demonstração: A triagem técnica dos metadados nos deu tranquilidade para tomar decisões assertivas em conformidade com a LGPD.]"
-              </p>
-              <div className="pt-2 border-t border-slate-800">
-                <p className="text-xs font-bold text-white">[Diretora de Compliance e Gente]</p>
-                <p className="text-[11px] text-slate-500">[Empresa de Logística]</p>
-              </div>
-            </div>
-          </div>
         </div>
       </section>
 
@@ -685,14 +626,12 @@ export default function LandingHomePage() {
             </p>
           </div>
 
-          {/* Cards de Tópicos Factuais de LGPD */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
-            {/* Tópico 1: Base Legal Expressa */}
             <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
-                  <Scale className="w-5 h-5" />
+                  <ShieldCheck className="w-5 h-5" />
                 </div>
                 <h3 className="text-sm font-bold text-white">1. Base Legal na LGPD</h3>
                 <p className="text-xs text-slate-300 leading-relaxed">
@@ -702,7 +641,6 @@ export default function LandingHomePage() {
               <span className="text-[10px] text-slate-500 font-mono">Art. 7º e 11 LGPD</span>
             </div>
 
-            {/* Tópico 2: Papel de Operador */}
             <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-sky-500/20 text-[#02c1db] flex items-center justify-center">
@@ -716,7 +654,6 @@ export default function LandingHomePage() {
               <span className="text-[10px] text-slate-500 font-mono">Controlador x Operador</span>
             </div>
 
-            {/* Tópico 3: Não Exigência de CID */}
             <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
@@ -730,7 +667,6 @@ export default function LandingHomePage() {
               <span className="text-[10px] text-slate-500 font-mono">Resolução CFM 1.658/02</span>
             </div>
 
-            {/* Tópico 4: Processamento Efêmero & Zero Retenção */}
             <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 flex flex-col justify-between">
               <div className="space-y-3">
                 <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center">
@@ -746,7 +682,6 @@ export default function LandingHomePage() {
 
           </div>
 
-          {/* Tópicos Complementares com Marcadores Jurídicos (Ocultos em produção via flag) */}
           {SHOW_LGPD_EXTENDED && (
             <div className="p-6 rounded-2xl bg-slate-900/40 border border-dashed border-slate-700 space-y-4">
               <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
@@ -773,109 +708,65 @@ export default function LandingHomePage() {
         </div>
       </section>
 
-      {/* 7. SEÇÃO 6: TESTE GRÁTIS / PILOTO CORPORATIVO */}
-      <section id="ativar-trial" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-gradient-to-b from-slate-950 to-slate-900">
+      {/* 7. SEÇÃO 6: CONTATO E CONVERSAÇÃO (SEM TRIAL ATIVO / COM FLAG DE RENDERIZAÇÃO) */}
+      <section id="contato" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-gradient-to-b from-slate-950 to-slate-900">
         <div className="max-w-4xl mx-auto space-y-8">
           
           <div className="text-center space-y-3">
             <span className="text-[11px] font-bold text-[#01cf9e] uppercase tracking-widest bg-emerald-500/10 px-3 py-1 rounded-full border border-emerald-500/30">
-              AVALIAÇÃO CORPORATIVA SEM COMPROMISSO
+              ATENDIMENTO CORPORATIVO B2B
             </span>
             <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-              Coloque à prova a triagem automatizada do Vurio na sua empresa
+              Converse com a equipe do Vurio
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Ative <strong>15 Consultas Gratuitas de Triagem Técnica</strong> e teste com atestados que geraram dúvidas no seu Departamento Pessoal no último mês.
+              Tire dúvidas sobre a triagem automatizada de metadados, conformidade com a LGPD e como integrar o canal de WhatsApp oficial à rotina do seu Departamento Pessoal.
             </p>
           </div>
 
-          {/* Card Principal de Teste Grátis */}
-          <div className="p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl relative overflow-hidden space-y-8">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-[#0077d1]/10 rounded-full blur-2xl pointer-events-none"></div>
+          {/* Card Principal: Se TRIAL_ENABLED for false, o formulário NÃO é renderizado */}
+          {!TRIAL_ENABLED ? (
+            <div className="p-8 sm:p-10 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl relative overflow-hidden text-center space-y-6">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#0077d1]/10 rounded-full blur-2xl pointer-events-none"></div>
 
-            {/* OPÇÃO 1: INÍCIO IMEDIATO VIA WHATSAPP (CTA PRINCIPAL) */}
-            <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-950 to-slate-900 border border-slate-700/80 text-center space-y-4">
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold text-[#02c1db] uppercase tracking-wider">
-                  OPÇÃO MAIS RÁPIDA (SEM FORMULÁRIOS)
-                </span>
-                <h3 className="text-lg font-bold text-white">
-                  Iniciar Teste de 15 Consultas Direto no WhatsApp
+              <div className="w-16 h-16 rounded-full bg-[#0077d1]/20 text-[#02c1db] mx-auto flex items-center justify-center">
+                <MessageSquare className="w-8 h-8" />
+              </div>
+
+              <div className="space-y-2 max-w-lg mx-auto">
+                <h3 className="text-xl font-bold text-white">
+                  Fale diretamente pelo WhatsApp
                 </h3>
-                <p className="text-xs text-slate-300 max-w-md mx-auto">
-                  Clique no botão abaixo para abrir a conversa no WhatsApp oficial do Vurio com mensagem pré-preenchida.
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Nosso canal oficial está disponível para entender o volume de atestados da sua empresa e apresentar como a triagem de metadados apoia as decisões do seu RH.
                 </p>
               </div>
 
-              <div className="flex justify-center">
+              <div className="flex justify-center pt-2">
                 <a
-                  href={waLinkTrial}
+                  href={waLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-8 py-3.5 rounded-xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] hover:opacity-95 text-white text-xs sm:text-sm font-bold shadow-lg shadow-[#0077d1]/25 transition-all flex items-center gap-2 transform hover:-translate-y-0.5 cursor-pointer"
+                  className="px-8 py-4 rounded-2xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] hover:opacity-95 text-white text-sm font-bold shadow-xl shadow-[#0077d1]/25 transition-all flex items-center gap-2.5 transform hover:-translate-y-0.5 cursor-pointer"
                 >
                   <MessageSquare className="w-4 h-4" />
-                  <span>Testar 15 consultas grátis via WhatsApp</span>
+                  <span>Falar com o Vurio via WhatsApp</span>
                 </a>
               </div>
+
+              <p className="text-[11px] text-slate-500 pt-2">
+                🔒 Atendimento exclusivo para empresas e profissionais de RH/DP.
+              </p>
             </div>
-
-            {/* DIVISOR */}
-            <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-slate-800"></div>
-              <span className="flex-shrink mx-4 text-[11px] text-slate-500 uppercase font-semibold">
-                Ou cadastre sua empresa para liberar o painel web corporativo
-              </span>
-              <div className="flex-grow border-t border-slate-800"></div>
-            </div>
-
-            {/* OPÇÃO 2: FORMULÁRIO COMPLETO B2B (Com backend funcional) */}
-            {submitted ? (
-              <div className="text-center py-6 space-y-6 animate-fadeIn">
-                <div className="w-16 h-16 rounded-full bg-emerald-500/20 text-emerald-400 mx-auto flex items-center justify-center">
-                  <CheckCircle2 className="w-10 h-10" />
-                </div>
-                
-                <div className="space-y-2">
-                  <h3 className="text-xl font-bold text-white">Suas 15 Consultas Gratuitas Foram Ativadas!</h3>
-                  <p className="text-xs sm:text-sm text-slate-300 max-w-lg mx-auto">
-                    Seus dados corporativos foram registrados com sucesso. O WhatsApp do Vurio foi aberto para você enviar seu primeiro atestado para triagem técnica em 3 segundos.
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-                  {trialData?.whatsappUrl && (
-                    <a
-                      href={trialData.whatsappUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] hover:opacity-95 text-white text-xs font-bold shadow-lg transition-all flex items-center gap-2"
-                    >
-                      <MessageSquare className="w-4 h-4" />
-                      <span>Abrir Conversa no WhatsApp do Robô</span>
-                    </a>
-                  )}
-
-                  <Link
-                    href={trialData?.dashboardUrl || '/dashboard'}
-                    className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition-all flex items-center gap-2"
-                  >
-                    <Briefcase className="w-4 h-4 text-sky-400" />
-                    <span>Acessar Painel Web da Empresa</span>
-                  </Link>
-                </div>
-
-                <p className="text-[11px] text-slate-500">
-                  Caso o WhatsApp não tenha aberto automaticamente, clique no botão acima.
-                </p>
-              </div>
-            ) : (
+          ) : (
+            /* RENDERIZADO SOMENTE QUANDO TRIAL_ENABLED === TRUE */
+            <div className="p-8 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl relative overflow-hidden space-y-8">
               <form onSubmit={handleSubmitTrial} className="space-y-4 text-xs">
                 {formError && (
                   <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 flex items-start gap-3">
                     <AlertTriangle className="w-5 h-5 flex-shrink-0 text-rose-400 mt-0.5" />
                     <div>
-                      <p className="font-bold text-xs">Não foi possível liberar as consultas:</p>
+                      <p className="font-bold text-xs">Atenção:</p>
                       <p className="text-[11px] text-rose-200/90 mt-0.5 leading-relaxed">{formError}</p>
                     </div>
                   </div>
@@ -889,7 +780,7 @@ export default function LandingHomePage() {
                       required
                       value={formName}
                       onChange={(e) => setFormName(e.target.value)}
-                      placeholder="Ex: Carlos Eduardo Mendes"
+                      placeholder="Ex: Carlos Mendes"
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-[#02c1db] text-xs"
                     />
                   </div>
@@ -897,7 +788,6 @@ export default function LandingHomePage() {
                   <div>
                     <label className="block text-slate-300 font-semibold mb-1.5">
                       E-mail Corporativo Institucional:
-                      <span className="text-[#02c1db] text-[10px] ml-1 font-normal">(Exclusivo B2B)</span>
                     </label>
                     <input
                       type="email"
@@ -907,17 +797,12 @@ export default function LandingHomePage() {
                       placeholder="carlos@suaempresa.com.br"
                       className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-[#02c1db] text-xs"
                     />
-                    {formEmail.includes('@gmail') || formEmail.includes('@hotmail') || formEmail.includes('@outlook') || formEmail.includes('@yahoo') ? (
-                      <span className="text-[10px] text-amber-400 mt-1 block">
-                        ⚠️ Cadastros com provedores públicos (@gmail/@hotmail) não são autorizados para o piloto corporativo. Use seu e-mail institucional.
-                      </span>
-                    ) : null}
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1.5">WhatsApp Corporativo com DDD:</label>
+                    <label className="block text-slate-300 font-semibold mb-1.5">WhatsApp Corporativo:</label>
                     <input
                       type="tel"
                       required
@@ -929,7 +814,7 @@ export default function LandingHomePage() {
                   </div>
 
                   <div>
-                    <label className="block text-slate-300 font-semibold mb-1.5">CNPJ da Empresa (Matriz ou Filial):</label>
+                    <label className="block text-slate-300 font-semibold mb-1.5">CNPJ da Empresa:</label>
                     <input
                       type="text"
                       required
@@ -941,162 +826,21 @@ export default function LandingHomePage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-slate-300 font-semibold mb-1.5">Nome / Razão Social da Empresa:</label>
-                    <input
-                      type="text"
-                      required
-                      value={formCompany}
-                      onChange={(e) => setFormCompany(e.target.value)}
-                      placeholder="Ex: Indústria Brasileira de Peças Ltda"
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white placeholder:text-slate-600 focus:outline-none focus:border-[#02c1db] text-xs"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-300 font-semibold mb-1.5">Faixa de Colaboradores CLT:</label>
-                    <select
-                      value={formRange}
-                      onChange={(e) => setFormRange(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-white focus:outline-none focus:border-[#02c1db] text-xs"
-                    >
-                      <option value="50 a 100">50 a 100 colaboradores</option>
-                      <option value="100 a 500">100 a 500 colaboradores</option>
-                      <option value="500 a 2000">500 a 2.000 colaboradores</option>
-                      <option value="Acima de 2000">Acima de 2.000 colaboradores</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="pt-2">
-                  <button
-                    type="submit"
-                    disabled={submitting}
-                    className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs shadow-lg transition-all flex items-center justify-center space-x-2 border border-slate-700"
-                  >
-                    {submitting ? (
-                      <>
-                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                        <span>Provisionando Conta de Teste...</span>
-                      </>
-                    ) : (
-                      <>
-                        <ShieldCheck className="w-4 h-4 text-[#02c1db]" />
-                        <span>Cadastrar Empresa e Ativar 15 Consultas no Painel</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-
-                <p className="text-[11px] text-slate-500 text-center pt-1">
-                  🔒 Dados protegidos sob a LGPD. Processamento efêmero sem armazenamento de diagnósticos (CID).
-                </p>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs shadow-lg transition-all"
+                >
+                  {submitting ? 'Processando...' : 'Cadastrar Empresa'}
+                </button>
               </form>
-            )}
-
-          </div>
+            </div>
+          )}
 
         </div>
       </section>
 
-      {/* 8. SEÇÃO 7: PLANOS COMERCIAIS (OCULTA EM PRODUÇÃO VIA FLAG SHOW_PLANOS) */}
-      {SHOW_PLANOS && (
-        <section id="planos" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950">
-          <div className="max-w-6xl mx-auto space-y-12">
-            <div className="text-center space-y-3 max-w-3xl mx-auto">
-              <span className="text-[11px] font-bold text-[#02c1db] uppercase tracking-widest bg-[#0077d1]/10 px-3 py-1 rounded-full border border-[#0077d1]/30">
-                PLANOS E CONTRATAÇÃO
-              </span>
-              <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-                Planos sob medida para o tamanho da sua operação
-              </h2>
-              <p className="text-xs sm:text-sm text-slate-400">
-                Escolha o pacote de consultas adequado ao volume mensal de atestados do seu Departamento Pessoal.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* Plano Starter */}
-              <div className="p-7 rounded-3xl bg-slate-900 border border-slate-800 space-y-6 flex flex-col justify-between">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-white">Starter</h3>
-                  <p className="text-xs text-slate-400">Para empresas de 50 a 200 colaboradores.</p>
-                  <div className="text-2xl font-black text-white">
-                    [PREENCHER COM VALORES/PLANOS COMERCIAIS REVISADOS]
-                  </div>
-                  <ul className="space-y-2 text-xs text-slate-300">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Até 50 consultas/mês</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> WhatsApp oficial e Painel Web</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Validação ICP-Brasil e CFM</li>
-                  </ul>
-                </div>
-                <a
-                  href={waLinkPlans}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs text-center border border-slate-700 transition-all block"
-                >
-                  Falar sobre planos
-                </a>
-              </div>
-
-              {/* Plano Pro */}
-              <div className="p-7 rounded-3xl bg-slate-900 border-2 border-[#02c1db] space-y-6 flex flex-col justify-between relative shadow-2xl">
-                <div className="space-y-4">
-                  <span className="text-[10px] font-bold text-[#02c1db] uppercase tracking-wider bg-[#02c1db]/10 px-2.5 py-0.5 rounded-full">
-                    MAIS POPULAR
-                  </span>
-                  <h3 className="text-lg font-bold text-white">Pro</h3>
-                  <p className="text-xs text-slate-400">Para empresas de 200 a 1.000 colaboradores.</p>
-                  <div className="text-2xl font-black text-white">
-                    [PREENCHER COM VALORES/PLANOS COMERCIAIS REVISADOS]
-                  </div>
-                  <ul className="space-y-2 text-xs text-slate-300">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Até 250 consultas/mês</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Múltiplas filiais e CCTs</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Alertas Geo-Shield de distância</li>
-                  </ul>
-                </div>
-                <a
-                  href={waLinkPlans}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] text-white font-bold text-xs text-center shadow-lg transition-all block"
-                >
-                  Falar sobre planos
-                </a>
-              </div>
-
-              {/* Plano Enterprise */}
-              <div className="p-7 rounded-3xl bg-slate-900 border border-slate-800 space-y-6 flex flex-col justify-between">
-                <div className="space-y-4">
-                  <h3 className="text-lg font-bold text-white">Enterprise</h3>
-                  <p className="text-xs text-slate-400">Para grandes operações acima de 1.000 vidas.</p>
-                  <div className="text-2xl font-black text-white">
-                    [PREENCHER COM VALORES/PLANOS COMERCIAIS REVISADOS]
-                  </div>
-                  <ul className="space-y-2 text-xs text-slate-300">
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Volume sob medida</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Webhooks e integração dedicada</li>
-                    <li className="flex items-center gap-2"><Check className="w-4 h-4 text-emerald-400" /> Suporte e SLA prioritário</li>
-                  </ul>
-                </div>
-                <a
-                  href={waLinkPlans}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs text-center border border-slate-700 transition-all block"
-                >
-                  Falar sobre planos
-                </a>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* 9. FAQ */}
+      {/* 8. FAQ */}
       <section id="perguntas-frequentes" className="py-16 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950/40">
         <div className="max-w-4xl mx-auto space-y-8">
           
@@ -1150,10 +894,9 @@ export default function LandingHomePage() {
         </div>
       </section>
 
-      {/* 10. FOOTER CORPORATIVO */}
+      {/* 9. FOOTER CORPORATIVO */}
       <footer className="bg-slate-950 py-12 px-4 sm:px-6 lg:px-8 border-t border-slate-900 text-center text-xs text-slate-500 space-y-4">
         
-        {/* Aviso Legal Obrigatório no Rodapé */}
         <div className="max-w-3xl mx-auto p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 text-slate-300 text-[11px] leading-relaxed">
           <strong className="text-white">Aviso Legal: </strong>
           O Vurio sinaliza indícios para apoiar a análise do RH. A decisão final é sempre humana e não substitui parecer médico ou jurídico.
@@ -1193,7 +936,7 @@ export default function LandingHomePage() {
         </p>
       </footer>
 
-      {/* 11. MODAL: SIMULAÇÃO LIVE DE RELATÓRIO DE ALERTAS */}
+      {/* 10. MODAL: SIMULAÇÃO LIVE DE RELATÓRIO DE ALERTAS */}
       {demoModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 space-y-4 animate-scaleUp">
@@ -1228,7 +971,6 @@ export default function LandingHomePage() {
                 </div>
               </div>
 
-              {/* Alerta Criptográfico */}
               <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 space-y-1">
                 <p className="font-bold flex items-center gap-1.5 text-rose-400">
                   <AlertTriangle className="w-4 h-4 text-rose-400" />
@@ -1239,7 +981,6 @@ export default function LandingHomePage() {
                 </p>
               </div>
 
-              {/* Alerta Geo-Shield */}
               <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 space-y-1">
                 <p className="font-bold flex items-center gap-1.5 text-amber-400">
                   <MapPin className="w-4 h-4 text-amber-400" />
@@ -1259,14 +1000,14 @@ export default function LandingHomePage() {
                 Fechar Simulação
               </button>
               <a
-                href={waLinkTrial}
+                href={waLink}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setDemoModalOpen(false)}
                 className="px-4 py-2.5 bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] text-white rounded-xl font-bold text-xs transition-all shadow flex items-center justify-center gap-1.5"
               >
                 <MessageSquare className="w-3.5 h-3.5" />
-                <span>Testar 15 consultas grátis via WhatsApp</span>
+                <span>Falar com o Vurio via WhatsApp</span>
               </a>
             </div>
           </div>

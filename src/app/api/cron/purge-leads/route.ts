@@ -6,16 +6,17 @@ export const runtime = 'nodejs';
 
 /**
  * Endpoint de Expurgo Programado LGPD
- * Finalidade: Destruição segura de leads inativos após período de retenção.
- * Pode ser acionado via Vercel Cron ou chamada autorizada com CRON_SECRET.
+ * Finalidade: Destruição segura de leads inativos após período de retenção (90 dias).
+ * Segurança: Exige cabeçalho "Authorization: Bearer <CRON_SECRET>".
+ * Se CRON_SECRET não estiver configurado no ambiente, a rota recusa (401) por segurança.
  */
 export async function GET(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization');
     const cronSecret = process.env.CRON_SECRET;
 
-    // Se houver CRON_SECRET configurado, exige validação de Bearer token
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    // Regra estrita: se CRON_SECRET não existir ou o Bearer não bater, rejeita 401
+    if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
     }
 
