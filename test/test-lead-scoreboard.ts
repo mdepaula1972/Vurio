@@ -34,7 +34,8 @@ import {
   generateLeadScoreboard, 
   purgeExpiredLeads,
   extractRefCode,
-  isLeadDatabaseConnected
+  isLeadDatabaseConnected,
+  getInMemoryLeadForTest
 } from '../src/lib/services/lead-service';
 import { POST as webhookPost } from '../src/app/api/webhook/whatsapp/route';
 import { GET as cronGet } from '../src/app/api/cron/purge-leads/route';
@@ -147,6 +148,10 @@ async function runTests() {
   const resOptOut = await registerOrUpdateLead(optOutPhone, 'sair');
   assert(resOptOut.isOptOut === true, 'Lead marcado com opt_out = true');
   assert(resOptOut.shouldSendAutoReply === false, 'Nenhuma mensagem enviada após opt-out');
+  const leadAfterOptOut = getInMemoryLeadForTest(optOutPhone);
+  assert(leadAfterOptOut?.first_message_text === null, 'Conteúdo da primeira mensagem apagado (first_message_text = null)');
+  assert(leadAfterOptOut?.phone === optOutPhone, 'Telefone mantido como marcador de opt-out');
+  assert(leadAfterOptOut?.opt_out === true, 'Flag opt_out ativada como true');
 
   // -------------------------------------------------------------------------
   // TESTE 9: Placar de Leads do Admin (Simulado)

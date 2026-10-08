@@ -285,7 +285,7 @@ export default function LandingHomePage() {
                 <Check className="w-4 h-4 text-[#01cf9e]" /> Triagem técnica em 3 segundos
               </span>
               <span className="flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-[#01cf9e]" /> Em conformidade com a LGPD
+                <Check className="w-4 h-4 text-[#01cf9e]" /> Princípios de Privacidade da LGPD
               </span>
             </div>
           </div>
@@ -622,7 +622,7 @@ export default function LandingHomePage() {
               Segurança e LGPD: Desenvolvido para atender às exigências do seu DPO e Jurídico
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              O Vurio opera sob os mais estritos princípios de <em>Privacy by Design</em>, minimização de dados e processamento efêmero, assegurando conformidade estrita com a Lei 13.709/2018.
+              O Vurio opera sob princípios de <em>Privacy by Design</em>, minimização de dados e processamento em memória volátil, orientado pelas diretrizes da Lei 13.709/2018.
             </p>
           </div>
 
@@ -672,12 +672,12 @@ export default function LandingHomePage() {
                 <div className="w-10 h-10 rounded-xl bg-teal-500/20 text-teal-400 flex items-center justify-center">
                   <CheckCircle2 className="w-5 h-5" />
                 </div>
-                <h3 className="text-sm font-bold text-white">4. Processamento Efêmero</h3>
+                <h3 className="text-sm font-bold text-white">4. Processamento em Memória</h3>
                 <p className="text-xs text-slate-300 leading-relaxed">
-                  O arquivo original é processado em memória volátil e <strong>definitivamente expurgado</strong> logo após a emissão do relatório de alertas. A guarda documental legal compete exclusivamente à empresa contratante.
+                  O arquivo original é processado temporariamente em memória volátil durante a análise e <strong>não é gravado em disco ou armazenamento persistente</strong>. A guarda documental legal compete exclusivamente à empresa contratante.
                 </p>
               </div>
-              <span className="text-[10px] text-slate-500 font-mono">Zero Retenção de Binários</span>
+              <span className="text-[10px] text-slate-500 font-mono">Não Armazenamento de Arquivos</span>
             </div>
 
           </div>
@@ -720,7 +720,7 @@ export default function LandingHomePage() {
               Converse com a equipe do Vurio
             </h2>
             <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
-              Tire dúvidas sobre a triagem automatizada de metadados, conformidade com a LGPD e como integrar o canal de WhatsApp oficial à rotina do seu Departamento Pessoal.
+              Tire dúvidas sobre a triagem automatizada de metadados, privacidade de dados e como integrar o canal de WhatsApp oficial à rotina do seu Departamento Pessoal.
             </p>
           </div>
 

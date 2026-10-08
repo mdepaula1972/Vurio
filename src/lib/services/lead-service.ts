@@ -39,7 +39,7 @@ export interface LeadRecord {
   id?: string;
   phone: string;
   ref: string | null;
-  first_message_text: string;
+  first_message_text: string | null;
   first_message_at: string;
   last_message_at: string;
   message_count: number;
@@ -53,6 +53,16 @@ export const LEAD_GREETING_MESSAGE =
 
 // Armazenamento em memória exclusivo para testes locais automatizados (NODE_ENV === 'test')
 const inMemoryTestLeads: Map<string, LeadRecord> = new Map();
+
+/**
+ * Consulta lead em memória exclusivamente para asserção em testes unitários automatizados
+ */
+export function getInMemoryLeadForTest(phone: string): LeadRecord | undefined {
+  if (process.env.NODE_ENV === 'test') {
+    return inMemoryTestLeads.get(normalizePhone(phone));
+  }
+  return undefined;
+}
 const inMemoryTestProcessedMessages: Set<string> = new Set();
 
 /**
@@ -225,7 +235,7 @@ export async function registerOrUpdateLead(
       const newLead: LeadRecord = {
         phone,
         ref,
-        first_message_text: messageText,
+        first_message_text: wantsOptOut ? null : messageText,
         first_message_at: now.toISOString(),
         last_message_at: now.toISOString(),
         message_count: 1,
@@ -244,6 +254,7 @@ export async function registerOrUpdateLead(
       existing.last_message_at = now.toISOString();
       if (wantsOptOut) {
         existing.opt_out = true;
+        existing.first_message_text = null;
       }
       return {
         isNewLead: false,
@@ -283,7 +294,7 @@ export async function registerOrUpdateLead(
       const insertPayload = {
         phone,
         ref,
-        first_message_text: messageText,
+        first_message_text: wantsOptOut ? null : messageText,
         first_message_at: now.toISOString(),
         last_message_at: now.toISOString(),
         message_count: 1,
@@ -304,13 +315,19 @@ export async function registerOrUpdateLead(
       const newCount = (existingLead.message_count || 1) + 1;
       const isAlreadyOptOut = existingLead.opt_out || wantsOptOut;
 
+      const updatePayload: Record<string, any> = {
+        last_message_at: now.toISOString(),
+        message_count: newCount,
+        opt_out: isAlreadyOptOut
+      };
+
+      if (wantsOptOut) {
+        updatePayload.first_message_text = null;
+      }
+
       await supabase
         .from('leads')
-        .update({
-          last_message_at: now.toISOString(),
-          message_count: newCount,
-          opt_out: isAlreadyOptOut
-        })
+        .update(updatePayload)
         .eq('phone', phone);
 
       return {

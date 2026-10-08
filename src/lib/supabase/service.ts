@@ -37,6 +37,21 @@ export async function getCompanyDocumentHashes(companyId: string): Promise<strin
 /**
  * Registra o log da validação realizada em conformidade com a LGPD
  */
+/**
+ * Extrai formato neutro ou extensão do arquivo (ex.: "pdf", "jpg"),
+ * sem armazenar a nomenclatura original recebida em observância
+ * à minimização de dados.
+ */
+function extractNeutralFileFormat(fileName?: string): string {
+  if (!fileName) return 'pdf';
+  const parts = fileName.split('.');
+  if (parts.length > 1) {
+    const ext = parts.pop()?.toLowerCase().replace(/[^a-z0-9]/g, '') || '';
+    if (ext) return ext;
+  }
+  return 'documento';
+}
+
 export async function saveValidationLog(
   companyId: string,
   report: AttestationValidationReport,
@@ -46,7 +61,7 @@ export async function saveValidationLog(
   const logEntry = {
     company_id: companyId,
     file_hash: report.fileSha256,
-    file_name: fileName || 'atestado_recebido',
+    file_name: extractNeutralFileFormat(fileName),
     status: report.status,
     is_authentic: report.isAuthentic,
     doctor_name: report.doctor.name,

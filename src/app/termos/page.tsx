@@ -41,7 +41,7 @@ export default function TermosPage() {
         <div className="space-y-2 border-b border-slate-800 pb-6">
           <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
             <Lock className="w-3.5 h-3.5" />
-            <span>Conformidade Legal & LGPD (Lei nº 13.709/2018)</span>
+            <span>Diretrizes de Privacidade e Proteção de Dados (Lei nº 13.709/2018)</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
             Termos de Uso, Política de Privacidade e Retenção de Dados
@@ -86,7 +86,7 @@ export default function TermosPage() {
           </p>
           <ul className="list-disc pl-5 space-y-1 text-xs text-slate-400">
             <li><strong>Hash SHA-256 do arquivo:</strong> Identificador matemático irreversível utilizado como trava técnica contra reapresentação do mesmo arquivo em períodos distintos;</li>
-            <li><strong>Nome do arquivo original recebido:</strong> Metadado de identificação fornecido no envio (ex.: atestado.pdf);</li>
+            <li><strong>Formato técnico do documento:</strong> Registro neutro exclusivamente da extensão do arquivo (ex.: pdf, jpg), sem armazenar a nomenclatura original;</li>
             <li><strong>Dados públicos do médico emissor:</strong> Nome completo, número do CRM e UF conferidos no CFM;</li>
             <li><strong>Parâmetros da assinatura digital:</strong> Emissor do certificado (ICP-Brasil), hash calculado e hash esperado da cadeia PAdES;</li>
             <li><strong>Período de repouso prescrito:</strong> Quantidade de dias e data de início do afastamento;</li>
@@ -109,10 +109,10 @@ export default function TermosPage() {
             <span>3. Privacidade e Retenção de Contatos Comerciais (Leads via WhatsApp)</span>
           </div>
           <p className="text-slate-300 leading-relaxed">
-            Quem entrar em contato pelo WhatsApp tem o número e a mensagem armazenados por até <strong>{LEAD_RETENTION_DAYS} dias</strong>, com finalidade de atendimento comercial, e pode pedir a exclusão respondendo "sair" ou entrando em contato.
+            Quem entrar em contato pelo WhatsApp tem o número e o texto da mensagem armazenados por até <strong>{LEAD_RETENTION_DAYS} dias</strong> para atendimento comercial. No entanto, responder 'sair' interrompe as mensagens automáticas e remove o conteúdo da sua mensagem; para pedir a exclusão total dos seus dados, escreva para [PREENCHER: canal de contato].
           </p>
           <p className="text-[11px] text-slate-400 leading-relaxed">
-            Após o período de retenção de {LEAD_RETENTION_DAYS} dias, os registros de leads inativos são automaticamente destruídos por rotina programada de expurgo seguro em conformidade com o Art. 16 da LGPD.
+            Após o período de até {LEAD_RETENTION_DAYS} dias, os registros de contatos comerciais inativos são removidos por rotina programada de limpeza de dados.
           </p>
         </div>
 
