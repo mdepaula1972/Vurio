@@ -8,6 +8,9 @@ export interface ExtractedAttestationData {
   doctorName: string | null;
   crm: string | null;
   uf: string | null;
+  councilType?: 'CRM' | 'CRO' | 'CRP' | 'CREFITO' | 'CRN' | 'RMS' | null;
+  councilNumber?: string | null;
+  professionalTitle?: string | null;
   patientName: string | null;
   patientCpf: string | null;
   emissionDate: string | null;
@@ -28,9 +31,10 @@ Você é um perito forense e auditor médico do Vurio. Sua tarefa é analisar mi
 Retorne EXCLUSIVAMENTE um objeto JSON válido (sem blocos de markdown, sem explicações extras) com a seguinte estrutura:
 {
   "isMedicalAttestation": true,
-  "doctorName": "Nome completo do médico identificado no carimbo ou cabeçalho (sem título Dr.)",
-  "crm": "Apenas os números do CRM",
-  "uf": "Duas letras da sigla do estado do CRM (ex: SP, RJ, MG)",
+  "councilType": "Sigla do conselho profissional emitente: CRM (médico), CRO (odontologia/dentista), CRP (psicólogo), CREFITO (fisioterapeuta) ou CRN (nutricionista). Padrão: CRM",
+  "doctorName": "Nome completo do profissional de saúde identificado no carimbo ou cabeçalho (sem título Dr.)",
+  "crm": "Apenas os dígitos do registro no conselho profissional",
+  "uf": "Duas letras da sigla do estado do conselho (ex: SP, RJ, MG)",
   "patientName": "Nome completo do paciente atendido",
   "patientCpf": "CPF ou RG do paciente se visível",
   "emissionDate": "Data do atestado no formato DD/MM/AAAA",
@@ -104,10 +108,17 @@ export async function extractAttestationFromImageBuffer(
 
             const isMedical = parsed.isMedicalAttestation !== false;
 
+            const rawCouncil = parsed.councilType ? String(parsed.councilType).toUpperCase().trim() : (parsed.crm ? 'CRM' : null);
+            const validCouncil = (rawCouncil && ['CRM', 'CRO', 'CRP', 'CREFITO', 'CRN', 'RMS'].includes(rawCouncil)) ? rawCouncil : 'CRM';
+            const num = isMedical && parsed.crm ? String(parsed.crm).replace(/\D/g, '') : null;
+
             return {
               isMedicalAttestation: isMedical,
               doctorName: isMedical ? (parsed.doctorName || null) : null,
-              crm: isMedical && parsed.crm ? String(parsed.crm).replace(/\D/g, '') : null,
+              crm: validCouncil === 'CRM' ? num : null,
+              councilType: isMedical ? (validCouncil as any) : null,
+              councilNumber: isMedical ? num : null,
+              professionalTitle: validCouncil === 'CRO' ? 'Cirurgião-Dentista' : validCouncil === 'CRP' ? 'Psicólogo(a)' : 'Médico(a)',
               uf: isMedical && parsed.uf ? String(parsed.uf).toUpperCase() : (isMedical ? 'SP' : null),
               patientName: isMedical ? (parsed.patientName || null) : null,
               patientCpf: isMedical ? (parsed.patientCpf || null) : null,

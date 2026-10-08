@@ -1,8 +1,9 @@
 import { AttestationValidationReport } from '../crypto/validator';
 
 /**
- * Formata a mensagem de retorno para o WhatsApp de acordo com as regras periciais expandidas,
- * incluindo Auditoria Cadastral Nacional de CRM (CFM - 27 estados) e Motor de Inconsistências Forenses.
+ * Formata a mensagem de retorno para o WhatsApp de acordo com as regras de triagem do Vurio,
+ * incluindo suporte a múltiplos conselhos profissionais (CRM, CRO, CRP),
+ * Auditoria Cadastral Nacional de CRM (CFM - 27 estados) e Motor de Inconsistências.
  */
 export function formatWhatsAppResponse(report: AttestationValidationReport): string {
   // 1. Bloco de Afastamento (LGPD compliant)
@@ -13,7 +14,7 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     restDaysLine = `\n*Afastamento:* ${days} dia${days > 1 ? 's' : ''}${startDate}`;
   }
 
-  // 2. Bloco de Auditoria de CRM / CFM Nacional (27 Estados)
+  // 2. Bloco de Auditoria Médica (CFM Nacional - 27 Estados)
   let cfmBlock = '';
   if (report.cfmAudit && report.cfmAudit.crm) {
     const cfm = report.cfmAudit;
@@ -40,7 +41,31 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     }
   }
 
-  // 3. Bloco de Apontamentos Técnicos de Auditoria
+  // 3. Bloco de Auditoria Odontológica (CRO)
+  let croBlock = '';
+  if (report.doctor.councilType === 'CRO') {
+    const croNum = report.doctor.councilNumber || report.doctor.crm || '';
+    const croUf = report.doctor.uf ? `/${report.doctor.uf}` : '';
+    croBlock =
+      `\n\n🦷 *Auditoria Odontológica (CRO${croUf})*\n` +
+      `• *Categoria:* Cirurgião-Dentista Habilitado\n` +
+      `• *Registro:* CRO ${croNum}${croUf}\n` +
+      `• *Respaldo Trabalhista:* Atestado odontológico legalmente válido para abono de faltas (Lei Federal nº 5.081/1966, Art. 6º, III).\n`;
+  }
+
+  // 4. Bloco de Atendimento Psicológico / Terapêutico (CRP)
+  let crpBlock = '';
+  if (report.doctor.councilType === 'CRP') {
+    const crpNum = report.doctor.councilNumber || report.doctor.crm || '';
+    const crpUf = report.doctor.uf ? `/${report.doctor.uf}` : '';
+    crpBlock =
+      `\n\n🧠 *Conselho de Psicologia (CRP${crpUf})*\n` +
+      `• *Categoria:* Psicólogo(a) Clínico(a)\n` +
+      `• *Registro:* CRP ${crpNum}${crpUf}\n` +
+      `• *Orientação para o DP:* Declaração de comparecimento/sessão terapêutica (abono de horas). Abono integral sujeito à CCT ou homologação pelo médico do trabalho.\n`;
+  }
+
+  // 5. Bloco de Apontamentos Técnicos de Auditoria
   let inconsistencyBlock = '';
   if (report.consistency && report.consistency.hasInconsistencies) {
     inconsistencyBlock = `\n\n📋 *Apontamentos Técnicos de Auditoria:*\n`;
@@ -50,7 +75,7 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     }
   }
 
-  // 4. Bloco de Auditoria de Localização (Geo-Shield Add-on)
+  // 6. Bloco de Auditoria de Localização (Geo-Shield Add-on)
   let geoBlock = '';
   if (report.geoAudit && !report.geoAudit.isCompatible && report.geoAudit.alert) {
     geoBlock =
@@ -61,23 +86,28 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
       `• 📌 *Apontamento:* ${report.geoAudit.alert.description}\n`;
   }
 
-  // 5. Montagem da Mensagem por Status
+  // 7. Identificação Dinâmica do Profissional
+  const councilType = report.doctor.councilType || 'CRM';
+  const councilNumber = report.doctor.councilNumber || report.doctor.crm;
+  const councilSuffix = councilNumber ? ` (${councilType} ${councilNumber}${report.doctor.uf ? `/${report.doctor.uf}` : ''})` : '';
+  const defaultTitle = report.doctor.professionalTitle || (councilType === 'CRO' ? 'Cirurgião-Dentista' : 'Profissional de Saúde');
+  const professionalDisplay = report.doctor.name ? `Dr(a). ${report.doctor.name}` : defaultTitle;
+
+  // 8. Montagem da Mensagem por Status
   switch (report.status) {
     case 'VALID_INTACT': {
-      const doctorName = report.doctor.name ? `Dr(a). ${report.doctor.name}` : 'Médico Identificado';
-      const crmStr = report.doctor.crm
-        ? `(CRM ${report.doctor.crm}${report.doctor.uf ? `/${report.doctor.uf}` : ''})`
-        : '';
       const issuer = report.signature.issuer || 'AC Autorizada ICP-Brasil';
 
       return (
         `🟢 *Atestado em Conformidade Digital*\n\n` +
-        `*Médico:* ${doctorName} ${crmStr}\n` +
+        `*Profissional:* ${professionalDisplay}${councilSuffix}\n` +
         `*Assinatura Digital:* Válida (Padrão ICP-Brasil)\n` +
         `*Integridade:* Confirmada (Arquivo intocado após a emissão)\n` +
         `*Emissor:* ${issuer}` +
         restDaysLine +
         cfmBlock +
+        croBlock +
+        crpBlock +
         inconsistencyBlock +
         geoBlock
       );
@@ -90,10 +120,13 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
       return (
         `🟢 *Atestado Validado via QR Code Oficial*\n\n` +
         `*Emissor:* Sistema Oficial (${issuer})\n` +
+        `*Profissional:* ${professionalDisplay}${councilSuffix}\n` +
         `*Status:* Documento com código de autenticação legível e rastreável.\n` +
         `*Link de Consulta:* ${url}` +
         restDaysLine +
         cfmBlock +
+        croBlock +
+        crpBlock +
         inconsistencyBlock +
         geoBlock
       );
@@ -102,10 +135,13 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     case 'PHOTO_MANUAL_PAPER': {
       return (
         `🟡 *Triagem de Atestado Físico (Papel Tradicional)*\n\n` +
+        `*Profissional:* ${professionalDisplay}${councilSuffix}\n` +
         `*Status:* Foto de receituário físico impresso/manual.\n` +
         `*Observação:* Documentos físicos não contêm a assinatura digital criptográfica e-CPF/ICP-Brasil.\n` +
         restDaysLine +
         cfmBlock +
+        croBlock +
+        crpBlock +
         inconsistencyBlock +
         geoBlock +
         `\n*Orientação para o DP:* Se o colaborador recebeu o arquivo eletrônico diretamente da clínica, solicite o PDF original para validação imediata. Sendo atendimento presencial físico, confira o carimbo legível e assinatura manual.`
@@ -125,20 +161,23 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     case 'TAMPERED': {
       return (
         `🟡 *Divergência de Integridade Digital*\n\n` +
+        `*Profissional:* ${professionalDisplay}${councilSuffix}\n` +
         `*Status:* O documento em PDF apresenta modificações estruturais ou visuais após o fechamento da assinatura digital.\n` +
         restDaysLine +
         cfmBlock +
+        croBlock +
+        crpBlock +
         inconsistencyBlock +
         geoBlock +
-        `\n*Sugestão para o DP:* Solicite ao colaborador o envio do arquivo PDF original emitido diretamente pelo médico ou clínica (sem salvar por cima ou reimprimir em PDF).`
+        `\n*Sugestão para o DP:* Solicite ao colaborador o envio do arquivo PDF original emitido diretamente pelo profissional ou clínica (sem salvar por cima ou reimprimir em PDF).`
       );
     }
 
     case 'NOT_AN_ATTESTATION': {
       return (
         `📄 *Documento Não Identificado como Atestado*\n\n` +
-        `*Status:* O arquivo enviado não possui características ou termos de um atestado médico ou declaração de saúde.\n\n` +
-        `*Finalidade:* O canal Vurio Compliance é dedicado à recepção e auditoria pericial de atestados médicos de colaboradores.\n\n` +
+        `*Status:* O arquivo enviado não possui características ou termos de um atestado médico, odontológico ou declaração de saúde.\n\n` +
+        `*Finalidade:* O canal Vurio é dedicado à recepção e triagem de atestados de saúde de colaboradores.\n\n` +
         `_Caso deseje validar um atestado, por favor envie o arquivo PDF original emitido pela clínica ou uma foto nítida do receituário físico._`
       );
     }
@@ -148,12 +187,15 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     default: {
       return (
         `🟡 *Documento Sem Assinatura ICP-Brasil Identificada*\n\n` +
+        `*Profissional:* ${professionalDisplay}${councilSuffix}\n` +
         `*Status:* O arquivo PDF enviado não possui certificado digital padrão ICP-Brasil acoplado.\n` +
         restDaysLine +
         cfmBlock +
+        croBlock +
+        crpBlock +
         inconsistencyBlock +
         geoBlock +
-        `\n*Sugestão para o DP:* Caso o colaborador tenha recebido o arquivo digital diretamente do consultório, solicite o PDF com a assinatura digital do médico ou a via com QR Code de autenticação.`
+        `\n*Sugestão para o DP:* Caso o colaborador tenha recebido o arquivo digital diretamente do consultório, solicite o PDF com a assinatura digital do profissional ou a via com QR Code de autenticação.`
       );
     }
   }

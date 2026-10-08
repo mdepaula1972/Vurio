@@ -30,6 +30,9 @@ export interface AttestationValidationReport {
     crm: string | null;
     uf: string | null;
     cpf: string | null;
+    councilType?: 'CRM' | 'CRO' | 'CRP' | 'CREFITO' | 'CRN' | 'RMS' | null;
+    councilNumber?: string | null;
+    professionalTitle?: string;
   };
   patient?: {
     name: string | null;
@@ -100,7 +103,10 @@ export async function validateMedicalAttestation(
           name: extracted.doctorName,
           crm: extracted.crm,
           uf: extracted.uf,
-          cpf: null
+          cpf: null,
+          councilType: extracted.councilType || 'CRM',
+          councilNumber: extracted.councilNumber || extracted.crm,
+          professionalTitle: extracted.professionalTitle || (extracted.councilType === 'CRO' ? 'Cirurgião-Dentista' : 'Médico(a)')
         },
         patient: {
           name: extracted.patientName,
@@ -227,8 +233,8 @@ export async function validateMedicalAttestation(
   // 5. Extrair blocos de assinatura digital PAdES
   const signatures = extractPdfSignatures(fileBuffer);
 
-  // Se o PDF tem texto legível, mas não possui vocabulário médico nem CRM
-  if (pdfText.trim().length > 20 && !hasMedicalContext && !crmInfo.crm) {
+  // Se o PDF tem texto legível, mas não possui vocabulário médico nem Conselho Profissional (CRM/CRO/etc.)
+  if (pdfText.trim().length > 20 && !hasMedicalContext && !crmInfo.councilNumber && !crmInfo.crm) {
     return {
       status: 'NOT_AN_ATTESTATION',
       isAuthentic: false,
@@ -384,10 +390,13 @@ export async function validateMedicalAttestation(
     isAuthentic: true,
     fileSha256,
     doctor: {
-      name: doctorData?.doctorName || 'Médico Signatário',
+      name: doctorData?.doctorName || (crmInfo.councilType === 'CRO' ? 'Cirurgião-Dentista Signatário' : 'Médico Signatário'),
       crm: crmInfo.crm,
       uf: crmInfo.uf,
-      cpf: doctorData?.cpf || null
+      cpf: doctorData?.cpf || null,
+      councilType: crmInfo.councilType || 'CRM',
+      councilNumber: crmInfo.councilNumber || crmInfo.crm,
+      professionalTitle: crmInfo.professionalTitle || (crmInfo.councilType === 'CRO' ? 'Cirurgião-Dentista' : 'Médico(a)')
     },
     patient: {
       name: patientInfo.patientName,
@@ -420,7 +429,12 @@ function checkMedicalVocabulary(text: string): boolean {
     'paciente', 'medico', 'médico', 'medica', 'médica', 'cid-10', 'cid10', 'cid:',
     'receituario', 'receituário', 'posologia', 'diagnostico', 'diagnóstico',
     'clinica medica', 'clínica médica', 'consulta medica', 'consulta médica',
-    'atendimento medico', 'atendimento médico', 'crm/'
+    'atendimento medico', 'atendimento médico', 'crm/',
+    // Odontologia (CRO)
+    'odontolog', 'dentista', 'cirurgiao-dentista', 'cirurgião-dentista', 'cirurgia bucal',
+    'extracao dentaria', 'extração dentária', 'endodontia', 'dente', 'dentes', 'cro/', 'cro-',
+    // Psicologia / Fisioterapia / Multiprofissional
+    'psicolog', 'psicoterapia', 'crp/', 'crp-', 'fisioterap', 'crefito', 'sessao', 'sessão'
   ];
   for (const word of medicalWords) {
     if (lower.includes(word)) {
@@ -463,8 +477,9 @@ async function finalizeReport(
 ): Promise<AttestationValidationReport> {
   const policy = getCompanyPolicy();
 
-  // 1. Auditoria de CRM / CFM Nacional (27 Estados)
-  if (baseReport.doctor.crm) {
+  // 1. Auditoria de CRM / CFM Nacional (27 Estados) - Executada apenas para médicos (CRM)
+  const isDoctor = !baseReport.doctor.councilType || baseReport.doctor.councilType === 'CRM';
+  if (baseReport.doctor.crm && isDoctor) {
     baseReport.cfmAudit = await auditDoctorCrm(
       baseReport.doctor.crm,
       baseReport.doctor.uf,

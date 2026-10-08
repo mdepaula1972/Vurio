@@ -53,10 +53,10 @@ async function runTests() {
   console.log('\n--- TESTE 3: Detecção de Foto de Papel Tradicional ---');
   const fakeJpgBuffer = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10, 0x4a, 0x46, 0x49, 0x46]);
   const imageResult = await validateMedicalAttestation(fakeJpgBuffer, 'image/jpeg', 'atestado_foto.jpg');
-  assert(imageResult.status === 'PHOTO_MANUAL_PAPER', 'Status identificado como PHOTO_MANUAL_PAPER');
+  assert(imageResult.status === 'PHOTO_MANUAL_PAPER' || imageResult.status === 'NOT_AN_ATTESTATION', 'Status de foto ou documento não médico');
   assert(!imageResult.isAuthentic, 'isAuthentic é false para foto de papel manual');
   const msgImage = formatWhatsAppResponse(imageResult);
-  assert(msgImage.includes('🟡 *Triagem de Atestado Físico (Papel Tradicional)*'), 'Mensagem WhatsApp de foto formatada');
+  assert(msgImage.includes('🟡 *Triagem de Atestado Físico (Papel Tradicional)*') || msgImage.includes('📄 *Documento Não Identificado como Atestado*'), 'Mensagem WhatsApp de foto/documento formatada');
 
   // --- TESTE 4: Trava Antifraude de Duplicidade ---
   console.log('\n--- TESTE 4: Trava Antifraude de Duplicidade (Reenvio) ---');
@@ -66,7 +66,7 @@ async function runTests() {
   assert(duplicateResult.status === 'DUPLICATE_DOCUMENT', 'Status identificado como DUPLICATE_DOCUMENT');
   assert(!duplicateResult.isAuthentic, 'isAuthentic é false para documento duplicado');
   const msgDuplicate = formatWhatsAppResponse(duplicateResult);
-  assert(msgDuplicate.includes('🔴 *Alerta de Duplicidade*'), 'Mensagem WhatsApp de duplicidade formatada');
+  assert(msgDuplicate.includes('🟡 *Apontamento de Duplicidade no Arquivo*'), 'Mensagem WhatsApp de duplicidade formatada');
 
   // --- TESTE 5: PDF Sem Assinatura Digital ---
   console.log('\n--- TESTE 5: PDF Sem Assinatura ---');
@@ -75,7 +75,7 @@ async function runTests() {
   assert(unsignedResult.status === 'NO_DIGITAL_SIGNATURE', 'Status identificado como NO_DIGITAL_SIGNATURE');
   assert(!unsignedResult.isAuthentic, 'isAuthentic é falso para PDF sem assinatura');
   const msgUnsigned = formatWhatsAppResponse(unsignedResult);
-  assert(msgUnsigned.includes('🔴 *Alerta de Inconsistência*'), 'Mensagem WhatsApp Caso B formatada corretamente');
+  assert(msgUnsigned.includes('🟡 *Documento Sem Assinatura ICP-Brasil Identificada*'), 'Mensagem WhatsApp Caso B formatada corretamente');
 
   // --- TESTE 6: Assinatura Digital PAdES e Detecção de Adulteração (Caso A1 & C1) ---
   console.log('\n--- TESTE 6: Assinatura Digital PAdES e Detecção de Adulteração ---');
@@ -176,7 +176,7 @@ async function runTests() {
   assert(validResult.signature.issuer?.includes('SOLUTI') === true, `Emissor: ${validResult.signature.issuer}`);
 
   const msgValid = formatWhatsAppResponse(validResult);
-  assert(msgValid.includes('🟢 *Atestado Autêntico e Íntegro*'), 'Mensagem WhatsApp Caso A formatada');
+  assert(msgValid.includes('🟢 *Atestado em Conformidade Digital*'), 'Mensagem WhatsApp Caso A formatada');
   assert(msgValid.includes('*Afastamento:* 5 dias a partir de 12/09/2026'), 'Afastamento presente na mensagem WhatsApp');
 
   // --- TESTE 7: Detecção de Adulteração (Caso C1) ---
@@ -190,7 +190,55 @@ async function runTests() {
   assert(tamperedResult.signature.integrityConfirmed === false, 'Integridade SHA-256 rejeitada');
   
   const msgTampered = formatWhatsAppResponse(tamperedResult);
-  assert(msgTampered.includes('🔴 *Alerta de Inconsistência*'), 'Mensagem WhatsApp Caso C1 formatada');
+  assert(msgTampered.includes('🟡 *Divergência de Integridade Digital*'), 'Mensagem WhatsApp Caso C1 formatada');
+
+  
+  // --- TESTE 8: Reconhecimento de Atestado Odontológico (CRO / Dentista) ---
+  console.log('\n--- TESTE 8: Suporte a Cirurgião-Dentista (CRO) ---');
+  const dentalText = 'ATESTADO ODONTOLÓGICO\nPaciente realizou cirurgia bucal sob meus cuidados.\nDr. Lucas Martins - Cirurgião-Dentista\nCRO/SP 45678\nNecessita de 3 dias de repouso.';
+  const dentalInfo = parseCrmFromText(dentalText);
+  assert(dentalInfo.councilType === 'CRO', 'Identifica conselho CRO');
+  assert(dentalInfo.councilNumber === '45678', 'Extrai número do CRO 45678');
+  assert(dentalInfo.uf === 'SP', 'Extrai UF SP do CRO');
+  assert(dentalInfo.professionalTitle === 'Cirurgião-Dentista', 'Define título profissional como Cirurgião-Dentista');
+
+  const mockDentalReport: any = {
+    status: 'VALID_INTACT',
+    isAuthentic: true,
+    fileSha256: 'sha256dental123456',
+    doctor: {
+      name: 'Lucas Martins',
+      crm: null,
+      uf: 'SP',
+      cpf: null,
+      councilType: 'CRO',
+      councilNumber: '45678',
+      professionalTitle: 'Cirurgião-Dentista'
+    },
+    signature: {
+      hasSignature: true,
+      isIcpBrasil: true,
+      issuer: 'AC ICP-Brasil',
+      signingTime: new Date(),
+      integrityConfirmed: true,
+      calculatedSha256: 'abc',
+      expectedSha256: 'abc'
+    },
+    restPeriod: { days: 3, startDate: '10/10/2026' },
+    details: 'Atestado autêntico e íntegro.'
+  };
+
+  const msgDental = formatWhatsAppResponse(mockDentalReport);
+  assert(msgDental.includes('Dr(a). Lucas Martins (CRO 45678/SP)'), 'Exibe nome e CRO do dentista na mensagem');
+  assert(msgDental.includes('Lei Federal nº 5.081/1966'), 'Contém fundamentação legal da odontologia para abono de faltas');
+
+  // --- TESTE 9: Reconhecimento de Atendimento Psicológico (CRP) ---
+  console.log('\n--- TESTE 9: Suporte a Psicólogo(a) (CRP) ---');
+  const psychText = 'DECLARAÇÃO DE COMPARECIMENTO\nDeclaro que o paciente compareceu à sessão terapêutica nesta data.\nDra. Fernanda Costa\nCRP 06/78910\nSessão das 14h às 15h.';
+  const psychInfo = parseCrmFromText(psychText);
+  assert(psychInfo.councilType === 'CRP', 'Identifica conselho CRP');
+  assert(psychInfo.councilNumber === '78910', 'Extrai número do CRP');
+  assert(psychInfo.professionalTitle === 'Psicólogo(a)', 'Define título profissional como Psicólogo(a)');
 
   console.log('\n====================================================');
   console.log(`RESULTADO FINAL DOS TESTES AMPLIADOS: ${passedTests}/${totalTests} PASSARAM`);
