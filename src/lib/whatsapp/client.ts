@@ -24,7 +24,8 @@ export async function sendWhatsAppMessage({ phone, message, instanceId, token }:
 
   // Se não estiver configurado em produção, opera em modo log de desenvolvimento
   if (!apiUrl || !effectiveInstance) {
-    console.log(`[WHATSAPP MOCK] Mensagem para ${phone}:\n${message}\n`);
+    const maskedPhone = phone ? `***${phone.slice(-4)}` : '****';
+    console.log(`[WHATSAPP MOCK] Mensagem despachada para ${maskedPhone} (conteúdo omitido por privacidade)`);
     return true;
   }
 
@@ -62,7 +63,7 @@ export async function sendWhatsAppMessage({ phone, message, instanceId, token }:
 
     return true;
   } catch (err) {
-    console.error('Falha ao enviar mensagem de WhatsApp:', err);
+    console.error('Falha ao enviar mensagem de WhatsApp:', (err as any)?.message || 'Erro de rede');
     return false;
   }
 }

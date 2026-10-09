@@ -135,7 +135,7 @@ export async function extractAttestationFromImageBuffer(
           console.warn(`[VisionOCR] Modelo ${model} retornou status ${response.status}. Tentando modelo alternativo...`);
         }
       } catch (err) {
-        console.warn(`[VisionOCR] Erro ao chamar modelo ${model}:`, err);
+        console.warn(`[VisionOCR] Erro ao chamar modelo ${model}:`, (err as any)?.message || 'Falha na requisição');
       }
     }
   }

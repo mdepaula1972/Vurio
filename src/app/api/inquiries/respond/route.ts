@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result);
   } catch (error: any) {
-    console.error('Erro na resposta da diligência:', error);
+    console.error('Erro na resposta da diligência:', (error as any)?.message || 'Erro na diligência');
     return NextResponse.json(
       { error: error?.message || 'Erro ao processar resposta da diligência.' },
       { status: 500 }

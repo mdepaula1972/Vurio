@@ -4,7 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   ShieldCheck, 
-  CheckCircle2, 
+  CheckCircle2,
+  Clock, 
   XCircle,
   MessageSquare, 
   Activity, 
@@ -343,8 +344,11 @@ export default function LandingHomePage() {
                     <Activity className="w-4 h-4" />
                   </span>
                   <div>
-                    <h4 className="text-xs font-bold text-white uppercase tracking-wider">Relatório de Alertas de Triagem</h4>
-                    <p className="text-[10px] text-slate-400">Processado em tempo real em 0.18s</p>
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs font-bold text-white uppercase tracking-wider">Relatório de Alertas de Triagem</h4>
+                      <span className="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 font-normal">Exemplo ilustrativo</span>
+                    </div>
+                    <p className="text-[10px] text-slate-400">Processado em tempo real em segundos</p>
                   </div>
                 </div>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">
@@ -376,9 +380,12 @@ export default function LandingHomePage() {
 
               {/* Alerta de Incompatibilidade Geográfica */}
               <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs space-y-1">
-                <div className="flex items-center gap-1.5 font-bold text-amber-400">
-                  <MapPin className="w-4 h-4 text-amber-400" />
-                  Alerta Geo-Shield: Incompatibilidade Geográfica de 412 km
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 font-bold text-amber-400">
+                    <MapPin className="w-4 h-4 text-amber-400" />
+                    Alerta Geo-Shield: Incompatibilidade Geográfica de 412 km
+                  </div>
+                  <span className="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700 font-normal">Exemplo ilustrativo</span>
                 </div>
                 <p className="text-[11px] text-slate-300">
                   O colaborador atua presencialmente na unidade de <strong>Santos/SP</strong>, mas o atendimento presencial informado ocorreu às 14:15 em <strong>Ribeirão Preto/SP</strong> durante sua jornada.
@@ -418,7 +425,7 @@ export default function LandingHomePage() {
             </div>
             <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-center">
               <span className="text-xl lg:text-2xl font-black text-[#02c1db] block">Assinatura ICP-Brasil</span>
-              <span className="text-xs text-slate-400 block">Verificação da assinatura digital do atestado</span>
+              <span className="text-xs text-slate-400 block">Verificação da assinatura digital em PDFs (quando presente)</span>
             </div>
             <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-center">
               <span className="text-lg lg:text-xl font-black text-indigo-300 block">O Vurio não grava o CID</span>
@@ -505,10 +512,10 @@ export default function LandingHomePage() {
                       </span>
                     </td>
                     <td className="p-4 sm:p-5 bg-[#0077d1]/5">
-                      <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Alerta Geo-Shield (Em desenvolvimento)
+                      <span className="inline-flex items-center gap-1.5 text-slate-300 font-semibold bg-slate-800/80 px-2.5 py-1 rounded-md border border-slate-700 text-[11px]">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" /> Alerta Geo-Shield (Em desenvolvimento)
                       </span>
-                      <p className="text-[10px] text-slate-400 mt-1">Calcula raio e sinaliza inconsistência para revisão do DP.</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Em desenvolvimento: cálculo de raio de distância e sinalização de inconsistência para revisão do DP.</p>
                     </td>
                   </tr>
 
@@ -523,10 +530,10 @@ export default function LandingHomePage() {
                       </span>
                     </td>
                     <td className="p-4 sm:p-5 bg-[#0077d1]/5">
-                      <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Checagem de UF (Em desenvolvimento)
+                      <span className="inline-flex items-center gap-1.5 text-slate-300 font-semibold bg-slate-800/80 px-2.5 py-1 rounded-md border border-slate-700 text-[11px]">
+                        <Clock className="w-3.5 h-3.5 text-slate-400" /> Checagem de UF (Em desenvolvimento)
                       </span>
-                      <p className="text-[10px] text-slate-400 mt-1">Checagem automatizada no cadastro de conselho profissional.</p>
+                      <p className="text-[10px] text-slate-400 mt-1">Em desenvolvimento: checagem automatizada no cadastro de conselho profissional e UF.</p>
                     </td>
                   </tr>
 
@@ -560,9 +567,9 @@ export default function LandingHomePage() {
               <div className="w-12 h-12 rounded-2xl bg-[#0077d1]/20 text-[#02c1db] flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Lock className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-white">1. Criptografia & Assinatura Digital ICP-Brasil (PAdES)</h3>
+              <h3 className="text-base font-bold text-white">1. Criptografia & Integridade ICP-Brasil (em PDFs)</h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Verifica se o documento possui assinatura digital no padrão ICP-Brasil (Gov.br, ITI, Certisign, Soluti, etc.), valida o resumo criptográfico SHA-256 e detecta qualquer modificação realizada após a assinatura médica.
+                Aplica-se a documentos em PDF que possuam assinatura digital (Gov.br, ITI, Certisign, Soluti, etc.), quando presente. Valida o resumo criptográfico SHA-256 e detecta qualquer modificação realizada após a assinatura médica.
               </p>
               <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2 text-[11px] text-slate-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
@@ -576,10 +583,10 @@ export default function LandingHomePage() {
               </div>
               <h3 className="text-base font-bold text-white">2. Checagem Cadastral do Conselho Profissional (Em desenvolvimento)</h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Cruza automaticamente o nome do médico, número do CRM e UF emissora com os registros públicos oficiais, conferindo a situação cadastral ativa e se o profissional possui inscrição correspondente.
+                Em desenvolvimento: cruzamento do nome do médico, número do CRM e UF emissora com registros de conselho para conferência cadastral ativa e verificação de inscrição correspondente.
               </p>
               <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2 text-[11px] text-slate-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
                 <span>Módulo em desenvolvimento (base de consulta restrita)</span>
               </div>
             </div>

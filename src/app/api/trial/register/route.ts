@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
       dashboardUrl: '/dashboard'
     });
   } catch (error: any) {
-    console.error('Erro ao registrar trial:', error);
+    console.error('Erro ao registrar trial:', (error as any)?.message || 'Erro no registro');
     return NextResponse.json({ success: false, error: error?.message }, { status: 500 });
   }
 }

@@ -109,7 +109,7 @@ export async function registerDoctorSubscription(params: {
         };
       }
     } catch (e) {
-      console.warn('Erro ao salvar mÃ©dico no Supabase:', e);
+      console.warn("Erro ao salvar médico no Supabase:", (e as any)?.message || "Erro de banco");
     }
   }
 
@@ -176,7 +176,7 @@ export function formatDoctorPassiveAlertMessage(params: {
     `Identificamos a apresentaÃ§Ã£o de um atestado mÃ©dico emitido sob seu registro profissional no dia de hoje` +
     `${params.cityOrCompany ? ` em ${params.cityOrCompany}` : ''}` +
     `${params.patientInitials ? ` (Paciente: ${params.patientInitials})` : ''}.\n\n` +
-    `ðŸ‘‰ *Caso este atendimento tenha procedÃªncia legÃ­tima, por gentileza apenas IGNORE esta notificaÃ§Ã£o.*\n\n` +
+    `👉 *Caso este atendimento tenha procedência legítima, por gentileza apenas IGNORE esta notificação.*\n\n` +
     `ðŸš¨ *SE NÃƒO FOI VOCÃŠ QUEM EMITIU:* Toque no link seguro abaixo para registrar o alerta de uso indevido e emitir seu DossiÃª para B.O. Policial em 1 clique:\n` +
     `${params.incidentTokenUrl}\n\n` +
     `_Vurio: Protegendo mÃ©dicos contra fraudadores e exercÃ­cio ilegal da medicina._`
@@ -275,7 +275,7 @@ export async function createDoctorIncident(params: {
         dossier_data: dossier
       });
     } catch (e) {
-      console.warn('Erro ao registrar incidente no Supabase:', e);
+      console.warn("Erro ao registrar incidente no Supabase:", (e as any)?.message || "Erro de banco");
     }
   }
 
@@ -317,7 +317,7 @@ export async function checkCrmExposureHistory(crm: string, uf: string): Promise<
         inconsistentOccurrences = totalOccurrences - authenticOccurrences;
       }
     } catch (e) {
-      console.warn('Erro ao consultar histÃ³rico de CRM no Supabase:', e);
+      console.warn("Erro ao consultar histórico de CRM no Supabase:", (e as any)?.message || "Erro de banco");
     }
   }
 

@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
       dossier: result.dossier
     });
   } catch (error: any) {
-    console.error('Erro ao gerar dossiê policial:', error);
+    console.error('Erro ao gerar dossiê policial:', (error as any)?.message || 'Erro no dossiê');
     return NextResponse.json(
       { error: error?.message || 'Erro ao gerar dossiê.' },
       { status: 500 }

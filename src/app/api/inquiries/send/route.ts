@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       message: 'Diligência de 1 clique criada com sucesso.'
     });
   } catch (error: any) {
-    console.error('Erro na rota /api/inquiries/send:', error);
+    console.error('Erro na rota /api/inquiries/send:', (error as any)?.message || 'Erro no envio');
     return NextResponse.json(
       { error: error?.message || 'Erro ao criar diligência.' },
       { status: 500 }

@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       report: result
     });
   } catch (error: any) {
-    console.error('Erro ao consultar exposição de CRM:', error);
+    console.error('Erro ao consultar exposição de CRM:', (error as any)?.message || 'Erro na consulta');
     return NextResponse.json(
       { error: error?.message || 'Erro ao consultar CRM.' },
       { status: 500 }

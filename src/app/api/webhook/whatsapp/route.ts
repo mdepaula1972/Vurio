@@ -160,7 +160,7 @@ export async function POST(req: NextRequest) {
       } catch (leadError) {
         // REQUISITO 3.2: Qualquer erro no código novo (banco, rede, etc.)
         // é capturado e NUNCA derruba o webhook, respondendo 200 ao provedor
-        console.error('[Webhook] Erro no fluxo de leads (capturado com segurança):', leadError);
+        console.error('[Webhook] Erro no fluxo de leads (capturado com segurança):', (leadError as any)?.message || 'Erro interno');
         return NextResponse.json({ 
           received: true, 
           status: 'fallback_handled', 
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Erro geral no webhook WhatsApp:', error);
+    console.error('Erro geral no webhook WhatsApp:', (error as any)?.message || 'Erro no webhook');
     // Sempre responde 200 com status de erro tratado para evitar loops de retentativa do provedor
     return NextResponse.json({ 
       received: true, 
@@ -279,7 +279,7 @@ async function processClientAttestationFlow(params: {
         }
       }
     } catch (err) {
-      console.error('Falha ao descriptografar mídia via Evolution API:', err);
+      console.error('Falha ao descriptografar mídia via Evolution API:', (err as any)?.message || 'Erro de rede');
     }
   }
 

@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       summary
     });
   } catch (error: any) {
-    console.error('Erro na auditoria em lote:', error);
+    console.error('Erro na auditoria em lote:', (error as any)?.message || 'Erro na auditoria');
     return NextResponse.json(
       { error: error?.message || 'Erro ao processar auditoria retroativa.' },
       { status: 500 }

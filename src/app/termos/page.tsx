@@ -125,15 +125,15 @@ export default function TermosPage() {
             <span>4. Serviços Externos e Subprocessadores de Dados de Saúde</span>
           </div>
           <p className="text-slate-300 leading-relaxed text-xs">
-            Em conformidade com a transparência da LGPD (Art. 6º, VI), discriminamos abaixo os serviços externos que participam do processamento da triagem e os dados trafegados:
+            Em linha com o princípio da transparência da LGPD, discriminamos abaixo os serviços externos que participam do processamento da triagem e os dados trafegados:
           </p>
           <div className="space-y-3 text-xs text-slate-300">
             <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
               <strong className="text-white block font-semibold">1. Google LLC (Google Gemini API / Google AI Studio)</strong>
               <p className="text-slate-400">
-                • <strong>Finalidade:</strong> Visão computacional e OCR pericial para leitura de fotografias de atestados físicos em papel.<br />
-                • <strong>Dados transmitidos:</strong> O buffer integral da imagem enviada (em base64), contendo as informações visíveis no atestado (dados da clínica, paciente, médico emitente e repouso prescrito).<br />
-                • <strong>Retenção e Termos:</strong> O envio ocorre via chave de API padrão (<code>GEMINI_API_KEY</code>). O código não implementa configuração de exclusão de treinamento; o processamento sujeita-se às políticas e termos padrão do Google AI Studio. Os dados não são retidos em armazenamento persistente pelo Vurio.
+                • <strong>Finalidade:</strong> Visão computacional e leitura do texto impresso ou manuscrito de fotografias de atestados físicos em papel.<br />
+                • <strong>Dados transmitidos:</strong> A imagem do documento enviada pelo colaborador, contendo os dados visíveis no atestado (identificação da clínica, paciente, médico emitente e repouso prescrito).<br />
+                • <strong>Retenção e Termos:</strong> A imagem do atestado é enviada à API do Google Gemini para leitura do texto. Hoje isso ocorre sob os termos padrão da API contratada, sem configuração específica de exclusão do uso para treinamento. Os documentos originais não são guardados em armazenamento persistente pelo Vurio.
               </p>
             </div>
 
@@ -142,7 +142,7 @@ export default function TermosPage() {
               <p className="text-slate-400">
                 • <strong>Finalidade:</strong> Recepção e entrega dos arquivos e mensagens trocadas com o canal de WhatsApp corporativo.<br />
                 • <strong>Dados transmitidos:</strong> Número de telefone do remetente, mensagens enviadas e arquivos de mídia (PDFs e fotos).<br />
-                • <strong>Retenção:</strong> Armazenamento temporário nos buffers e instâncias do gateway para tráfego e entrega das mensagens na rede WhatsApp.
+                • <strong>Retenção:</strong> Armazenamento transitório na infraestrutura do gateway pelo tempo necessário para tráfego e entrega das mensagens na rede WhatsApp.
               </p>
             </div>
 
@@ -151,16 +151,16 @@ export default function TermosPage() {
               <p className="text-slate-400">
                 • <strong>Finalidade:</strong> Registro de logs técnicos de auditoria para o Painel do DP e controle de unicidade por hash.<br />
                 • <strong>Dados gravados:</strong> Metadados técnicos do atestado (hash SHA-256, nome do médico, CRM, UF, dias de repouso, parâmetros PAdES e tempo de execução). Não armazena arquivos binários (PDF/foto), CPF do médico nem CID.<br />
-                • <strong>Retenção:</strong> Os logs de validação ficam salvos para consulta do DP da empresa contratante. Contatos de leads comerciais sofrem expurgo programado em até 72 horas.
+                • <strong>Retenção:</strong> Os logs de validação ficam salvos para consulta do DP da empresa contratante. Contatos comerciais de leads sofrem expurgo programado em até {LEAD_RETENTION_DAYS} dias conforme estabelecido na seção de privacidade comercial.
               </p>
             </div>
 
             <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
               <strong className="text-white block font-semibold">4. Vercel Inc. (Hospedagem e Execução Serverless)</strong>
               <p className="text-slate-400">
-                • <strong>Finalidade:</strong> Execução do frontend e das rotas de backend (Serverless Functions).<br />
-                • <strong>Dados transmitidos:</strong> Tráfego HTTP das requisições, buffers voláteis em memória e metadados de acesso (IP, headers).<br />
-                • <strong>Retenção:</strong> Processamento estritamente efêmero em memória volátil, encerrado imediatamente ao final da resposta da requisição.
+                • <strong>Finalidade:</strong> Execução do frontend e das rotas de processamento técnico da aplicação.<br />
+                • <strong>Dados transmitidos:</strong> Tráfego das requisições de rede e metadados técnicos de acesso (IP e cabeçalhos de navegação).<br />
+                • <strong>Retenção:</strong> A execução ocorre em ambiente de nuvem serverless. Os arquivos em análise não são gravados em disco persistente pela aplicação, cabendo notar que a plataforma de hospedagem pode reter logs técnicos de tráfego e execução de sistema.
               </p>
             </div>
           </div>

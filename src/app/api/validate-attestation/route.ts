@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
       whatsappMessage
     });
   } catch (error: any) {
-    console.error('Erro na rota /api/validate-attestation:', error);
+    console.error('Erro na rota /api/validate-attestation:', (error as any)?.message || 'Erro interno');
     return NextResponse.json(
       {
         success: false,

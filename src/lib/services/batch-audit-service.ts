@@ -216,7 +216,7 @@ export async function executeBatchAudit(input: BatchAuditInput): Promise<BatchAu
         details: summary
       });
     } catch (e) {
-      console.warn('Erro ao salvar auditoria no Supabase:', e);
+      console.warn('Erro ao salvar auditoria no Supabase:', (e as any)?.message || 'Erro de banco');
     }
   }
 

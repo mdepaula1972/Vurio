@@ -91,14 +91,14 @@ export async function saveValidationLog(
       .single();
 
     if (error) {
-      console.error('Erro ao salvar log no Supabase:', error);
+      console.error('Erro ao salvar log no Supabase:', (error as any)?.message || 'Falha de gravação');
       inMemoryLogs.unshift(logEntry);
       return logEntry;
     }
 
     return data;
   } catch (err) {
-    console.error('Exceção ao salvar log no Supabase:', err);
+    console.error('Exceção ao salvar log no Supabase:', (err as any)?.message || 'Erro inesperado');
     inMemoryLogs.unshift(logEntry);
     return logEntry;
   }

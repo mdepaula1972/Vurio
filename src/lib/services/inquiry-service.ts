@@ -95,7 +95,7 @@ export async function createVerificationInquiry(params: {
         };
       }
     } catch (err) {
-      console.warn('Fallback em memória para diligências (Supabase não respondeu):', err);
+      console.warn('Fallback em memória para diligências (Supabase não respondeu):', (err as any)?.message || 'Sem conexão');
     }
   }
 
@@ -243,7 +243,7 @@ export async function answerInquiry(params: {
         })
         .eq('token', params.token);
     } catch (e) {
-      console.warn('Erro ao atualizar diligência no Supabase:', e);
+      console.warn('Erro ao atualizar diligência no Supabase:', (e as any)?.message || 'Erro de banco');
     }
   }
 

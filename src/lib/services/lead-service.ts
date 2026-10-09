@@ -186,7 +186,7 @@ export async function isRegisteredCompanyPhone(phone: string): Promise<boolean> 
       }
     }
   } catch (err) {
-    console.warn('Erro ao consultar empresas no lead-service:', err);
+    console.warn('Erro ao consultar empresas no lead-service:', (err as any)?.message || 'Erro interno');
   }
   return false;
 }
@@ -302,7 +302,7 @@ export async function registerOrUpdateLead(
       .maybeSingle();
 
     if (findError) {
-      console.error('[LeadService] Erro ao buscar lead:', findError);
+      console.error('[LeadService] Erro ao buscar lead:', (findError as any)?.message || 'Erro de banco');
     }
 
     if (!existingLead) {
@@ -355,7 +355,7 @@ export async function registerOrUpdateLead(
       };
     }
   } catch (err) {
-    console.error('[LeadService] Falha ao processar lead no Supabase:', err);
+    console.error('[LeadService] Falha ao processar lead no Supabase:', (err as any)?.message || 'Erro de banco');
     return {
       isNewLead: false,
       messageCount: 1,
@@ -395,12 +395,12 @@ export async function generateLeadScoreboard(commandText: string): Promise<strin
         .order('first_message_at', { ascending: true });
 
       if (error || !data) {
-        console.error('[Scoreboard] Erro ao consultar banco:', error);
+        console.error('[Scoreboard] Erro ao consultar banco:', (error as any)?.message || 'Erro de banco');
         return 'Placar indisponível: erro ao consultar o banco';
       }
       leads = data as LeadRecord[];
     } catch (err) {
-      console.error('[Scoreboard] Exceção ao consultar banco:', err);
+      console.error('[Scoreboard] Exceção ao consultar banco:', (err as any)?.message || 'Erro inesperado');
       return 'Placar indisponível: erro ao consultar o banco';
     }
   }
