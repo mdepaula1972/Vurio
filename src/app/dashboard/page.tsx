@@ -734,7 +734,7 @@ export default function DashboardClientPage() {
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">Ativo & Conectado</span>
                   </div>
                   <p className="text-[11px] text-slate-500">
-                    Seus colaboradores podem enviar o atestado direto no WhatsApp da empresa para auditoria em 3 segundos.
+                    Seus colaboradores podem enviar o atestado direto no WhatsApp da empresa para auditoria em segundos.
                   </p>
                 </div>
               </div>

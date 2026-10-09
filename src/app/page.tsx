@@ -240,7 +240,7 @@ export default function LandingHomePage() {
 
             {/* Subheadline Precisa em 2 Frases */}
             <p className="text-sm sm:text-base text-slate-300 max-w-3xl leading-relaxed pt-2">
-              O Vurio analisa metadados de PDFs e fotos de receitas em 3 segundos, checa assinaturas ICP-Brasil e CFM em 27 estados, e sinaliza indícios de divergência para que seu RH decida com segurança.
+              O Vurio analisa metadados de PDFs e fotos de atestados em segundos, checa assinaturas ICP-Brasil e CFM em 27 estados, e sinaliza indícios de divergência para que seu RH decida com segurança.
             </p>
 
             {/* Disclaimer Legal Obrigatório Perto do Hero */}
@@ -280,7 +280,7 @@ export default function LandingHomePage() {
                 <Check className="w-4 h-4 text-[#01cf9e]" /> Atendimento direto no WhatsApp
               </span>
               <span className="flex items-center gap-1.5">
-                <Check className="w-4 h-4 text-[#01cf9e]" /> Triagem técnica em 3 segundos
+                <Check className="w-4 h-4 text-[#01cf9e]" /> Triagem técnica em segundos
               </span>
               <span className="flex items-center gap-1.5">
                 <Check className="w-4 h-4 text-[#01cf9e]" /> Princípios de Privacidade da LGPD
@@ -320,7 +320,7 @@ export default function LandingHomePage() {
                   <p className="text-[11px] text-slate-300">"Segue meu atestado médico de 3 dias para justificar a ausência."</p>
                 </div>
 
-                {/* Resposta do Vurio em 3 segundos */}
+                {/* Resposta do Vurio em segundos */}
                 <div className="bg-emerald-950/40 border border-emerald-500/30 p-3 rounded-2xl rounded-tl-none text-slate-200 mr-6 space-y-1">
                   <p className="text-[10px] font-bold text-emerald-400 flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5" /> Vurio Triagem Bot:
@@ -397,21 +397,29 @@ export default function LandingHomePage() {
 
           {/* Faixa de Indicadores de Impacto */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto pt-6 border-t border-slate-800/60 text-center">
-            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60">
-              <span className="text-2xl lg:text-3xl font-black text-white block">33 Milhões+</span>
-              <span className="text-xs text-slate-400">Trabalhadores CLT no Brasil</span>
+            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-center">
+              <span className="text-2xl lg:text-3xl font-black text-white block">48 Milhões+</span>
+              <span className="text-xs text-slate-400 block">Vínculos formais de emprego no Brasil</span>
+              <a
+                href="https://www.gov.br/trabalho-e-emprego/pt-br/noticias-e-conteudo/2026/setembro/novo-caged-emprego-formal-gera-165-8-mil-vagas-em-agosto-e-acumula-1-13-milhao-de-postos-no-ano"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] text-slate-500 hover:text-[#02c1db] underline transition-colors block mt-1"
+              >
+                Fonte: Novo Caged/MTE, agosto de 2026
+              </a>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60">
-              <span className="text-2xl lg:text-3xl font-black text-[#01cf9e] block">&lt; 3 segundos</span>
-              <span className="text-xs text-slate-400">Tempo Médio de Resposta da Triagem</span>
+            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-center">
+              <span className="text-2xl lg:text-3xl font-black text-[#01cf9e] block">Em segundos</span>
+              <span className="text-xs text-slate-400 block">Tempo Médio de Resposta da Triagem</span>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60">
-              <span className="text-2xl lg:text-3xl font-black text-[#02c1db] block">100% PAdES</span>
-              <span className="text-xs text-slate-400">Verificação Criptográfica ICP</span>
+            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-center">
+              <span className="text-xl lg:text-2xl font-black text-[#02c1db] block">Assinatura ICP-Brasil</span>
+              <span className="text-xs text-slate-400 block">Verificação da assinatura digital do atestado</span>
             </div>
-            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60">
+            <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-center">
               <span className="text-2xl lg:text-3xl font-black text-indigo-300 block">Zero CID</span>
-              <span className="text-xs text-slate-400">Sigilo Médico Resguardado</span>
+              <span className="text-xs text-slate-400 block">Sigilo Médico Resguardado</span>
             </div>
           </div>
 
@@ -539,7 +547,7 @@ export default function LandingHomePage() {
               O que o Vurio verifica: os 3 pilares de triagem de atestados
             </h2>
             <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-              Uma esteira de análise em 3 camadas que processa documentos técnicos e fotos em até 3 segundos, sinalizando indícios para a decisão humana do RH.
+              Uma esteira de análise em 3 camadas que processa documentos técnicos e fotos em segundos, sinalizando indícios para a decisão humana do RH.
             </p>
           </div>
 
@@ -891,7 +899,7 @@ export default function LandingHomePage() {
         </div>
 
         <p className="max-w-2xl mx-auto text-[11px] leading-relaxed text-slate-500">
-          Amparado na MP nº 2.200-2/2001 (ICP-Brasil), Resolução CFM 1.658/2002, Art. 482 da CLT, Lei 14.510/2023 (Telemedicina) e LGPD (Lei 13.709/2018).
+          Referências legais: MP nº 2.200-2/2001 (ICP-Brasil), Resolução CFM 1.658/2002, Art. 482 da CLT, Lei 14.510/2023 (Telemedicina) e LGPD (Lei 13.709/2018).
         </p>
 
         <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 pt-1">

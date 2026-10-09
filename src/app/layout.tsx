@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   authors: [{ name: 'Vurio Tecnologia' }],
   openGraph: {
     title: 'Vurio | Triagem Automatizada de Atestados Médicos',
-    description: 'Receba e faça a triagem automatizada de atestados médicos pelo WhatsApp corporativo em 3 segundos. Apoio técnico para o RH decidir com segurança.',
+    description: 'Receba e faça a triagem automatizada de atestados médicos pelo WhatsApp corporativo em segundos. Apoio técnico para o RH decidir com segurança.',
     url: 'https://www.vurio.com.br',
     siteName: 'Vurio',
     locale: 'pt_BR',
