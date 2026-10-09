@@ -171,6 +171,24 @@ async function runTests() {
   const leadAfterExcluirDados = getInMemoryLeadForTest(optOutExcluirDadosPhone);
   assert(leadAfterExcluirDados?.first_message_text === null, 'Conteúdo apagado no gatilho "excluir meus dados"');
 
+  // Cobertura estrita: frase contendo 'excluir' no início NÃO deve disparar opt-out
+  const questionLeadPhone = '5513994448888';
+  await registerOrUpdateLead(questionLeadPhone, 'Olá, gostaria de conhecer o Vurio');
+  const resQuestion = await registerOrUpdateLead(questionLeadPhone, 'Excluir um funcionário duplicado, como faz?');
+  assert(resQuestion.isOptOut === false, 'Pergunta com "Excluir..." NÃO dispara opt-out');
+  const leadAfterQuestion = getInMemoryLeadForTest(questionLeadPhone);
+  assert(leadAfterQuestion?.opt_out === false, 'Lead continua ativo após pergunta operacional');
+  assert(leadAfterQuestion?.first_message_text !== null, 'Conteúdo original preservado quando não há opt-out');
+
+  // Cobertura estrita: comando com pontuação final "Excluir meus dados." DISPARA opt-out
+  const punctuatedLeadPhone = '5513995559999';
+  await registerOrUpdateLead(punctuatedLeadPhone, 'Quero saber mais');
+  const resPunctuated = await registerOrUpdateLead(punctuatedLeadPhone, 'Excluir meus dados.');
+  assert(resPunctuated.isOptOut === true, '"Excluir meus dados." (com ponto) DISPARA opt-out');
+  const leadAfterPunctuated = getInMemoryLeadForTest(punctuatedLeadPhone);
+  assert(leadAfterPunctuated?.first_message_text === null, 'Conteúdo apagado quando comando tem ponto final');
+  assert(leadAfterPunctuated?.opt_out === true, 'Flag opt_out ativada com comando pontuado');
+
   // -------------------------------------------------------------------------
   // TESTE 9: Placar de Leads do Admin (Simulado)
   // -------------------------------------------------------------------------

@@ -25,8 +25,6 @@ import {
 const SHOW_PROVA_SOCIAL = false;
 // 2. Seção de planos oculta por padrão
 const SHOW_PLANOS = false;
-// 3. Tópicos complementares de LGPD com marcadores jurídicos (modo preview apenas)
-const SHOW_LGPD_EXTENDED = false;
 // 4. FLAG DO TRIAL (Padrão: false). Quando false, o formulário não é renderizado
 // e todas as CTAs direcionam para conversa no WhatsApp corporativo
 const TRIAL_ENABLED = process.env.NEXT_PUBLIC_TRIAL_ENABLED === 'true';
@@ -682,28 +680,7 @@ export default function LandingHomePage() {
 
           </div>
 
-          {SHOW_LGPD_EXTENDED && (
-            <div className="p-6 rounded-2xl bg-slate-900/40 border border-dashed border-slate-700 space-y-4">
-              <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
-                <AlertCircle className="w-4 h-4" />
-                <span>Tópicos Complementares de LGPD (Apenas Preview):</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                  <h4 className="font-bold text-white">O que o Vurio guarda e por quanto tempo:</h4>
-                  <p className="text-slate-400 leading-relaxed">
-                    Armazenamos unicamente logs técnicos (Hash SHA-256, dados públicos do médico no CFM e carimbo de tempo) para trava de duplicidade. Prazo contratual de guarda de logs conforme estipulado no Termo de Adesão e Acordo de Nível de Serviço da empresa contratante.
-                  </p>
-                </div>
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
-                  <h4 className="font-bold text-white">Segurança da infraestrutura e salvaguardas técnicas:</h4>
-                  <p className="text-slate-400 leading-relaxed">
-                    Comunicação criptografada em trânsito (TLS 1.3) e em repouso. Salvaguardas técnicas e controles de acesso com isolamento lógico multi-tenant e trilha de auditoria restrita.
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
+
 
         </div>
       </section>

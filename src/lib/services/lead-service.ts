@@ -224,15 +224,25 @@ export async function registerOrUpdateLead(
   const now = new Date();
   const lowerText = (messageText || '').toLowerCase().trim();
 
-  // Tratamento de Opt-Out ('sair', 'parar', 'cancelar')
-  // Tratamento de Opt-Out ('sair', 'parar', 'cancelar', 'excluir', 'excluir meus dados')
-  const wantsOptOut = 
-    lowerText === 'sair' || 
-    lowerText === 'parar' || 
-    lowerText === 'cancelar' || 
-    lowerText === 'excluir' || 
-    lowerText === 'excluir meus dados' ||
-    lowerText.startsWith('excluir');
+  // Tratamento estrito de Opt-Out:
+  // Apenas mensagens que sejam exatamente: "sair", "parar", "cancelar", "excluir", "excluir meus dados", "excluir dados"
+  // Comparação após trim, minúsculas e remoção de pontuação final
+  const cleanOptOutText = (messageText || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[.!?:;,]+$/, '')
+    .trim();
+
+  const OPT_OUT_COMMANDS = new Set([
+    'sair',
+    'parar',
+    'cancelar',
+    'excluir',
+    'excluir meus dados',
+    'excluir dados'
+  ]);
+
+  const wantsOptOut = OPT_OUT_COMMANDS.has(cleanOptOutText);
 
   // 1. AMBIENTE DE TESTE LOCAL (NODE_ENV === 'test')
   if (process.env.NODE_ENV === 'test') {
