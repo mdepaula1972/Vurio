@@ -240,7 +240,7 @@ export default function LandingHomePage() {
 
             {/* Subheadline Precisa em 2 Frases */}
             <p className="text-sm sm:text-base text-slate-300 max-w-3xl leading-relaxed pt-2">
-              O Vurio analisa metadados de PDFs e fotos de atestados em segundos, checa assinaturas ICP-Brasil e registros do conselho profissional, e sinaliza indícios de divergência para que seu RH decida com segurança.
+              O Vurio analisa metadados de PDFs e fotos de atestados em segundos, valida assinaturas digitais ICP-Brasil e travas de duplicidade, e sinaliza indícios técnicos para que seu RH decida com segurança.
             </p>
 
             {/* Disclaimer Legal Obrigatório Perto do Hero */}
@@ -299,7 +299,10 @@ export default function LandingHomePage() {
                     <img src="/logo.png" alt="Vurio" className="w-full h-full object-contain rounded-full bg-white" />
                   </div>
                   <div>
-                    <h4 className="text-xs font-bold text-white">Vurio - WhatsApp RH</h4>
+                    <div className="flex items-center gap-1.5">
+                      <h4 className="text-xs font-bold text-white">Vurio - WhatsApp RH</h4>
+                      <span className="text-[9px] bg-slate-800 text-slate-300 px-1.5 py-0.5 rounded border border-slate-700">Exemplo ilustrativo</span>
+                    </div>
                     <p className="text-[10px] text-[#02c1db] font-medium">Triagem Automatizada Ativa</p>
                   </div>
                 </div>
@@ -388,7 +391,7 @@ export default function LandingHomePage() {
                   className="text-[#02c1db] font-bold text-[11px] hover:underline cursor-pointer" 
                   onClick={() => setDemoModalOpen(true)}
                 >
-                  Ver Exemplo de Relatório em PDF →
+                  Ver Exemplo ilustrativo de Relatório em PDF →
                 </span>
               </div>
             </div>
@@ -418,8 +421,8 @@ export default function LandingHomePage() {
               <span className="text-xs text-slate-400 block">Verificação da assinatura digital do atestado</span>
             </div>
             <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800/60 flex flex-col justify-center">
-              <span className="text-2xl lg:text-3xl font-black text-indigo-300 block">Zero CID</span>
-              <span className="text-xs text-slate-400 block">Sigilo Médico Resguardado</span>
+              <span className="text-lg lg:text-xl font-black text-indigo-300 block">O Vurio não grava o CID</span>
+              <span className="text-xs text-slate-400 block">Sigilo médico resguardado na triagem</span>
             </div>
           </div>
 
@@ -503,7 +506,7 @@ export default function LandingHomePage() {
                     </td>
                     <td className="p-4 sm:p-5 bg-[#0077d1]/5">
                       <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Alerta Geo-Shield em segundos
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Alerta Geo-Shield (Em desenvolvimento)
                       </span>
                       <p className="text-[10px] text-slate-400 mt-1">Calcula raio e sinaliza inconsistência para revisão do DP.</p>
                     </td>
@@ -521,7 +524,7 @@ export default function LandingHomePage() {
                     </td>
                     <td className="p-4 sm:p-5 bg-[#0077d1]/5">
                       <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Alerta de divergência de UF
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Checagem de UF (Em desenvolvimento)
                       </span>
                       <p className="text-[10px] text-slate-400 mt-1">Checagem automatizada no cadastro de conselho profissional.</p>
                     </td>
@@ -571,13 +574,13 @@ export default function LandingHomePage() {
               <div className="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Stethoscope className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-white">2. Regularidade Cadastral do Conselho Profissional</h3>
+              <h3 className="text-base font-bold text-white">2. Checagem Cadastral do Conselho Profissional (Em desenvolvimento)</h3>
               <p className="text-xs text-slate-300 leading-relaxed">
                 Cruza automaticamente o nome do médico, número do CRM e UF emissora com os registros públicos oficiais, conferindo a situação cadastral ativa e se o profissional possui inscrição correspondente.
               </p>
               <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2 text-[11px] text-slate-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>Verificação cadastral e de UF</span>
+                <span>Módulo em desenvolvimento (base de consulta restrita)</span>
               </div>
             </div>
 
@@ -922,10 +925,13 @@ export default function LandingHomePage() {
         <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-xl w-full p-6 space-y-4 animate-scaleUp">
             <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <h3 className="text-sm font-bold text-white flex items-center gap-2">
-                <Activity className="w-4 h-4 text-[#02c1db]" />
-                Simulação Interativa de Relatório de Alertas de Triagem
-              </h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                  <Activity className="w-4 h-4 text-[#02c1db]" />
+                  Simulação de Relatório de Alertas
+                </h3>
+                <span className="text-[10px] bg-sky-500/10 text-[#02c1db] px-2 py-0.5 rounded-full border border-[#02c1db]/30 font-medium">Exemplo ilustrativo</span>
+              </div>
               <button 
                 onClick={() => setDemoModalOpen(false)} 
                 className="text-slate-400 hover:text-white"
@@ -973,7 +979,9 @@ export default function LandingHomePage() {
               </div>
             </div>
 
-            <div className="pt-2 flex flex-col sm:flex-row justify-end gap-2">
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-2">
+              <span className="text-[10px] text-slate-500">Exemplo ilustrativo de simulação técnica para o DP.</span>
+              <div className="flex gap-2">
               <button
                 onClick={() => setDemoModalOpen(false)}
                 className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl font-bold text-xs transition-all"
@@ -990,6 +998,7 @@ export default function LandingHomePage() {
                 <MessageSquare className="w-3.5 h-3.5" />
                 <span>Falar com o Vurio via WhatsApp</span>
               </a>
+              </div>
             </div>
           </div>
         </div>

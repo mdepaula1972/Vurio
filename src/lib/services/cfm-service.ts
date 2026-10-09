@@ -184,14 +184,14 @@ export async function auditDoctorCrm(
       regionalCouncil: council,
       officialName: null,
       status: 'NOT_FOUND',
-      statusDescription: 'Número de CRM não identificado no documento.',
+      statusDescription: 'Não foi possível verificar o registro profissional (CRM não identificado no documento).',
       primarySpecialty: null,
       nameMatch: {
         isMatched: false,
         similarityScore: 0,
         declaredName: declaredDoctorName || '',
         registeredName: null,
-        divergenceAlert: 'CRM ausente ou ilegível'
+        divergenceAlert: undefined
       },
       auditedAt: nowIso
     };
@@ -217,14 +217,14 @@ export async function auditDoctorCrm(
       regionalCouncil: council,
       officialName: null,
       status: 'NOT_FOUND',
-      statusDescription: `CRM ${cleanCrm} não localizado no cadastro de médicos do ${council} nem nas demais UFs do CFM.`,
+      statusDescription: 'Não foi possível verificar o registro profissional.',
       primarySpecialty: null,
       nameMatch: {
         isMatched: false,
         similarityScore: 0,
         declaredName: declaredDoctorName || '',
         registeredName: null,
-        divergenceAlert: `CRM ${cleanCrm} inexistente no ${council}`
+        divergenceAlert: undefined
       },
       auditedAt: nowIso
     };

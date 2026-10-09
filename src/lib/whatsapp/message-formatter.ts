@@ -20,11 +20,12 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     const cfm = report.cfmAudit;
     const council = cfm.regionalCouncil;
     const isRegular = cfm.status === 'REGULAR';
-    const statusIcon = isRegular ? '🟢' : '🔴';
-    const docName = cfm.officialName || report.doctor.name || 'Médico Localizado';
+    const isNotFound = cfm.status === 'NOT_FOUND';
+    const statusIcon = isRegular ? '🟢' : isNotFound ? 'ℹ️' : '🔴';
+    const docName = cfm.officialName || report.doctor.name || 'Médico Informado';
 
     cfmBlock =
-      `\n\n🩺 *Auditoria Cadastral (CFM / ${council})*\n` +
+      `\n\n🩺 *Auditoria Cadastral (Conselho Profissional / ${council})*\n` +
       `• *Médico Titular:* Dr(a). ${docName}\n` +
       `• *CRM ${cfm.crm}/${cfm.uf}:* ${statusIcon} ${cfm.statusDescription}\n`;
 

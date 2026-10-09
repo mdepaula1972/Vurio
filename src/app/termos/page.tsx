@@ -118,22 +118,70 @@ export default function TermosPage() {
           </p>
         </div>
 
-        {/* 4. PAPÉIS SOB A LGPD */}
+        {/* 4. SERVIÇOS EXTERNOS E SUBPROCESSADORES DE DADOS DE SAÚDE */}
+        <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-4">
+          <div className="flex items-center space-x-2 text-sky-400 font-bold text-base">
+            <Lock className="w-5 h-5" />
+            <span>4. Serviços Externos e Subprocessadores de Dados de Saúde</span>
+          </div>
+          <p className="text-slate-300 leading-relaxed text-xs">
+            Em conformidade com a transparência da LGPD (Art. 6º, VI), discriminamos abaixo os serviços externos que participam do processamento da triagem e os dados trafegados:
+          </p>
+          <div className="space-y-3 text-xs text-slate-300">
+            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+              <strong className="text-white block font-semibold">1. Google LLC (Google Gemini API / Google AI Studio)</strong>
+              <p className="text-slate-400">
+                • <strong>Finalidade:</strong> Visão computacional e OCR pericial para leitura de fotografias de atestados físicos em papel.<br />
+                • <strong>Dados transmitidos:</strong> O buffer integral da imagem enviada (em base64), contendo as informações visíveis no atestado (dados da clínica, paciente, médico emitente e repouso prescrito).<br />
+                • <strong>Retenção e Termos:</strong> O envio ocorre via chave de API padrão (<code>GEMINI_API_KEY</code>). O código não implementa configuração de exclusão de treinamento; o processamento sujeita-se às políticas e termos padrão do Google AI Studio. Os dados não são retidos em armazenamento persistente pelo Vurio.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+              <strong className="text-white block font-semibold">2. Gateway de Mensageria WhatsApp (Evolution API / Infraestrutura de Conexão)</strong>
+              <p className="text-slate-400">
+                • <strong>Finalidade:</strong> Recepção e entrega dos arquivos e mensagens trocadas com o canal de WhatsApp corporativo.<br />
+                • <strong>Dados transmitidos:</strong> Número de telefone do remetente, mensagens enviadas e arquivos de mídia (PDFs e fotos).<br />
+                • <strong>Retenção:</strong> Armazenamento temporário nos buffers e instâncias do gateway para tráfego e entrega das mensagens na rede WhatsApp.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+              <strong className="text-white block font-semibold">3. Supabase Inc. (Banco de Dados PostgreSQL em Nuvem)</strong>
+              <p className="text-slate-400">
+                • <strong>Finalidade:</strong> Registro de logs técnicos de auditoria para o Painel do DP e controle de unicidade por hash.<br />
+                • <strong>Dados gravados:</strong> Metadados técnicos do atestado (hash SHA-256, nome do médico, CRM, UF, dias de repouso, parâmetros PAdES e tempo de execução). Não armazena arquivos binários (PDF/foto), CPF do médico nem CID.<br />
+                • <strong>Retenção:</strong> Os logs de validação ficam salvos para consulta do DP da empresa contratante. Contatos de leads comerciais sofrem expurgo programado em até 72 horas.
+              </p>
+            </div>
+
+            <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1">
+              <strong className="text-white block font-semibold">4. Vercel Inc. (Hospedagem e Execução Serverless)</strong>
+              <p className="text-slate-400">
+                • <strong>Finalidade:</strong> Execução do frontend e das rotas de backend (Serverless Functions).<br />
+                • <strong>Dados transmitidos:</strong> Tráfego HTTP das requisições, buffers voláteis em memória e metadados de acesso (IP, headers).<br />
+                • <strong>Retenção:</strong> Processamento estritamente efêmero em memória volátil, encerrado imediatamente ao final da resposta da requisição.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 5. PAPÉIS SOB A LGPD */}
         <div className="space-y-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <Lock className="w-4 h-4 text-sky-400" />
-            4. Papéis sob a LGPD: Controlador x Operador
+            5. Papéis sob a LGPD: Controlador x Operador
           </h3>
           <p>
             A empresa contratante figura como <strong>Controladora</strong> dos dados de seus colaboradores, sendo a responsável pela base legal do recebimento do atestado no âmbito das obrigações da relação de emprego (CLT e Lei 8.213/91). O Vurio atua como <strong>Operador técnico</strong> sob mandato, realizando a triagem automatizada e entregando o relatório de alertas ao Departamento Pessoal.
           </p>
         </div>
 
-        {/* 5. CARÁTER CONSULTIVO */}
+        {/* 6. CARÁTER CONSULTIVO */}
         <div className="space-y-3">
           <h3 className="text-base font-bold text-white flex items-center gap-2">
             <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            5. Postura de Triagem Técnica Neutra
+            6. Postura de Triagem Técnica Neutra
           </h3>
           <p>
             O Vurio não formula juízos de valor nem acusações de dolo. A ferramenta sinaliza indícios objetivos de conformidade ou inconsistência documental para subsidiar a deliberação dos profissionais de RH e Medicina do Trabalho da empresa.
