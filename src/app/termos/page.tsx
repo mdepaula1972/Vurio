@@ -85,19 +85,21 @@ export default function TermosPage() {
             Após o processamento de um atestado médico enviado por colaborador de empresa contratante, são registrados em banco de dados exclusivamente os seguintes metadados técnicos de auditoria para visualização no Painel do DP e prevenção de duplicidades:
           </p>
           <ul className="list-disc pl-5 space-y-1 text-xs text-slate-400">
+            <li><strong>Identificador da conta da empresa:</strong> Vínculo técnico exclusivo à empresa contratante para segregação de acesso no Painel do DP;</li>
             <li><strong>Hash SHA-256 do arquivo:</strong> Identificador matemático irreversível utilizado como trava técnica contra reapresentação do mesmo arquivo em períodos distintos;</li>
             <li><strong>Formato técnico do documento:</strong> Registro neutro exclusivamente da extensão do arquivo (ex.: pdf, jpg), sem armazenar a nomenclatura original;</li>
-            <li><strong>Dados públicos do médico emissor:</strong> Nome completo, número do CRM e UF conferidos no CFM;</li>
+            <li><strong>Dados profissionais do médico emissor:</strong> Nome completo, número do CRM e UF conferidos no CFM;</li>
             <li><strong>Parâmetros da assinatura digital:</strong> Emissor do certificado (ICP-Brasil), hash calculado e hash esperado da cadeia PAdES;</li>
+            <li><strong>URL de verificação do documento:</strong> Endereço web do QR Code oficial contido no atestado para conferência externa, quando presente;</li>
             <li><strong>Período de repouso prescrito:</strong> Quantidade de dias e data de início do afastamento;</li>
-            <li><strong>Resultado da triagem e carimbo de tempo:</strong> Status técnico apurado (autêntico, divergência detectada, etc.) e data/hora da emissão.</li>
+            <li><strong>Resultado da triagem e carimbo de tempo:</strong> Status técnico apurado (autêntico, averiguação, etc.), tempo de execução do processamento em milissegundos e data/hora do registro.</li>
           </ul>
           <div className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 space-y-1 text-xs">
             <p className="text-emerald-400 font-semibold">
               ✓ Dados que NÃO são gravados na tabela de auditoria de validação:
             </p>
             <p className="text-slate-400">
-              O sistema <strong>não grava</strong> o nome do colaborador/paciente, o telefone pessoal do colaborador nem o diagnóstico clínico (CID) na tabela de logs de validação, respeitando o sigilo médico (Resolução CFM nº 1.658/2002).
+              O sistema <strong>não grava</strong> o CPF do médico, o nome do colaborador/paciente, o telefone pessoal do colaborador nem o diagnóstico clínico (CID) na tabela de logs de validação, respeitando a estrita minimização de dados e o sigilo médico (Resolução CFM nº 1.658/2002).
             </p>
           </div>
         </div>

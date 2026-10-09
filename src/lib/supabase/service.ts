@@ -65,7 +65,7 @@ export async function saveValidationLog(
     status: report.status,
     is_authentic: report.isAuthentic,
     doctor_name: report.doctor.name,
-    doctor_cpf: report.doctor.cpf,
+    doctor_cpf: null, // Minimização de dados LGPD: não grava CPF do médico
     crm: report.doctor.crm,
     uf: report.doctor.uf,
     issuer: report.signature.issuer,
