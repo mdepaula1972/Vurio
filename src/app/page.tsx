@@ -240,7 +240,7 @@ export default function LandingHomePage() {
 
             {/* Subheadline Precisa em 2 Frases */}
             <p className="text-sm sm:text-base text-slate-300 max-w-3xl leading-relaxed pt-2">
-              O Vurio analisa metadados de PDFs e fotos de atestados em segundos, checa assinaturas ICP-Brasil e CFM em 27 estados, e sinaliza indícios de divergência para que seu RH decida com segurança.
+              O Vurio analisa metadados de PDFs e fotos de atestados em segundos, checa assinaturas ICP-Brasil e registros do conselho profissional, e sinaliza indícios de divergência para que seu RH decida com segurança.
             </p>
 
             {/* Disclaimer Legal Obrigatório Perto do Hero */}
@@ -521,7 +521,7 @@ export default function LandingHomePage() {
                     </td>
                     <td className="p-4 sm:p-5 bg-[#0077d1]/5">
                       <span className="inline-flex items-center gap-1.5 text-emerald-400 font-semibold bg-emerald-500/10 px-2.5 py-1 rounded-md border border-emerald-500/20 text-[11px]">
-                        <CheckCircle2 className="w-3.5 h-3.5" /> Varredura nos 27 estados
+                        <CheckCircle2 className="w-3.5 h-3.5" /> Alerta de divergência de UF
                       </span>
                       <p className="text-[10px] text-slate-400 mt-1">Checagem automatizada no cadastro de conselho profissional.</p>
                     </td>
@@ -571,13 +571,13 @@ export default function LandingHomePage() {
               <div className="w-12 h-12 rounded-2xl bg-sky-500/20 text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform">
                 <Stethoscope className="w-6 h-6" />
               </div>
-              <h3 className="text-base font-bold text-white">2. Regularidade Cadastral no CFM (27 estados)</h3>
+              <h3 className="text-base font-bold text-white">2. Regularidade Cadastral do Conselho Profissional</h3>
               <p className="text-xs text-slate-300 leading-relaxed">
                 Cruza automaticamente o nome do médico, número do CRM e UF emissora com os registros públicos oficiais, conferindo a situação cadastral ativa e se o profissional possui inscrição correspondente.
               </p>
               <div className="pt-2 border-t border-slate-800/80 flex items-center gap-2 text-[11px] text-slate-400">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                <span>Cobertura nacional em 27 estados</span>
+                <span>Verificação cadastral e de UF</span>
               </div>
             </div>
 
@@ -904,11 +904,7 @@ export default function LandingHomePage() {
 
         <div className="flex flex-wrap items-center justify-center gap-4 text-xs text-slate-400 pt-1">
           <Link href="/termos" className="hover:text-[#02c1db] underline transition-colors">
-            Termos de Uso
-          </Link>
-          <span>•</span>
-          <Link href="/termos" className="hover:text-[#02c1db] underline transition-colors">
-            Política de Privacidade & LGPD
+            Termos de Uso e Política de Privacidade (LGPD)
           </Link>
           <span>•</span>
           <Link href="/dashboard" className="hover:text-[#02c1db] transition-colors">

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
     'assinatura digital atestado',
     'gestão de absenteísmo rh',
     'compliance dp',
-    'cfm 27 estados',
+    'consulta cfm',
     'icp-brasil atestado'
   ],
   authors: [{ name: 'Vurio Tecnologia' }],
