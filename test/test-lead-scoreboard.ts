@@ -140,18 +140,36 @@ async function runTests() {
   assert(resLead2.shouldSendAutoReply === false, 'NÃO repete saudação automática (sem loop)');
 
   // -------------------------------------------------------------------------
-  // TESTE 8: Lead com Opt-out (Simulado)
+  // TESTE 8: Lead com Opt-out (Simulado: sair, parar, excluir, excluir meus dados)
   // -------------------------------------------------------------------------
-  console.log('\n--- TESTE 8: Opt-Out do Lead (Simulado) ---');
+  console.log('\n--- TESTE 8: Opt-Out do Lead (Simulado: sair, parar, excluir) ---');
   const optOutPhone = '5513991115555';
   await registerOrUpdateLead(optOutPhone, 'Olá [ref:google_ads]');
   const resOptOut = await registerOrUpdateLead(optOutPhone, 'sair');
-  assert(resOptOut.isOptOut === true, 'Lead marcado com opt_out = true');
+  assert(resOptOut.isOptOut === true, 'Lead marcado com opt_out = true via "sair"');
   assert(resOptOut.shouldSendAutoReply === false, 'Nenhuma mensagem enviada após opt-out');
   const leadAfterOptOut = getInMemoryLeadForTest(optOutPhone);
   assert(leadAfterOptOut?.first_message_text === null, 'Conteúdo da primeira mensagem apagado (first_message_text = null)');
   assert(leadAfterOptOut?.phone === optOutPhone, 'Telefone mantido como marcador de opt-out');
   assert(leadAfterOptOut?.opt_out === true, 'Flag opt_out ativada como true');
+
+  // Cobertura explícita do novo gatilho: 'excluir'
+  const optOutExcluirPhone = '5513992226666';
+  await registerOrUpdateLead(optOutExcluirPhone, 'Quero saber valores do Vurio');
+  const resExcluir = await registerOrUpdateLead(optOutExcluirPhone, 'excluir');
+  assert(resExcluir.isOptOut === true, 'Lead marcado com opt_out = true via "excluir"');
+  assert(resExcluir.shouldSendAutoReply === false, 'Nenhuma mensagem enviada após "excluir"');
+  const leadAfterExcluir = getInMemoryLeadForTest(optOutExcluirPhone);
+  assert(leadAfterExcluir?.first_message_text === null, 'Conteúdo apagado no gatilho "excluir" (first_message_text = null)');
+  assert(leadAfterExcluir?.phone === optOutExcluirPhone, 'Telefone mantido no gatilho "excluir"');
+
+  // Cobertura explícita de "excluir meus dados"
+  const optOutExcluirDadosPhone = '5513993337777';
+  await registerOrUpdateLead(optOutExcluirDadosPhone, 'Tenho interesse na plataforma');
+  const resExcluirDados = await registerOrUpdateLead(optOutExcluirDadosPhone, 'excluir meus dados');
+  assert(resExcluirDados.isOptOut === true, 'Lead marcado com opt_out = true via "excluir meus dados"');
+  const leadAfterExcluirDados = getInMemoryLeadForTest(optOutExcluirDadosPhone);
+  assert(leadAfterExcluirDados?.first_message_text === null, 'Conteúdo apagado no gatilho "excluir meus dados"');
 
   // -------------------------------------------------------------------------
   // TESTE 9: Placar de Leads do Admin (Simulado)

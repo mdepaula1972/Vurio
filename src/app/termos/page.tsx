@@ -109,7 +109,7 @@ export default function TermosPage() {
             <span>3. Privacidade e Retenção de Contatos Comerciais (Leads via WhatsApp)</span>
           </div>
           <p className="text-slate-300 leading-relaxed">
-            Quem entrar em contato pelo WhatsApp tem o número e o texto da mensagem armazenados por até <strong>{LEAD_RETENTION_DAYS} dias</strong> para atendimento comercial. No entanto, responder 'sair' interrompe as mensagens automáticas e remove o conteúdo da sua mensagem; para pedir a exclusão total dos seus dados, escreva para [PREENCHER: canal de contato].
+            Quem entrar em contato pelo WhatsApp tem o número e o texto da mensagem armazenados por até <strong>{LEAD_RETENTION_DAYS} dias</strong> para atendimento comercial. No entanto, responder 'sair' interrompe as mensagens automáticas e remove o conteúdo da sua mensagem; para pedir a exclusão total dos seus dados, escreva pelo WhatsApp (13) 3150-0987, escrevendo 'excluir meus dados'.
           </p>
           <p className="text-[11px] text-slate-400 leading-relaxed">
             Após o período de até {LEAD_RETENTION_DAYS} dias, os registros de contatos comerciais inativos são removidos por rotina programada de limpeza de dados.

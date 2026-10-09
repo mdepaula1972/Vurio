@@ -225,7 +225,14 @@ export async function registerOrUpdateLead(
   const lowerText = (messageText || '').toLowerCase().trim();
 
   // Tratamento de Opt-Out ('sair', 'parar', 'cancelar')
-  const wantsOptOut = lowerText === 'sair' || lowerText === 'parar' || lowerText === 'cancelar';
+  // Tratamento de Opt-Out ('sair', 'parar', 'cancelar', 'excluir', 'excluir meus dados')
+  const wantsOptOut = 
+    lowerText === 'sair' || 
+    lowerText === 'parar' || 
+    lowerText === 'cancelar' || 
+    lowerText === 'excluir' || 
+    lowerText === 'excluir meus dados' ||
+    lowerText.startsWith('excluir');
 
   // 1. AMBIENTE DE TESTE LOCAL (NODE_ENV === 'test')
   if (process.env.NODE_ENV === 'test') {

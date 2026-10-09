@@ -692,13 +692,13 @@ export default function LandingHomePage() {
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
                   <h4 className="font-bold text-white">O que o Vurio guarda e por quanto tempo:</h4>
                   <p className="text-slate-400 leading-relaxed">
-                    Armazenamos unicamente logs técnicos (Hash SHA-256, dados públicos do médico no CFM e carimbo de tempo) para trava de duplicidade. Prazo contratual de guarda de logs: [PREENCHER COM TEXTO JURÍDICO REVISADO].
+                    Armazenamos unicamente logs técnicos (Hash SHA-256, dados públicos do médico no CFM e carimbo de tempo) para trava de duplicidade. Prazo contratual de guarda de logs conforme estipulado no Termo de Adesão e Acordo de Nível de Serviço da empresa contratante.
                   </p>
                 </div>
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
                   <h4 className="font-bold text-white">Segurança da infraestrutura e salvaguardas técnicas:</h4>
                   <p className="text-slate-400 leading-relaxed">
-                    Comunicação criptografada em trânsito (TLS 1.3) e em repouso. Salvaguardas técnicas e controles de acesso: [PREENCHER COM TEXTO JURÍDICO REVISADO].
+                    Comunicação criptografada em trânsito (TLS 1.3) e em repouso. Salvaguardas técnicas e controles de acesso com isolamento lógico multi-tenant e trilha de auditoria restrita.
                   </p>
                 </div>
               </div>
