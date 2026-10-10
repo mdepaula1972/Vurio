@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateMedicalAttestation } from '@/lib/crypto/validator';
-import { formatWhatsAppResponse } from '@/lib/whatsapp/message-formatter';
+import { formatWhatsAppResponse, formatEmployeeReceiptMessage } from '@/lib/whatsapp/message-formatter';
+import { getCompanyById } from '@/lib/services/company-service';
 import { sendWhatsAppMessage } from '@/lib/whatsapp/client';
 import { getCompanyDocumentHashes, saveValidationLog, deductCredit } from '@/lib/supabase/service';
 import { 
@@ -117,11 +118,14 @@ export async function POST(req: NextRequest) {
         }
 
         // ---------------------------------------------------------------------
-        // PRIORIDADE 2: CLIENTE JÁ CADASTRADO (EMPRESA EXISTENTE)
-        // Mantém o fluxo atual de atestados SEM nenhuma alteração
+        // PRIORIDADE 2: ISOLAMENTO OPERACIONAL - ANEXOS E CLIENTES CADASTRADOS
+        // Se a mensagem contiver documento/mídia ou originar de empresa cadastrada,
+        // o tráfego é estritamente operacional de DP e JAMAIS concorre com leads comerciais.
         // ---------------------------------------------------------------------
+        const hasMediaAttachment = !!(mediaUrl || mediaBase64);
         const isClient = await isRegisteredCompanyPhone(phone);
-        if (isClient) {
+
+        if (hasMediaAttachment || isClient) {
           return await processClientAttestationFlow({
             payload,
             phone,
@@ -249,7 +253,7 @@ async function processClientAttestationFlow(params: {
   // 1. Enviar mensagem automática instantânea de processamento
   await sendWhatsAppMessage({
     phone,
-    message: '🔍 *Processando e analisando documento recebido...*'
+    message: '📄 *Documento recebido. Aguarde a confirmação do seu protocolo de entrega...*'
   });
 
   // 2. Obter buffer do arquivo (Base64 direto, descriptografia Evolution API ou download da URL)
@@ -313,21 +317,52 @@ async function processClientAttestationFlow(params: {
     await deductCredit(companyId);
   }
 
-  // 6. Formatar mensagem de resposta de acordo com a regra de negócio
-  const whatsappResponse = formatWhatsAppResponse(report);
+  // 6. Formatar identificador de protocolo asséptico e relatórios
+  const protocolId = report.fileSha256
+    ? `VUR-${report.fileSha256.substring(0, 8).toUpperCase()}`
+    : `VUR-${Date.now().toString(36).toUpperCase()}`;
 
-  // 7. Enviar resposta para o WhatsApp do colaborador/RH
-  await sendWhatsAppMessage({
-    phone,
-    message: whatsappResponse
-  });
+  const employeeReceipt = formatEmployeeReceiptMessage(protocolId);
+  const dpDetailedReport = formatWhatsAppResponse(report);
+
+  // Identifica se o remetente é o próprio contato autorizado do DP/RH ou administrador
+  const company = await getCompanyById(companyId);
+  const dpAuthorizedPhone = company?.whatsappPhone || process.env.DP_NOTIFICATION_PHONE;
+  const isSenderAuthorizedDP = 
+    (dpAuthorizedPhone && normalizePhone(phone) === normalizePhone(dpAuthorizedPhone)) || 
+    isAdminPhone(phone);
+
+  if (isSenderAuthorizedDP) {
+    // 7.1. Se o remetente for o próprio DP/RH, devolve o relatório pericial detalhado diretamente
+    await sendWhatsAppMessage({
+      phone,
+      message: dpDetailedReport
+    });
+  } else {
+    // 7.2. Se o remetente for o COLABORADOR, devolve ESTRITAMENTE a confirmação asséptica de protocolo
+    // (Blindagem jurídica contra constrangimento / passivo trabalhista)
+    await sendWhatsAppMessage({
+      phone,
+      message: employeeReceipt
+    });
+
+    // 7.3. O relatório pericial detalhado é direcionado exclusivamente ao contato/grupo autorizado do DP/RH
+    if (dpAuthorizedPhone && normalizePhone(dpAuthorizedPhone) !== normalizePhone(phone)) {
+      await sendWhatsAppMessage({
+        phone: dpAuthorizedPhone,
+        message: `📋 *Novo Atestado Triado - Protocolo #${protocolId}*\n*Remetente (Colaborador):* ***${phone.slice(-4)}\n\n` + dpDetailedReport
+      });
+    }
+  }
 
   return NextResponse.json({
     success: true,
     phone,
+    protocolId,
     status: report.status,
     executionTimeMs,
-    whatsappResponse
+    employeeReceiptSent: !isSenderAuthorizedDP,
+    dpReportSent: true
   });
 }
 

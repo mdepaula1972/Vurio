@@ -1,6 +1,13 @@
 ﻿import { supabase, isSupabaseConfigured } from '../supabase/client';
 import { generatePoliceDossier, PoliceDossierData } from './police-dossier-generator';
 
+/**
+ * FLAG DE GOVERNANÇA OPERACIONAL:
+ * O envio ativo de mensagens no WhatsApp pessoal de médicos cujo CRM aparece em validações
+ * está estritamente CONGELADO por padrão para evitar bloqueios de linha/spam e riscos de abordagem não solicitada.
+ */
+export const DOCTOR_PASSIVE_ALERT_ENABLED = false;
+
 export interface DoctorSubscription {
   id: string;
   doctorName: string;

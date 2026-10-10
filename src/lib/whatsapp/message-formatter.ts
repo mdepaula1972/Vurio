@@ -201,3 +201,15 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
     }
   }
 }
+
+/**
+ * Confirmação asséptica e neutra de protocolo para o colaborador.
+ * Blindagem jurídica contra passivo trabalhista e alegação de constrangimento (Art. 483 CLT).
+ */
+export function formatEmployeeReceiptMessage(protocolId: string): string {
+  return (
+    `✅ *Documento recebido com sucesso.*\n\n` +
+    `Protocolo *#${protocolId}* registrado para triagem do Departamento Pessoal.\n\n` +
+    `_As informações foram encaminhadas para conferência interna junto à empresa._`
+  );
+}

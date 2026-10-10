@@ -25,7 +25,7 @@ import {
 // 1. Prova social permanece oculta até aprovação de clientes reais
 const SHOW_PROVA_SOCIAL = false;
 // 2. Seção de planos oculta por padrão
-const SHOW_PLANOS = false;
+const SHOW_PLANOS = true;
 // 4. FLAG DO TRIAL (Padrão: false). Quando false, o formulário não é renderizado
 // e todas as CTAs direcionam para conversa no WhatsApp corporativo
 const TRIAL_ENABLED = process.env.NEXT_PUBLIC_TRIAL_ENABLED === 'true';
@@ -702,6 +702,266 @@ export default function LandingHomePage() {
 
         </div>
       </section>
+
+      {/* 6.1. SEÇÃO DE PLANOS E PREÇOS (MODELO SAAS POR PORTE + AUDITORIA EM LOTE) */}
+      {SHOW_PLANOS && (
+        <section id="planos" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950/70">
+          <div className="max-w-6xl mx-auto space-y-12">
+            
+            <div className="text-center space-y-3">
+              <span className="text-[11px] font-bold text-[#02c1db] uppercase tracking-widest bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/30">
+                PLANOS SAAS CORPORATIVOS
+              </span>
+              <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                Planos dimensionados ao porte da sua empresa
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
+                Mensalidade previsível com franquia de validações por porte, sem taxa de implantação e com cancelamento a qualquer momento.
+              </p>
+            </div>
+
+            {/* Grid dos 3 Planos SaaS por Porte */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+              
+              {/* 1. Starter / PME */}
+              <div className="p-7 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-6 hover:border-slate-700 transition-all">
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-md">
+                      Até 50 colaboradores
+                    </span>
+                    <h3 className="text-xl font-bold text-white pt-1">Starter / PME</h3>
+                    <p className="text-xs text-slate-400">Para pequenas empresas e operações em estruturação de DP.</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-extrabold text-white">R$ 490</span>
+                      <span className="text-xs text-slate-400 font-medium">/mês</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Franquia de até 50 validações mensais</p>
+                  </div>
+
+                  <ul className="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Recepção automatizada no WhatsApp do DP</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Validação PAdES e integridade ICP-Brasil em PDFs</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Visão computacional e leitura de fotos em papel</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Trava antifraude de duplicidade (SHA-256)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Protocolo asséptico imediato ao colaborador</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Painel Web do DP com histórico e Zero CID</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <a
+                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de contratar o plano Starter / PME do Vurio.')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs text-center border border-slate-700 transition-all block shadow"
+                >
+                  Contratar Plano Starter
+                </a>
+              </div>
+
+              {/* 2. Pro / Growth (Destaque) */}
+              <div className="p-7 rounded-3xl bg-slate-900 border-2 border-[#02c1db] flex flex-col justify-between space-y-6 relative shadow-2xl shadow-[#0077d1]/10">
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] text-white text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full shadow">
+                  MAIS ESCOLHIDO
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#02c1db] bg-sky-500/10 px-2.5 py-0.5 rounded-md border border-sky-500/20">
+                      51 a 250 colaboradores
+                    </span>
+                    <h3 className="text-xl font-bold text-white pt-1">Pro / Growth</h3>
+                    <p className="text-xs text-slate-400">Para médias empresas com múltiplos turnos e tolerâncias de CCT.</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-extrabold text-white">R$ 1.190</span>
+                      <span className="text-xs text-slate-400 font-medium">/mês</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Franquia de até 250 validações mensais</p>
+                  </div>
+
+                  <ul className="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                    <li className="flex items-start gap-2 font-medium text-white">
+                      <Check className="w-4 h-4 text-[#02c1db] flex-shrink-0 mt-0.5" />
+                      <span>Tudo do plano Starter, mais:</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span><strong>Diligência 1-Clique</strong> com clínicas e médicos</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span><strong>Geo-Shield:</strong> auditoria geográfica com tolerância metropolitana</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Configuração personalizada de prazos e limites da CCT</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Notificação pericial automática no canal/grupo do DP</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Painel multi-usuário com exportação de relatórios</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <a
+                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de contratar o plano Pro / Growth do Vurio.')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] hover:opacity-95 text-white font-bold text-xs text-center shadow-lg shadow-[#0077d1]/25 transition-all block"
+                >
+                  Contratar Plano Pro
+                </a>
+              </div>
+
+              {/* 3. Enterprise */}
+              <div className="p-7 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-6 hover:border-slate-700 transition-all">
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-md">
+                      Acima de 250 colaboradores
+                    </span>
+                    <h3 className="text-xl font-bold text-white pt-1">Enterprise</h3>
+                    <p className="text-xs text-slate-400">Para grandes operações com alta volumetria e exigência de integração.</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-2xl font-extrabold text-white">Sob Consulta</span>
+                    </div>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Preço personalizado conforme a volumetria da folha</p>
+                  </div>
+
+                  <ul className="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                    <li className="flex items-start gap-2 font-medium text-white">
+                      <Check className="w-4 h-4 text-[#01cf9e] flex-shrink-0 mt-0.5" />
+                      <span>Tudo do plano Pro, mais:</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Volume de validações customizado para a empresa</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Integração via API REST e Webhooks para Folha/RH</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Múltiplas instâncias de WhatsApp e filiais separadas</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Treinamento especializado da equipe de DP e SESMT</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Gerente de contas dedicado e SLA prioritário</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <a
+                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de solicitar uma proposta personalizada do plano Enterprise para minha empresa.')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs text-center border border-slate-700 transition-all block shadow"
+                >
+                  Falar com um Consultor
+                </a>
+              </div>
+
+            </div>
+
+            {/* Módulo Destacado de Entrada: Auditoria Forense de Histórico de Folha (Batch Audit) */}
+            <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-r from-slate-900 via-slate-900 to-[#0077d1]/10 border border-slate-800 relative overflow-hidden shadow-2xl">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                
+                <div className="lg:col-span-8 space-y-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-amber-400 uppercase tracking-widest bg-amber-500/10 px-3 py-1 rounded-full border border-amber-500/30">
+                      DIAGNÓSTICO PONTUAL / OFERTA DE ENTRADA
+                    </span>
+                  </div>
+
+                  <h3 className="text-xl sm:text-2xl font-black text-white">
+                    Auditoria Forense de Histórico de Folha
+                  </h3>
+
+                  <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
+                    Descubra o passivo financeiro oculto em atestados já pagos pela sua organização. Realizamos uma varredura pericial completa no seu histórico dos últimos 6 a 24 meses em lote (via arquivo compactado em .ZIP).
+                  </p>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-slate-300 pt-2">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span>Diagnóstico pontual <strong>sem necessidade de assinatura mensal</strong></span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span>Cálculo exato da sangria financeira na folha e encargos</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span>Mapeamento de reincidências e carimbos adulterados</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                      <span>Dossiê executivo com ROI comprovado para a Diretoria</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="lg:col-span-4 flex flex-col items-center lg:items-end justify-center space-y-3">
+                  <div className="text-center lg:text-right">
+                    <span className="text-[11px] text-slate-400 block">Diagnóstico em Lote</span>
+                    <span className="text-2xl font-black text-white">A partir de R$ 990</span>
+                    <span className="text-[10px] text-slate-500 block">Proposta sob medida conforme o volume de arquivos</span>
+                  </div>
+
+                  <a
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de solicitar um diagnóstico de Auditoria Forense de Histórico de Folha para minha empresa.')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 hover:opacity-95 text-slate-950 font-black text-xs text-center shadow-lg shadow-amber-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  >
+                    <Activity className="w-4 h-4 text-slate-950" />
+                    <span>Solicitar Diagnóstico Forense</span>
+                  </a>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+        </section>
+      )}
 
       {/* 7. SEÇÃO 6: CONTATO E CONVERSAÇÃO (SEM TRIAL ATIVO / COM FLAG DE RENDERIZAÇÃO) */}
       <section id="contato" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-gradient-to-b from-slate-950 to-slate-900">
