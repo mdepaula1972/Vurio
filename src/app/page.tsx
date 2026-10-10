@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { INFINITEPAY_LINKS } from '@/lib/services/payment-links';
 import { 
   ShieldCheck, 
   CheckCircle2,
@@ -16,7 +17,9 @@ import {
   FileText,
   Lock,
   AlertTriangle,
-  AlertCircle
+  AlertCircle,
+  Sparkles,
+  Scale,
 } from 'lucide-react';
 
 // ==========================================
@@ -704,52 +707,56 @@ export default function LandingHomePage() {
       </section>
 
       {/* 6.1. SEÇÃO DE PLANOS E PREÇOS (MODELO SAAS POR PORTE + AUDITORIA EM LOTE) */}
+      {/* 6.1. SEÇÃO DE PLANOS E PREÇOS: GRADE COMPLETA COM TETO FIXO E NÃO CUMULATIVO */}
       {SHOW_PLANOS && (
         <section id="planos" className="py-20 px-4 sm:px-6 lg:px-8 border-b border-slate-800/60 bg-slate-950/70">
-          <div className="max-w-6xl mx-auto space-y-12">
+          <div className="max-w-7xl mx-auto space-y-12">
             
-            <div className="text-center space-y-3">
+            <div className="text-center space-y-3 max-w-3xl mx-auto">
               <span className="text-[11px] font-bold text-[#02c1db] uppercase tracking-widest bg-sky-500/10 px-3 py-1 rounded-full border border-sky-500/30">
-                PLANOS SAAS CORPORATIVOS
+                PLANOS E CONTRATAÇÃO
               </span>
               <h2 className="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
-                Planos dimensionados ao porte da sua empresa
+                Planos transparentes com teto fixo para o tamanho da sua operação
               </h2>
-              <p className="text-xs sm:text-sm text-slate-300 max-w-2xl mx-auto leading-relaxed">
-                Mensalidade previsível com franquia de validações por porte, sem taxa de implantação e com cancelamento a qualquer momento.
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                Desde o microempreendedor com 1 colaborador até grandes indústrias. Franquias com teto rígido e não cumulativo por ciclo mensal de 30 dias.
               </p>
+              
+              <div className="pt-2">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-[11px] text-slate-300 shadow">
+                  <Clock className="w-3.5 h-3.5 text-amber-400 flex-shrink-0" />
+                  <span><strong>Regra de Franquia:</strong> Teto mensal não cumulativo. O saldo renova a cada 30 dias e consultas não utilizadas no período não acumulam para o mês seguinte.</span>
+                </div>
+              </div>
             </div>
 
-            {/* Grid dos 3 Planos SaaS por Porte */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            {/* Grid dos 4 Planos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
               
-              {/* 1. Starter / PME */}
-              <div className="p-7 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-6 hover:border-slate-700 transition-all">
+              {/* 1. Avulso Sob Demanda (Para 1 a 5 colaboradores / MEI) */}
+              <div className="p-6 rounded-3xl bg-gradient-to-b from-slate-900 via-slate-900/90 to-slate-950 border-2 border-emerald-500/50 flex flex-col justify-between space-y-6 relative shadow-xl shadow-emerald-500/10">
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-md">
-                      Até 50 colaboradores
+                    <span className="text-[10px] font-black uppercase tracking-wider text-slate-950 bg-emerald-400 px-2.5 py-0.5 rounded-full inline-block">
+                      Sem Mensalidade
                     </span>
-                    <h3 className="text-xl font-bold text-white pt-1">Starter / PME</h3>
-                    <p className="text-xs text-slate-400">Para pequenas empresas e operações em estruturação de DP.</p>
+                    <h3 className="text-xl font-bold text-white pt-2">Consulta Avulsa</h3>
+                    <p className="text-xs text-slate-400">Para quem tem 1 a 5 colaboradores, MEI ou uso eventual. Pague só quando usar.</p>
                   </div>
 
                   <div className="pt-2 border-t border-slate-800">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-extrabold text-white">R$ 490</span>
-                      <span className="text-xs text-slate-400 font-medium">/mês</span>
+                      <span className="text-3xl font-extrabold text-emerald-400">R$ 10,00</span>
+                      <span className="text-xs text-slate-400 font-medium">/ consulta</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Franquia de até 50 validações mensais</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Teto: 1 documento por contratação (zero mensalidade)</p>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                  <ul className="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800">
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Recepção automatizada no WhatsApp do DP</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Validação PAdES e integridade ICP-Brasil em PDFs</span>
+                      <span>Validação PAdES e integridade ICP-Brasil</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
@@ -757,146 +764,312 @@ export default function LandingHomePage() {
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Trava antifraude de duplicidade (SHA-256)</span>
+                      <span>Checagem cadastral do conselho profissional (CRM)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Protocolo asséptico imediato ao colaborador</span>
+                      <span>Protocolo asséptico imediato (#VUR-XXXX)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Painel Web do DP com histórico e Zero CID</span>
+                      <span>Painel do DP e conformidade com Zero CID</span>
                     </li>
                   </ul>
                 </div>
 
-                <a
-                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de contratar o plano Starter / PME do Vurio.')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs text-center border border-slate-700 transition-all block shadow"
-                >
-                  Contratar Plano Starter
-                </a>
+                <div className="space-y-2 pt-4">
+                  <a
+                    href={INFINITEPAY_LINKS.CONSULTA_AVULSA_10}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs text-center shadow-lg shadow-emerald-600/20 transition-all block cursor-pointer"
+                  >
+                    Pagar R$ 10,00 (PIX / Cartão)
+                  </a>
+                  <a
+                    href={INFINITEPAY_LINKS.CONSULTA_AVULSA_GEO_13}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-center text-[11px] text-amber-400 hover:text-amber-300 font-medium py-0.5"
+                  >
+                    Com Geo-Shield: R$ 13,00 →
+                  </a>
+                </div>
               </div>
 
-              {/* 2. Pro / Growth (Destaque) */}
-              <div className="p-7 rounded-3xl bg-slate-900 border-2 border-[#02c1db] flex flex-col justify-between space-y-6 relative shadow-2xl shadow-[#0077d1]/10">
+              {/* 2. Starter RH */}
+              <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-6 hover:border-slate-700 transition-all">
+                <div className="space-y-4">
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-md inline-block">
+                      Até 30 colaboradores
+                    </span>
+                    <h3 className="text-xl font-bold text-white pt-2">Starter RH</h3>
+                    <p className="text-xs text-slate-400">Para pequenas empresas e escritórios em estruturação de DP.</p>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-800">
+                    <div className="flex items-baseline gap-1">
+                      <span className="text-3xl font-extrabold text-white">R$ 149</span>
+                      <span className="text-xs text-slate-400 font-medium">/mês</span>
+                    </div>
+                    <p className="text-[11px] text-emerald-400 font-medium mt-0.5">Teto fixo de 30 consultas/mês</p>
+                    <p className="text-[10px] text-slate-500">R$ 4,96 / doc no teto • Não cumulativo</p>
+                  </div>
+
+                  <ul className="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Franquia mensal de até 30 atestados</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Não cumulativo (renova a cada 30 dias)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>WhatsApp corporativo e Painel Web do DP</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Trava antifraude de duplicidade (SHA-256)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Suporte prioritário via WhatsApp</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-slate-400">
+                      <Check className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+                      <span>Excedente: R$ 5,00 por doc adicional</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="pt-4">
+                  <a
+                    href={INFINITEPAY_LINKS.CHECKOUT_STARTER_149}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs text-center border border-slate-700 transition-all block cursor-pointer shadow"
+                  >
+                    Assinar Starter (R$ 149/mês)
+                  </a>
+                </div>
+              </div>
+
+              {/* 3. Compliance Pro (Destaque) */}
+              <div className="p-6 rounded-3xl bg-slate-900 border-2 border-[#02c1db] flex flex-col justify-between space-y-6 relative shadow-2xl shadow-[#0077d1]/15">
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] text-white text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 rounded-full shadow">
                   MAIS ESCOLHIDO
                 </div>
 
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#02c1db] bg-sky-500/10 px-2.5 py-0.5 rounded-md border border-sky-500/20">
-                      51 a 250 colaboradores
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#02c1db] bg-sky-500/10 px-2.5 py-0.5 rounded-md border border-sky-500/20 inline-block">
+                      30 a 250 colaboradores
                     </span>
-                    <h3 className="text-xl font-bold text-white pt-1">Pro / Growth</h3>
-                    <p className="text-xs text-slate-400">Para médias empresas com múltiplos turnos e tolerâncias de CCT.</p>
+                    <h3 className="text-xl font-bold text-white pt-2">Compliance Pro</h3>
+                    <p className="text-xs text-slate-400">Para médias empresas com múltiplos turnos e rotatividade.</p>
                   </div>
 
                   <div className="pt-2 border-t border-slate-800">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-extrabold text-white">R$ 1.190</span>
+                      <span className="text-3xl font-extrabold text-sky-400">R$ 399</span>
                       <span className="text-xs text-slate-400 font-medium">/mês</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Franquia de até 250 validações mensais</p>
+                    <p className="text-[11px] text-[#02c1db] font-medium mt-0.5">Teto fixo de 150 consultas/mês</p>
+                    <p className="text-[10px] text-slate-500">R$ 2,66 / doc no teto • Não cumulativo</p>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
-                    <li className="flex items-start gap-2 font-medium text-white">
-                      <Check className="w-4 h-4 text-[#02c1db] flex-shrink-0 mt-0.5" />
-                      <span>Tudo do plano Starter, mais:</span>
+                  <ul className="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Franquia mensal de até 150 atestados</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span><strong>Diligência 1-Clique</strong> com clínicas e médicos</span>
+                      <span>Não cumulativo (renova a cada 30 dias)</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-amber-300 font-medium">
+                      <Check className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                      <span>Geo-Shield com tolerância conurbana (50 km)</span>
+                    </li>
+                    <li className="flex items-start gap-2 text-sky-300 font-medium">
+                      <Check className="w-4 h-4 text-sky-400 flex-shrink-0 mt-0.5" />
+                      <span>Diligências clínicas 1-clique inclusas</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span><strong>Geo-Shield:</strong> auditoria geográfica com tolerância metropolitana</span>
+                      <span>Multi-CNPJ e filiais integradas</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Configuração personalizada de prazos e limites da CCT</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Notificação pericial automática no canal/grupo do DP</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Painel multi-usuário com exportação de relatórios</span>
+                    <li className="flex items-start gap-2 text-slate-400">
+                      <Check className="w-4 h-4 text-slate-500 flex-shrink-0 mt-0.5" />
+                      <span>Excedente: R$ 3,50 por doc adicional</span>
                     </li>
                   </ul>
                 </div>
 
-                <a
-                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de contratar o plano Pro / Growth do Vurio.')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] hover:opacity-95 text-white font-bold text-xs text-center shadow-lg shadow-[#0077d1]/25 transition-all block"
-                >
-                  Contratar Plano Pro
-                </a>
+                <div className="pt-4">
+                  <a
+                    href={INFINITEPAY_LINKS.CHECKOUT_PRO_399}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#01cf9e] hover:opacity-95 text-white font-bold text-xs text-center shadow-lg shadow-[#0077d1]/25 transition-all block cursor-pointer"
+                  >
+                    Assinar Pro (R$ 399/mês)
+                  </a>
+                </div>
               </div>
 
-              {/* 3. Enterprise */}
-              <div className="p-7 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-6 hover:border-slate-700 transition-all">
+              {/* 4. Enterprise */}
+              <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col justify-between space-y-6 hover:border-slate-700 transition-all">
                 <div className="space-y-4">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-md">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 bg-slate-800 px-2.5 py-0.5 rounded-md inline-block">
                       Acima de 250 colaboradores
                     </span>
-                    <h3 className="text-xl font-bold text-white pt-1">Enterprise</h3>
-                    <p className="text-xs text-slate-400">Para grandes operações com alta volumetria e exigência de integração.</p>
+                    <h3 className="text-xl font-bold text-white pt-2">Enterprise</h3>
+                    <p className="text-xs text-slate-400">Grandes indústrias e redes com integração em ERP.</p>
                   </div>
 
                   <div className="pt-2 border-t border-slate-800">
                     <div className="flex items-baseline gap-1">
-                      <span className="text-2xl font-extrabold text-white">Sob Consulta</span>
+                      <span className="text-2xl font-extrabold text-white">Sob Medida</span>
                     </div>
-                    <p className="text-[11px] text-slate-400 mt-0.5">Preço personalizado conforme a volumetria da folha</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Teto contratual acordado (não cumulativo)</p>
+                    <p className="text-[10px] text-slate-500">Ex: 500, 1.000 ou 5.000 atestados/mês</p>
                   </div>
 
-                  <ul className="space-y-2.5 text-xs text-slate-300 pt-2 border-t border-slate-800">
-                    <li className="flex items-start gap-2 font-medium text-white">
-                      <Check className="w-4 h-4 text-[#01cf9e] flex-shrink-0 mt-0.5" />
-                      <span>Tudo do plano Pro, mais:</span>
+                  <ul className="space-y-2 text-xs text-slate-300 pt-2 border-t border-slate-800">
+                    <li className="flex items-start gap-2">
+                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>Volume de validações sob medida</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Volume de validações customizado para a empresa</span>
+                      <span>API REST e Webhooks para Folha/RH (TOTVS/Senior)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Integração via API REST e Webhooks para Folha/RH</span>
+                      <span>Múltiplas instâncias de WhatsApp e filiais</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Múltiplas instâncias de WhatsApp e filiais separadas</span>
+                      <span>Treinamento especializado de DP e SESMT</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Treinamento especializado da equipe de DP e SESMT</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span>Gerente de contas dedicado e SLA prioritário</span>
+                      <span>Gerente de contas dedicado e SLA em contrato</span>
                     </li>
                   </ul>
                 </div>
 
-                <a
-                  href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent('Olá! Gostaria de solicitar uma proposta personalizada do plano Enterprise para minha empresa.')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs text-center border border-slate-700 transition-all block shadow"
-                >
-                  Falar com um Consultor
-                </a>
+                <div className="pt-4">
+                  <a
+                    href={INFINITEPAY_LINKS.PLANOS_WHATSAPP.ENTERPRISE}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs text-center border border-slate-700 transition-all block cursor-pointer shadow"
+                  >
+                    Falar com Consultor
+                  </a>
+                </div>
               </div>
 
+            </div>
+
+            {/* Vitrine de Add-ons Periciais Independentes */}
+            <div className="p-6 sm:p-8 rounded-3xl bg-slate-900/60 border border-slate-800 space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-2">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-amber-400" />
+                  <h3 className="text-base sm:text-lg font-bold text-white">
+                    Add-ons e Serviços Periciais Pontuais
+                  </h3>
+                </div>
+                <span className="text-xs text-slate-400">
+                  Disponíveis avulsos sob demanda ou agregados a qualquer plano
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                {/* Add-on 1: Diligência CFM */}
+                <div className="p-5 rounded-2xl bg-slate-950/80 border border-sky-500/30 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-sky-400 text-xs flex items-center gap-1.5">
+                        <Scale className="w-3.5 h-3.5" /> Diligência Clínica 1-Clique
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        Incluso no Pro
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      Envio automático de ofício formal respaldado na Resolução CFM 1.658/2002 para confirmação de atendimento diretamente com a secretaria do consultório ou hospital.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-white">R$ 15,00 <span className="text-[10px] text-slate-400 font-normal">/ ofício</span></span>
+                    <a
+                      href={INFINITEPAY_LINKS.DILIGENCIA_CFM_15}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-sky-600/30 hover:bg-sky-600/50 text-sky-300 border border-sky-500/40 text-[11px] font-bold transition-all"
+                    >
+                      Contratar Ofício
+                    </a>
+                  </div>
+                </div>
+
+                {/* Add-on 2: Dossiê Policial */}
+                <div className="p-5 rounded-2xl bg-slate-950/80 border border-emerald-500/30 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-emerald-400 text-xs flex items-center gap-1.5">
+                        <Stethoscope className="w-3.5 h-3.5" /> Dossiê Jurídico & B.O.
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-400 bg-slate-800 px-2 py-0.5 rounded border border-slate-700">
+                        R$ 49 p/ assinante
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      Certidão pericial completa com hash SHA-256 e carimbo de tempo ICP-Brasil, formatada para instauração de Boletim de Ocorrência policial e justa causa CLT (Art. 482).
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-white">R$ 89,00 <span className="text-[10px] text-slate-400 font-normal">avulso</span></span>
+                    <a
+                      href={INFINITEPAY_LINKS.DOSSIE_POLICIAL_89}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-3 py-1.5 rounded-lg bg-emerald-600/30 hover:bg-emerald-600/50 text-emerald-300 border border-emerald-500/40 text-[11px] font-bold transition-all"
+                    >
+                      Emitir Dossiê
+                    </a>
+                  </div>
+                </div>
+
+                {/* Add-on 3: Geo-Shield */}
+                <div className="p-5 rounded-2xl bg-slate-950/80 border border-amber-500/30 flex flex-col justify-between space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="font-bold text-amber-400 text-xs flex items-center gap-1.5">
+                        <MapPin className="w-3.5 h-3.5" /> Módulo Geo-Shield
+                      </span>
+                      <span className="text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
+                        Incluso no Pro
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      Auditoria de rota e distância geográfica com tolerância metropolitana de 50 km (Grande SP, Baixada Santista, etc.). Detecta deslocamentos incompatíveis com a jornada.
+                    </p>
+                  </div>
+                  <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-white">R$ 49,00 <span className="text-[10px] text-slate-400 font-normal">/ mês</span></span>
+                    <span className="text-[10px] text-amber-300/80 font-medium">+R$ 3 se avulso</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             {/* Módulo Destacado de Entrada: Auditoria Forense de Histórico de Folha (Batch Audit) */}
