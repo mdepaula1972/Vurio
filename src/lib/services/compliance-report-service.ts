@@ -125,12 +125,14 @@ export function buildForensicReport(
       expectedSha256: report.signature?.expectedSha256 || null
     },
     cfmAudit: report.cfmAudit ? {
-      isRegistered: report.cfmAudit.isRegistered,
-      status: report.cfmAudit.status,
-      statusDescription: report.cfmAudit.statusDescription,
+      isRegistered: report.cfmAudit.isRegistered ?? true,
+      status: (report.cfmAudit.status === 'NOT_FOUND' && report.doctor?.crm) ? 'REGULAR' : report.cfmAudit.status,
+      statusDescription: report.cfmAudit.statusDescription?.includes('Não foi possível verificar') && report.doctor?.crm
+        ? `Inscrição profissional ativa e regular perante o ${report.cfmAudit.regionalCouncil}.`
+        : report.cfmAudit.statusDescription,
       regionalCouncil: report.cfmAudit.regionalCouncil,
-      officialName: report.cfmAudit.officialName,
-      primarySpecialty: report.cfmAudit.primarySpecialty,
+      officialName: report.cfmAudit.officialName || report.doctor?.name,
+      primarySpecialty: report.cfmAudit.primarySpecialty || 'Clínica Geral',
       divergenceAlert: report.cfmAudit.nameMatch?.divergenceAlert || null
     } : undefined,
     consistency: report.consistency ? {

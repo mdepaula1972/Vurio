@@ -52,8 +52,8 @@ export default function RootLayout({
     <html lang="pt-BR" className="scroll-smooth">
       <head>
         <link rel="icon" href="/favicon.png" type="image/png" />
-        <meta name="vurio-version" content="v1.4.0" />
-        <meta name="vurio-engine" content="Vurio DP Workstation v1.4.0" />
+        <meta name="vurio-version" content="v1.4.1" />
+        <meta name="vurio-engine" content="Vurio DP Workstation v1.4.1" />
       </head>
       <body className="min-h-screen bg-[#040c18] text-slate-100 antialiased selection:bg-[#02c1db] selection:text-[#001c4e]">
         {children}

@@ -9,8 +9,8 @@ const nextConfig = {
       {
         source: '/:path*',
         headers: [
-          { key: 'X-Vurio-Version', value: 'v1.4.0' },
-          { key: 'X-Vurio-Engine', value: 'Vurio DP Workstation v1.4.0' }
+          { key: 'X-Vurio-Version', value: 'v1.4.1' },
+          { key: 'X-Vurio-Engine', value: 'Vurio DP Workstation v1.4.1' }
         ]
       }
     ];

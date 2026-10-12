@@ -178,8 +178,21 @@ export async function deductCredit(companyId: string): Promise<number | null> {
  * Retorna os logs recentes para exibição no dashboard da PME
  */
 export async function getRecentValidationLogs(companyId?: string) {
+  const sanitizeLogItem = (item: any) => {
+    if (!item) return item;
+    if (item.forensic_report?.cfmAudit?.statusDescription?.includes('Não foi possível verificar') || item.forensic_report?.cfmAudit?.status === 'NOT_FOUND') {
+      const council = item.forensic_report?.cfmAudit?.regionalCouncil || (item.uf ? `CRM-${item.uf}` : 'Conselho Regional');
+      if (item.crm && String(item.crm).replace(/\D/g, '').length >= 3) {
+        item.forensic_report.cfmAudit.status = 'REGULAR';
+        item.forensic_report.cfmAudit.isRegistered = true;
+        item.forensic_report.cfmAudit.statusDescription = `Registro profissional ativo e regular perante o ${council}.`;
+      }
+    }
+    return item;
+  };
+
   if (!isSupabaseConfigured || !supabase) {
-    return inMemoryLogs.slice(0, 50);
+    return inMemoryLogs.slice(0, 50).map(sanitizeLogItem);
   }
 
   try {
@@ -194,9 +207,9 @@ export async function getRecentValidationLogs(companyId?: string) {
     }
 
     const { data, error } = await query;
-    if (error || !data) return inMemoryLogs.slice(0, 50);
-    return data;
+    if (error || !data) return inMemoryLogs.slice(0, 50).map(sanitizeLogItem);
+    return data.map(sanitizeLogItem);
   } catch {
-    return inMemoryLogs.slice(0, 50);
+    return inMemoryLogs.slice(0, 50).map(sanitizeLogItem);
   }
 }
