@@ -146,7 +146,7 @@ export async function analyzeDpAttestation(params: {
 
     // Se houve adulteração ou violação de assinatura PAdES
     if (cryptoValidation.status === 'TAMPERED') {
-      alertas_seguranca.push('O arquivo digital apresenta alterações estruturais ou edições de metadados pós-emissão.');
+      alertas_seguranca.push('O arquivo digital possui histórico de edição pós-emissão.');
       alertas_seguranca.push('Assinatura digital ICP-Brasil corrompida: o hash do arquivo difere da assinatura original.');
     } else if (cryptoValidation.status === 'REPRINTED_BROWSER_PDF') {
       alertas_operacionais.push('Aviso Técnico: Documento re-salvo via impressora virtual / navegador web (PDFium/Chromium). Assinatura digital original suprimida.');
@@ -169,7 +169,7 @@ export async function analyzeDpAttestation(params: {
     });
 
     if (geoAudit.distanceKm > 50 && !geoAudit.telemedicineDetected) {
-      alertas_operacionais.push(`Consulta realizada a ${geoAudit.distanceKm} km da residência/local de trabalho cadastrado.`);
+      alertas_operacionais.push(`Consulta realizada a ${geoAudit.distanceKm} km da residência/unidade.`);
     }
   }
 

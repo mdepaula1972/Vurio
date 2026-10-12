@@ -1,6 +1,6 @@
 /**
- * Vurio - Serviço de Gestão de Absenteísmo, Inteligência Preditiva e Pasta do Colaborador
- * Módulo DP: Cruzamento de Calendário Oficial, Eventos Notáveis e Histórico de Absenteísmo.
+ * Vurio - Serviço de Gestão de Absenteísmo, Inteligência Preditiva e Pasta Permanente do Colaborador
+ * Módulo DP: Cruzamento de Calendário Oficial, Eventos Notáveis, Digitação Assistida e Decisões de DP.
  */
 
 export interface NotableDpEvent {
@@ -14,8 +14,44 @@ export interface NotableDpEvent {
   createdAt: string;
 }
 
+export interface EmployeeAttestationRecord {
+  id: string;
+  protocolId: string;
+  dataEmissao: string;
+  diasAfastamento: number;
+  medicoNome?: string | null;
+  crmUf?: string | null;
+  cid?: string | null;
+  cidGrupo?: string | null;
+  localAtendimento?: string | null;
+  decisaoDp: 'APROVADO' | 'APROVADO_COM_OBSERVACAO' | 'SOLICITADO_DOCUMENTO_FISICO';
+  observacaoDp?: string;
+  alertasRegistrados: string[];
+  etiquetasPreditivas: string[];
+  exigiuDigitacaoManual: boolean;
+  registradoEm: string;
+}
+
+export interface PermanentEmployeeFolder {
+  cpf: string;
+  nome: string;
+  companyId: string;
+  anoVigente: number;
+  totalAtestadosAno: number;
+  totalDiasAno: number;
+  totalAtestadosHistoricoGeral: number;
+  totalDiasHistoricoGeral: number;
+  historicoInconsistencias: number;
+  atestadosIlegiveisDigitados: number;
+  reincidenciaCidGrupo: boolean;
+  cidGruposHistorico: string[];
+  historicoDescritivo: string[];
+  atestados: EmployeeAttestationRecord[];
+  ultimaDecisaoEm?: string;
+}
+
 export interface EmployeeFolderRecord {
-  employeeIdentifier: string; // CPF ou Nome
+  employeeIdentifier: string;
   companyId: string;
   year: number;
   totalAtestadosAno: number;
@@ -47,12 +83,12 @@ const BRAZILIAN_FIXED_HOLIDAYS: Record<string, string> = {
   '12-25': 'Natal'
 };
 
-// Armazenamento em memória para Eventos Notáveis e Pastas dos Colaboradores (com fallback dinâmico)
+// Armazenamento em memória (com persistência em sessão e compatível com multi-tenant)
 const inMemoryNotableEvents: NotableDpEvent[] = [
   {
     id: 'evt-default-1',
     companyId: 'default',
-    title: 'Show Musical na Cidade',
+    title: 'Show Noturno na Cidade',
     startDate: '2026-10-16',
     endDate: '2026-10-18',
     category: 'SHOW',
@@ -69,10 +105,20 @@ const inMemoryNotableEvents: NotableDpEvent[] = [
   }
 ];
 
+// Mapa indexado por CPF sanitizado ou Identificador Único
+const inMemoryPermanentFolders = new Map<string, PermanentEmployeeFolder>();
 const inMemoryEmployeeFolders = new Map<string, EmployeeFolderRecord>();
 
 /**
- * Retorna o grupo estrutural do código CID-10 (Capítulo de Saúde)
+ * Sanitiza identificador de CPF (apenas dígitos)
+ */
+export function sanitizeCpf(cpf?: string | null): string {
+  if (!cpf) return '';
+  return cpf.replace(/\D/g, '');
+}
+
+/**
+ * Retorna o grupo estrutural do código CID-10 (Capítulo Clínico)
  */
 export function getCidStructuralGroup(cidCode?: string | null): { groupCode: string; description: string } | null {
   if (!cidCode) return null;
@@ -104,7 +150,7 @@ export function getCidStructuralGroup(cidCode?: string | null): { groupCode: str
 }
 
 /**
- * Normaliza string de data (DD/MM/AAAA ou YYYY-MM-DD) para objeto Date
+ * Normaliza string de data para objeto Date
  */
 export function parseDateString(dateStr?: string | null): Date | null {
   if (!dateStr) return null;
@@ -121,9 +167,6 @@ export function parseDateString(dateStr?: string | null): Date | null {
   return isNaN(timestamp) ? null : new Date(timestamp);
 }
 
-/**
- * Formata objeto Date para string YYYY-MM-DD
- */
 export function formatDateIso(date: Date): string {
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -146,12 +189,12 @@ export function analyzeEventCoincidence(
   let coincidencia_feriado = false;
   let nomeFeriadoOuPonte = '';
 
-  // 1. Checagem direta de feriado nacional
+  // 1. Checagem de feriado nacional fixo
   if (BRAZILIAN_FIXED_HOLIDAYS[monthDay]) {
     coincidencia_feriado = true;
     nomeFeriadoOuPonte = BRAZILIAN_FIXED_HOLIDAYS[monthDay];
   } else {
-    // 2. Checagem de véspera ou pós-feriado imediato
+    // 2. Véspera ou pós-feriado
     const prevDay = new Date(date);
     prevDay.setDate(prevDay.getDate() - 1);
     const prevMonthDay = `${String(prevDay.getMonth() + 1).padStart(2, '0')}-${String(prevDay.getDate()).padStart(2, '0')}`;
@@ -169,7 +212,7 @@ export function analyzeEventCoincidence(
     }
   }
 
-  // 3. Regra de ponte de fim de semana (Sexta-feira ou Segunda-feira)
+  // 3. Regra de pontes de fim de semana (Sexta-feira ou Segunda-feira)
   const isWeekendBridge = dayOfWeek === 1 || dayOfWeek === 5;
   const padrao_reincidente_dias = isWeekendBridge || coincidencia_feriado;
 
@@ -177,7 +220,7 @@ export function analyzeEventCoincidence(
     nomeFeriadoOuPonte = dayOfWeek === 5 ? 'Sexta-feira (Ponte de Fim de Semana)' : 'Segunda-feira (Pós-Fim de Semana)';
   }
 
-  // 4. Cruzamento com Eventos Notáveis do DP (Privado/Manual)
+  // 4. Cruzamento com Eventos Notáveis do DP
   const events = getNotableEvents(companyId);
   let coincidencia_evento_dp = false;
   let nome_evento = '';
@@ -190,14 +233,14 @@ export function analyzeEventCoincidence(
     }
   }
 
-  // Rótulo oficial exigido pela diretriz: "Afastamento com coincidência em [Nome do Evento / Véspera de Feriado]."
+  // Rótulo da diretriz: "Afastamento com coincidência em [Nome do Evento / Véspera de Feriado]."
   let rotulo_alerta: string | undefined = undefined;
   if (coincidencia_evento_dp && nome_evento) {
-    rotulo_alerta = `Afastamento com coincidência em ${nome_evento}.`;
+    rotulo_alerta = `Afastamento coincidente com ${nome_evento}.`;
   } else if (coincidencia_feriado && nomeFeriadoOuPonte) {
-    rotulo_alerta = `Afastamento com coincidência em ${nomeFeriadoOuPonte}.`;
+    rotulo_alerta = `Afastamento coincidente com ${nomeFeriadoOuPonte}.`;
   } else if (isWeekendBridge) {
-    rotulo_alerta = `Afastamento com coincidência em ${nomeFeriadoOuPonte}.`;
+    rotulo_alerta = `Afastamento coincidente com ${nomeFeriadoOuPonte}.`;
   }
 
   return {
@@ -210,7 +253,138 @@ export function analyzeEventCoincidence(
 }
 
 /**
- * Consulta ou Inicializa a Pasta do Colaborador no ano vigente (ETAPA 4)
+ * Consulta ou Inicializa a Pasta Permanente do Colaborador (Permanente por CPF)
+ * Mantém o histórico permanente mesmo em caso de desligamento e posterior recontratação.
+ */
+export function getOrCreatePermanentFolder(
+  identifier: { cpf?: string | null; nome?: string | null },
+  companyId: string = 'default'
+): PermanentEmployeeFolder {
+  const rawCpf = sanitizeCpf(identifier.cpf);
+  const cleanKey = rawCpf || (identifier.nome ? identifier.nome.trim().toLowerCase() : 'colaborador-geral');
+  const compositeKey = `${companyId}:${cleanKey}`;
+
+  const currentYear = new Date().getFullYear();
+
+  let folder = inMemoryPermanentFolders.get(compositeKey);
+  if (!folder) {
+    folder = {
+      cpf: rawCpf || 'Não informado',
+      nome: identifier.nome || 'Colaborador Identificado',
+      companyId,
+      anoVigente: currentYear,
+      totalAtestadosAno: 0,
+      totalDiasAno: 0,
+      totalAtestadosHistoricoGeral: 0,
+      totalDiasHistoricoGeral: 0,
+      historicoInconsistencias: 0,
+      atestadosIlegiveisDigitados: 0,
+      reincidenciaCidGrupo: false,
+      cidGruposHistorico: [],
+      historicoDescritivo: [],
+      atestados: []
+    };
+    inMemoryPermanentFolders.set(compositeKey, folder);
+  }
+
+  // Recalcular métricas do ano corrente dinamicamente
+  const atestadosAno = folder.atestados.filter(a => a.dataEmissao.startsWith(String(currentYear)));
+  folder.totalAtestadosAno = atestadosAno.length;
+  folder.totalDiasAno = atestadosAno.reduce((acc, a) => acc + (a.diasAfastamento || 0), 0);
+
+  return folder;
+}
+
+/**
+ * Registra formalmente a Decisão do DP e atualiza a Pasta Permanente do Colaborador
+ */
+export function recordDpDecision(params: {
+  identifier: { cpf?: string | null; nome?: string | null };
+  companyId?: string;
+  protocolId: string;
+  decisaoDp: 'APROVADO' | 'APROVADO_COM_OBSERVACAO' | 'SOLICITADO_DOCUMENTO_FISICO';
+  observacaoDp?: string;
+  diasAfastamento: number;
+  dataEmissao?: string;
+  medicoNome?: string | null;
+  crmUf?: string | null;
+  cid?: string | null;
+  localAtendimento?: string | null;
+  alertasRegistrados?: string[];
+  etiquetasPreditivas?: string[];
+  exigiuDigitacaoManual?: boolean;
+}): PermanentEmployeeFolder {
+  const companyId = params.companyId || 'default';
+  const folder = getOrCreatePermanentFolder(params.identifier, companyId);
+  const dataIso = params.dataEmissao || formatDateIso(new Date());
+
+  const cidGroup = getCidStructuralGroup(params.cid);
+
+  const novoRegistro: EmployeeAttestationRecord = {
+    id: `rec-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+    protocolId: params.protocolId,
+    dataEmissao: dataIso,
+    diasAfastamento: Math.max(1, params.diasAfastamento),
+    medicoNome: params.medicoNome || null,
+    crmUf: params.crmUf || null,
+    cid: params.cid || null,
+    cidGrupo: cidGroup ? cidGroup.groupCode : null,
+    localAtendimento: params.localAtendimento || null,
+    decisaoDp: params.decisaoDp,
+    observacaoDp: params.observacaoDp,
+    alertasRegistrados: params.alertasRegistrados || [],
+    etiquetasPreditivas: params.etiquetasPreditivas || [],
+    exigiuDigitacaoManual: !!params.exigiuDigitacaoManual,
+    registradoEm: new Date().toISOString()
+  };
+
+  // Adicionar ao histórico geral permanente
+  folder.atestados.unshift(novoRegistro);
+  folder.totalAtestadosHistoricoGeral += 1;
+  folder.totalDiasHistoricoGeral += novoRegistro.diasAfastamento;
+  folder.ultimaDecisaoEm = new Date().toISOString();
+
+  // Histórico descritivo
+  if (params.exigiuDigitacaoManual) {
+    folder.atestadosIlegiveisDigitados += 1;
+    folder.historicoDescritivo.push(
+      `Protocolo ${params.protocolId} (${dataIso}): Exigiu preenchimento assistido por OCR com baixa nitidez.`
+    );
+  }
+
+  if (params.alertasRegistrados && params.alertasRegistrados.length > 0) {
+    folder.historicoInconsistencias += 1;
+    folder.historicoDescritivo.push(
+      `Protocolo ${params.protocolId} (${dataIso}): Apontamentos: ${params.alertasRegistrados.join('; ')}`
+    );
+  }
+
+  if (params.observacaoDp) {
+    folder.historicoDescritivo.push(
+      `Decisão ${params.decisaoDp} no Protocolo ${params.protocolId}: ${params.observacaoDp}`
+    );
+  }
+
+  // Checar reincidência de grupo de CID
+  if (cidGroup) {
+    if (folder.cidGruposHistorico.includes(cidGroup.groupCode)) {
+      folder.reincidenciaCidGrupo = true;
+    } else {
+      folder.cidGruposHistorico.push(cidGroup.groupCode);
+    }
+  }
+
+  // Atualizar ano corrente
+  const currentYear = new Date().getFullYear();
+  const atestadosAno = folder.atestados.filter(a => a.dataEmissao.startsWith(String(currentYear)));
+  folder.totalAtestadosAno = atestadosAno.length;
+  folder.totalDiasAno = atestadosAno.reduce((acc, a) => acc + (a.diasAfastamento || 0), 0);
+
+  return folder;
+}
+
+/**
+ * Consulta ou Inicializa a Pasta do Colaborador no ano vigente (compatibilidade retroativa)
  */
 export function getOrCreateEmployeeFolder(
   employeeIdentifier: string,
@@ -240,9 +414,6 @@ export function getOrCreateEmployeeFolder(
   return newFolder;
 }
 
-/**
- * Atualiza e persiste métricas na Pasta do Colaborador (ETAPA 4)
- */
 export function updateEmployeeFolder(params: {
   employeeIdentifier: string;
   companyId?: string;
@@ -258,7 +429,6 @@ export function updateEmployeeFolder(params: {
   const year = new Date().getFullYear();
   const folder = getOrCreateEmployeeFolder(params.employeeIdentifier, companyId, year);
 
-  // Atualizar totais
   folder.totalAtestadosAno += 1;
   folder.totalDiasAno += Math.max(1, params.days);
 

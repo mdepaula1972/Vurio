@@ -52,7 +52,8 @@ import {
   Printer,
   Calendar,
   Briefcase,
-  FolderOpen
+  FolderOpen,
+  Columns
 } from 'lucide-react';
 import { TaxRegime } from '@/lib/services/batch-audit-service';
 import { auditGeoDistance, GeoAuditResult } from '@/lib/services/geo-audit-service';
@@ -62,6 +63,7 @@ import { formatProtocolId, generateHumanizedComplianceReport, buildForensicRepor
 import { APP_VERSION, APP_VERSION_LABEL, APP_ENGINE_NAME, APP_BUILD_DATE } from '@/lib/version';
 import { DpAttestationAnalysisResponse } from '@/lib/services/dp-attestation-analyzer';
 import { NotableDpEvent } from '@/lib/services/absenteeism-service';
+import { ValidationWorkstation } from '@/components/dp/validation-workstation';
 
 interface ValidationLog {
   id: string;
@@ -88,6 +90,7 @@ interface ValidationLog {
 
 export default function DashboardClientPage() {
   const [activeTab, setActiveTab] = useState<'validation' | 'absenteeism' | 'whatsapp' | 'companies' | 'inquiries' | 'geo' | 'policies' | 'audit' | 'doctor'>('validation');
+  const [dpViewMode, setDpViewMode] = useState<'workstation' | 'events'>('workstation');
   
   // MÓDULO DP: Analisador de Atestados & Gestor de Absenteísmo
   const [dpFile, setDpFile] = useState<File | null>(null);
@@ -1101,6 +1104,17 @@ export default function DashboardClientPage() {
                         <FileText className="w-3.5 h-3.5 text-sky-400" />
                         <span>Comprovante de Balcão</span>
                       </button>
+
+                      <button
+                        onClick={() => {
+                          setActiveTab('absenteeism');
+                          setDpViewMode('workstation');
+                        }}
+                        className="py-2 px-3 rounded-xl bg-gradient-to-r from-sky-600 to-indigo-600 hover:opacity-90 text-white font-bold text-xs flex items-center gap-1.5 shadow"
+                      >
+                        <Columns className="w-3.5 h-3.5" />
+                        <span>Estação Split View</span>
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -1251,6 +1265,17 @@ export default function DashboardClientPage() {
                             </td>
                             <td className="py-2.5 px-3 text-right whitespace-nowrap">
                               <div className="flex items-center justify-end space-x-1.5">
+                                <button
+                                  onClick={() => {
+                                    setActiveTab('absenteeism');
+                                    setDpViewMode('workstation');
+                                  }}
+                                  title="Abrir na Estação de Validação Split View"
+                                  className="px-2 py-1 rounded bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 text-[11px] font-semibold border border-indigo-500/30 flex items-center gap-1"
+                                >
+                                  <Columns className="w-3 h-3" />
+                                  <span>Split View</span>
+                                </button>
                                 <button
                                   onClick={() => {
                                     setSelectedLogForLaudo(log);
@@ -1424,38 +1449,69 @@ export default function DashboardClientPage() {
                   </span>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h2 className="text-lg font-black text-white">Módulo DP: Analisador de Atestados & Gestor de Absenteísmo</h2>
+                      <h2 className="text-lg font-black text-white">Módulo DP: Gestão e Validação de Atestados Médicos</h2>
                       <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/40 px-2 py-0.5 rounded-full font-bold">
                         {APP_VERSION}
                       </span>
                     </div>
                     <p className="text-xs text-slate-300">
-                      Neutralidade Absoluta • Triagem de Metadados • Inteligência Preditiva de Eventos/Pontes • Pasta do Colaborador
+                      Estação Split View Lado a Lado • Neutralidade Absoluta • Consulta CFM ao Vivo • Pasta Permanente do Colaborador
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              {/* Seletor de Modo de Visualização do DP */}
+              <div className="flex items-center gap-2 flex-wrap">
                 <button
-                  onClick={() => setAssistTypingOpen(!assistTypingOpen)}
+                  onClick={() => setDpViewMode('workstation')}
                   className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
-                    assistTypingOpen
-                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                    dpViewMode === 'workstation'
+                      ? 'bg-sky-600 text-white border-sky-500 shadow-md'
                       : 'bg-slate-900 text-slate-300 border-slate-700 hover:text-white'
                   }`}
                 >
-                  <FileText className="w-3.5 h-3.5" />
-                  <span>{assistTypingOpen ? 'Ocultar Digitação Assistida' : 'Ativar Digitação Assistida (CFM)'}</span>
+                  <Columns className="w-3.5 h-3.5" />
+                  <span>Estação Split View (Validação)</span>
+                  <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1 rounded border border-emerald-500/30">
+                    Ao Vivo
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setDpViewMode('events')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                    dpViewMode === 'events'
+                      ? 'bg-indigo-600 text-white border-indigo-500 shadow-md'
+                      : 'bg-slate-900 text-slate-300 border-slate-700 hover:text-white'
+                  }`}
+                >
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span>Eventos do DP & Preditivo</span>
+                  <span className="text-[10px] bg-indigo-500/20 text-indigo-300 px-1 rounded border border-indigo-500/30">
+                    {notableEventsList.length}
+                  </span>
                 </button>
               </div>
             </div>
 
-            {/* Grid Principal do Módulo DP */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-              
-              {/* Coluna 1 (5 colunas): Ingestão, Dados Cadastrais & Digitação Assistida */}
-              <div className="lg:col-span-5 space-y-6">
+            {/* MODO 1: ESTAÇÃO DE VALIDAÇÃO (SPLIT VIEW LADO A LADO) */}
+            {dpViewMode === 'workstation' && (
+              <ValidationWorkstation
+                companyId={selectedCompany?.id || 'default'}
+                onDecisionRecorded={() => {
+                  fetchLogs();
+                  fetchNotableEvents();
+                }}
+              />
+            )}
+
+            {/* MODO 2: CADASTRO DE EVENTOS DO DP & ANÁLISE PREDITIVA */}
+            {dpViewMode === 'events' && (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                
+                {/* Coluna 1 (5 colunas): Ingestão, Dados Cadastrais & Digitação Assistida */}
+                <div className="lg:col-span-5 space-y-6">
                 
                 {/* Card de Ingestão de Documento */}
                 <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4 shadow-xl">
@@ -1906,6 +1962,7 @@ export default function DashboardClientPage() {
               </div>
 
             </div>
+            )}
           </div>
         )}
 

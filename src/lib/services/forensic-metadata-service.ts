@@ -138,7 +138,7 @@ export function analyzePdfForensicMetadata(
 
   if (hasTechnicalAnomaly) {
     // Alerta padrão obrigatório da instrução
-    securityAlerts.push('O arquivo digital apresenta alterações estruturais ou edições de metadados pós-emissão.');
+    securityAlerts.push('O arquivo digital possui histórico de edição pós-emissão.');
 
     if (detectedGraphicEditor) {
       securityAlerts.push(`Identificada assinatura do software de edição gráfica: ${detectedGraphicEditor}.`);
