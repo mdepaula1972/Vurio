@@ -49,14 +49,19 @@ import {
   Users,
   Radio,
   ChevronDown,
-  Printer
+  Printer,
+  Calendar,
+  Briefcase,
+  FolderOpen
 } from 'lucide-react';
 import { TaxRegime } from '@/lib/services/batch-audit-service';
 import { auditGeoDistance, GeoAuditResult } from '@/lib/services/geo-audit-service';
 import { getCompanyPolicy, updateCompanyPolicy, CompanyPolicyConfig } from '@/lib/services/company-policy-service';
 import { CompanyAccount } from '@/lib/services/company-service';
 import { formatProtocolId, generateHumanizedComplianceReport, buildForensicReport } from '@/lib/services/compliance-report-service';
-import { APP_VERSION, APP_VERSION_LABEL } from '@/lib/version';
+import { APP_VERSION, APP_VERSION_LABEL, APP_ENGINE_NAME, APP_BUILD_DATE } from '@/lib/version';
+import { DpAttestationAnalysisResponse } from '@/lib/services/dp-attestation-analyzer';
+import { NotableDpEvent } from '@/lib/services/absenteeism-service';
 
 interface ValidationLog {
   id: string;
@@ -82,8 +87,37 @@ interface ValidationLog {
 }
 
 export default function DashboardClientPage() {
-  const [activeTab, setActiveTab] = useState<'validation' | 'whatsapp' | 'companies' | 'inquiries' | 'geo' | 'policies' | 'audit' | 'doctor'>('validation');
+  const [activeTab, setActiveTab] = useState<'validation' | 'absenteeism' | 'whatsapp' | 'companies' | 'inquiries' | 'geo' | 'policies' | 'audit' | 'doctor'>('validation');
   
+  // MÓDULO DP: Analisador de Atestados & Gestor de Absenteísmo
+  const [dpFile, setDpFile] = useState<File | null>(null);
+  const [dpAnalyzing, setDpAnalyzing] = useState(false);
+  const [dpResult, setDpResult] = useState<DpAttestationAnalysisResponse | null>(null);
+  const [dpEmployeeName, setDpEmployeeName] = useState('');
+  const [dpEmployeeCpf, setDpEmployeeCpf] = useState('');
+  const [dpEmployeeWorkCity, setDpEmployeeWorkCity] = useState('Santos');
+  const [dpEmployeeHomeCity, setDpEmployeeHomeCity] = useState('Santos');
+
+  // Digitação Assistida (com Consulta Instantânea CFM ao vivo)
+  const [assistTypingOpen, setAssistTypingOpen] = useState(false);
+  const [assistCrm, setAssistCrm] = useState('');
+  const [assistUf, setAssistUf] = useState('SP');
+  const [assistDoctorName, setAssistDoctorName] = useState('');
+  const [assistDays, setAssistDays] = useState('3');
+  const [assistEmissionDate, setAssistEmissionDate] = useState(new Date().toISOString().substring(0, 10));
+  const [assistCid, setAssistCid] = useState('');
+  const [assistClinicName, setAssistClinicName] = useState('');
+  const [assistLookingUpCfm, setAssistLookingUpCfm] = useState(false);
+
+  // Eventos Notáveis do DP
+  const [notableEventsList, setNotableEventsList] = useState<NotableDpEvent[]>([]);
+  const [newEventTitle, setNewEventTitle] = useState('');
+  const [newEventStartDate, setNewEventStartDate] = useState('');
+  const [newEventEndDate, setNewEventEndDate] = useState('');
+  const [newEventCategory, setNewEventCategory] = useState<'SHOW' | 'FESTA_LOCAL' | 'PICO_OPERACIONAL' | 'OUTRO'>('SHOW');
+  const [creatingEvent, setCreatingEvent] = useState(false);
+  const [copiedDpJson, setCopiedDpJson] = useState(false);
+
   // Tab 1: Validação Instantânea & Showcase
   const [logs, setLogs] = useState<ValidationLog[]>([]);
   const [loadingLogs, setLoadingLogs] = useState(false);
@@ -196,7 +230,115 @@ export default function DashboardClientPage() {
     fetchInquiries();
     fetchCompanies();
     fetchWhatsAppStatus('vurio');
+    fetchNotableEvents();
   }, []);
+
+  const fetchNotableEvents = async () => {
+    try {
+      const cId = selectedCompany?.id || 'default';
+      const res = await fetch(`/api/dp/notable-events?companyId=${cId}`);
+      if (res.ok) {
+        const data = await res.json();
+        setNotableEventsList(data.events || []);
+      }
+    } catch {
+      // silencioso
+    }
+  };
+
+  const handleLookupCrmLive = async (crm: string, uf: string) => {
+    if (!crm || crm.trim().length < 3) return;
+    setAssistLookingUpCfm(true);
+    try {
+      const res = await fetch(`/api/doctor/check-crm?crm=${encodeURIComponent(crm.trim())}&uf=${encodeURIComponent(uf.trim().toUpperCase())}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.officialName) {
+          setAssistDoctorName(data.officialName);
+        }
+      }
+    } catch {
+      // silencioso
+    } finally {
+      setAssistLookingUpCfm(false);
+    }
+  };
+
+  const handleAnalyzeDp = async () => {
+    try {
+      setDpAnalyzing(true);
+      const fd = new FormData();
+      if (dpFile) {
+        fd.append('file', dpFile);
+      }
+      fd.append('companyId', selectedCompany?.id || 'default');
+      if (dpEmployeeName) fd.append('colaborador_nome', dpEmployeeName);
+      if (dpEmployeeCpf) fd.append('colaborador_cpf', dpEmployeeCpf);
+      if (dpEmployeeWorkCity) fd.append('cidade_trabalho', dpEmployeeWorkCity);
+      if (dpEmployeeHomeCity) fd.append('cidade_residencia', dpEmployeeHomeCity);
+
+      if (assistTypingOpen) {
+        if (assistCrm) fd.append('manual_crm', assistCrm);
+        if (assistUf) fd.append('manual_uf', assistUf);
+        if (assistDays) fd.append('manual_dias', assistDays);
+        if (assistEmissionDate) fd.append('manual_data_emissao', assistEmissionDate);
+        if (assistCid) fd.append('manual_cid', assistCid);
+      }
+
+      const res = await fetch('/api/dp/analyze-attestation', {
+        method: 'POST',
+        body: fd
+      });
+
+      if (res.ok) {
+        const data: DpAttestationAnalysisResponse = await res.json();
+        setDpResult(data);
+      }
+    } catch (err) {
+      console.error('Erro na análise DP:', err);
+    } finally {
+      setDpAnalyzing(false);
+    }
+  };
+
+  const handleCreateNotableEvent = async () => {
+    if (!newEventTitle || !newEventStartDate || !newEventEndDate) return;
+    try {
+      setCreatingEvent(true);
+      const res = await fetch('/api/dp/notable-events', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          companyId: selectedCompany?.id || 'default',
+          title: newEventTitle,
+          startDate: newEventStartDate,
+          endDate: newEventEndDate,
+          category: newEventCategory
+        })
+      });
+      if (res.ok) {
+        setNewEventTitle('');
+        setNewEventStartDate('');
+        setNewEventEndDate('');
+        fetchNotableEvents();
+      }
+    } catch {
+      // silencioso
+    } finally {
+      setCreatingEvent(false);
+    }
+  };
+
+  const handleDeleteNotableEvent = async (id: string) => {
+    try {
+      const res = await fetch(`/api/dp/notable-events?id=${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        fetchNotableEvents();
+      }
+    } catch {
+      // silencioso
+    }
+  };
 
   const fetchLogs = async (overrideCompanyId?: string) => {
     try {
@@ -480,6 +622,35 @@ export default function DashboardClientPage() {
   return (
     <div className="min-h-screen text-slate-100 flex flex-col font-sans selection:bg-sky-500/30 selection:text-sky-200">
       
+      {/* Banner de Versão Ativa do Deploy */}
+      <div className="bg-gradient-to-r from-sky-950/90 via-slate-900 to-indigo-950/90 border-b border-sky-500/20 px-4 py-2 flex flex-wrap items-center justify-between text-xs gap-2">
+        <div className="flex items-center space-x-2">
+          <span className="flex h-2 w-2 relative">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+          </span>
+          <span className="font-bold text-white tracking-wide">{APP_ENGINE_NAME} {APP_VERSION}</span>
+          <span className="text-slate-400 hidden sm:inline">• Build {APP_BUILD_DATE}</span>
+          <span className="text-[10px] bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-mono font-bold">
+            PRODUÇÃO ATIVA
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-[11px] text-slate-400 hidden md:inline">
+            Zero Storage • LGPD Estrita • Neutralidade Absoluta
+          </span>
+          <a
+            href="/api/version"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-sky-400 hover:text-sky-300 font-medium flex items-center gap-1 hover:underline bg-slate-900 px-2 py-0.5 rounded border border-slate-800"
+          >
+            <span>Verificar /api/version</span>
+            <ExternalLink className="w-3 h-3" />
+          </a>
+        </div>
+      </div>
+
       {/* Top Navbar do Painel do Cliente */}
       <header className="border-b border-slate-800/60 bg-slate-900/80 backdrop-blur-xl sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
@@ -527,6 +698,22 @@ export default function DashboardClientPage() {
             >
               <Activity className="w-3.5 h-3.5" />
               <span>Validador</span>
+            </button>
+
+            {/* Nova Aba: Módulo DP & Absenteísmo */}
+            <button
+              onClick={() => setActiveTab('absenteeism')}
+              className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                activeTab === 'absenteeism'
+                  ? 'bg-gradient-to-r from-sky-600 to-indigo-600 text-white shadow-md'
+                  : 'text-sky-300 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <Briefcase className="w-3.5 h-3.5" />
+              <span>Módulo DP & Absenteísmo</span>
+              <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/30">
+                Novo
+              </span>
             </button>
 
             {/* Nova Aba: Conexão WhatsApp */}
@@ -1222,6 +1409,503 @@ export default function DashboardClientPage() {
               </div>
             </div>
 
+          </div>
+        )}
+
+        {/* ABA: MÓDULO DP - ANALISADOR DE ATESTADOS & GESTÃO DE ABSENTEÍSMO */}
+        {activeTab === 'absenteeism' && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Header da Aba */}
+            <div className="p-6 rounded-2xl bg-gradient-to-r from-slate-900 via-sky-950/40 to-indigo-950/40 border border-sky-500/30 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl">
+              <div className="space-y-1">
+                <div className="flex items-center space-x-2">
+                  <span className="p-2 rounded-xl bg-sky-500/20 text-sky-400 border border-sky-500/30">
+                    <Briefcase className="w-5 h-5" />
+                  </span>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-black text-white">Módulo DP: Analisador de Atestados & Gestor de Absenteísmo</h2>
+                      <span className="text-[10px] font-mono bg-sky-500/20 text-sky-300 border border-sky-500/40 px-2 py-0.5 rounded-full font-bold">
+                        {APP_VERSION}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-300">
+                      Neutralidade Absoluta • Triagem de Metadados • Inteligência Preditiva de Eventos/Pontes • Pasta do Colaborador
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setAssistTypingOpen(!assistTypingOpen)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 border ${
+                    assistTypingOpen
+                      ? 'bg-amber-500/20 text-amber-300 border-amber-500/40 shadow-sm'
+                      : 'bg-slate-900 text-slate-300 border-slate-700 hover:text-white'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>{assistTypingOpen ? 'Ocultar Digitação Assistida' : 'Ativar Digitação Assistida (CFM)'}</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Grid Principal do Módulo DP */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              {/* Coluna 1 (5 colunas): Ingestão, Dados Cadastrais & Digitação Assistida */}
+              <div className="lg:col-span-5 space-y-6">
+                
+                {/* Card de Ingestão de Documento */}
+                <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4 shadow-xl">
+                  <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                    <UploadCloud className="w-4 h-4 text-sky-400" />
+                    Etapa 1: Leitura do Documento (OCR & Arquivo)
+                  </h3>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <label className="block text-slate-400 mb-1 font-medium">Arquivo do Atestado (PDF ou Foto):</label>
+                      <input
+                        type="file"
+                        accept=".pdf,image/*"
+                        onChange={(e) => setDpFile(e.target.files?.[0] || null)}
+                        className="w-full text-xs text-slate-400 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-sky-600 file:text-white hover:file:bg-sky-500 cursor-pointer bg-slate-950 border border-slate-800 rounded-xl p-1.5"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-medium">Nome do Colaborador (Cadastro):</label>
+                        <input
+                          type="text"
+                          value={dpEmployeeName}
+                          onChange={(e) => setDpEmployeeName(e.target.value)}
+                          placeholder="Ex: Carlos Oliveira"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-medium">CPF do Colaborador:</label>
+                        <input
+                          type="text"
+                          value={dpEmployeeCpf}
+                          onChange={(e) => setDpEmployeeCpf(e.target.value)}
+                          placeholder="000.000.000-00"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-medium">Cidade da Unidade de Trabalho:</label>
+                        <input
+                          type="text"
+                          value={dpEmployeeWorkCity}
+                          onChange={(e) => setDpEmployeeWorkCity(e.target.value)}
+                          placeholder="Ex: Santos"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 mb-1 font-medium">Cidade de Residência:</label>
+                        <input
+                          type="text"
+                          value={dpEmployeeHomeCity}
+                          onChange={(e) => setDpEmployeeHomeCity(e.target.value)}
+                          placeholder="Ex: Santos"
+                          className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-white text-xs focus:outline-none focus:border-sky-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Painel de Digitação Assistida */}
+                  {assistTypingOpen && (
+                    <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30 space-y-3 animate-fadeIn">
+                      <div className="flex items-center justify-between">
+                        <span className="font-bold text-amber-300 text-xs flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> Digitação Assistida (OCR Fallback)
+                        </span>
+                        <span className="text-[10px] text-amber-400/90 font-medium">Consulta Instantânea CFM</span>
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2 text-xs">
+                        <div>
+                          <label className="block text-slate-400 text-[10px] mb-0.5">CRM:</label>
+                          <input
+                            type="text"
+                            value={assistCrm}
+                            onChange={(e) => {
+                              setAssistCrm(e.target.value);
+                              handleLookupCrmLive(e.target.value, assistUf);
+                            }}
+                            placeholder="Ex: 98133"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-400 text-[10px] mb-0.5">UF:</label>
+                          <input
+                            type="text"
+                            value={assistUf}
+                            onChange={(e) => {
+                              setAssistUf(e.target.value.toUpperCase());
+                              handleLookupCrmLive(assistCrm, e.target.value.toUpperCase());
+                            }}
+                            placeholder="SP"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white uppercase font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-400 text-[10px] mb-0.5">Dias:</label>
+                          <input
+                            type="number"
+                            min="1"
+                            value={assistDays}
+                            onChange={(e) => setAssistDays(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white"
+                          />
+                        </div>
+                      </div>
+
+                      {assistLookingUpCfm && (
+                        <p className="text-[11px] text-sky-400 flex items-center gap-1">
+                          <RefreshCw className="w-3 h-3 animate-spin" /> Consultando registro no Conselho Regional...
+                        </p>
+                      )}
+
+                      {assistDoctorName && (
+                        <div className="p-2 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-[11px] text-emerald-300 flex items-center justify-between">
+                          <span><strong>Médico no CFM:</strong> {assistDoctorName}</span>
+                          <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 py-0.5 rounded">Ativo</span>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <label className="block text-slate-400 text-[10px] mb-0.5">Data de Emissão:</label>
+                          <input
+                            type="date"
+                            value={assistEmissionDate}
+                            onChange={(e) => setAssistEmissionDate(e.target.value)}
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-slate-400 text-[10px] mb-0.5">CID (Opcional):</label>
+                          <input
+                            type="text"
+                            value={assistCid}
+                            onChange={(e) => setAssistCid(e.target.value.toUpperCase())}
+                            placeholder="Ex: M54.5"
+                            className="w-full bg-slate-950 border border-slate-700 rounded-lg px-2 py-1.5 text-white uppercase text-xs"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={handleAnalyzeDp}
+                    disabled={dpAnalyzing || (!dpFile && !assistCrm)}
+                    className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-sky-600 via-indigo-600 to-sky-600 hover:opacity-90 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all shadow-lg disabled:opacity-50"
+                  >
+                    {dpAnalyzing ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <span>Processando 4 Etapas Analíticas...</span>
+                      </>
+                    ) : (
+                      <>
+                        <ShieldCheck className="w-4 h-4" />
+                        <span>Executar Análise Completa do DP</span>
+                      </>
+                    )}
+                  </button>
+                </div>
+
+                {/* Card de Gestão de Eventos Notáveis do DP */}
+                <div className="p-6 rounded-2xl bg-slate-900/70 border border-slate-800 space-y-4 shadow-xl">
+                  <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                    <h3 className="text-sm font-bold text-white flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-indigo-400" />
+                      Eventos Notáveis do DP (Privado/Manual)
+                    </h3>
+                    <span className="text-[10px] text-slate-400">Inteligência Preditiva</span>
+                  </div>
+
+                  <p className="text-[11px] text-slate-400 leading-relaxed">
+                    Cadastre datas estratégicas (shows na região, eventos noturnos, fechamento de folha) para cruzamento automatizado com datas de atestado.
+                  </p>
+
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {notableEventsList.map((evt) => (
+                      <div key={evt.id} className="p-2.5 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-between text-xs">
+                        <div>
+                          <span className="font-bold text-white block">{evt.title}</span>
+                          <span className="text-[10px] text-slate-400 font-mono">
+                            {evt.startDate} até {evt.endDate} • {evt.category}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteNotableEvent(evt.id)}
+                          className="text-slate-500 hover:text-rose-400 text-xs px-2 py-1"
+                          title="Remover evento"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Formulário Rápido para Novo Evento */}
+                  <div className="pt-2 border-t border-slate-800 space-y-2 text-xs">
+                    <input
+                      type="text"
+                      value={newEventTitle}
+                      onChange={(e) => setNewEventTitle(e.target.value)}
+                      placeholder="Nome do Evento (ex: Festival de Verão)"
+                      className="w-full bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1.5 text-white"
+                    />
+                    <div className="grid grid-cols-2 gap-2">
+                      <input
+                        type="date"
+                        value={newEventStartDate}
+                        onChange={(e) => setNewEventStartDate(e.target.value)}
+                        className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-white text-[11px]"
+                      />
+                      <input
+                        type="date"
+                        value={newEventEndDate}
+                        onChange={(e) => setNewEventEndDate(e.target.value)}
+                        className="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-white text-[11px]"
+                      />
+                    </div>
+                    <button
+                      onClick={handleCreateNotableEvent}
+                      disabled={creatingEvent || !newEventTitle || !newEventStartDate || !newEventEndDate}
+                      className="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs transition-all disabled:opacity-50"
+                    >
+                      {creatingEvent ? 'Cadastrando...' : '+ Cadastrar Evento do DP'}
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Coluna 2 (7 colunas): Resultado Analítico & Pasta do Colaborador */}
+              <div className="lg:col-span-7 space-y-6">
+                
+                {dpResult ? (
+                  <div className="space-y-6 animate-fadeIn">
+                    
+                    {/* CARD 1: AÇÃO RECOMENDADA AO DP (DESTAQUE MÁXIMO) */}
+                    <div className={`p-6 rounded-2xl border shadow-2xl space-y-3 ${
+                      dpResult.acao_recomendada_dp === 'APROVAR'
+                        ? 'bg-emerald-950/30 border-emerald-500/50 text-emerald-200'
+                        : dpResult.acao_recomendada_dp === 'CONFERIR_DOCUMENTO_FISICO'
+                        ? 'bg-amber-950/30 border-amber-500/50 text-amber-200'
+                        : 'bg-sky-950/30 border-sky-500/50 text-sky-200'
+                    }`}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border bg-black/40">
+                          DIRETRIZ ANALÍTICA DO DP
+                        </span>
+                        <span className="font-mono text-xs">Apoio à Decisão Humana</span>
+                      </div>
+
+                      <div className="flex items-start gap-3 pt-1">
+                        {dpResult.acao_recomendada_dp === 'APROVAR' ? (
+                          <CheckCircle2 className="w-8 h-8 text-emerald-400 flex-shrink-0" />
+                        ) : dpResult.acao_recomendada_dp === 'CONFERIR_DOCUMENTO_FISICO' ? (
+                          <AlertTriangle className="w-8 h-8 text-amber-400 flex-shrink-0" />
+                        ) : (
+                          <FileText className="w-8 h-8 text-sky-400 flex-shrink-0" />
+                        )}
+
+                        <div>
+                          <h4 className="text-lg font-black text-white tracking-tight">
+                            {dpResult.acao_recomendada_dp === 'APROVAR' && 'AÇÃO RECOMENDADA: APROVAR ATESTADO'}
+                            {dpResult.acao_recomendada_dp === 'CONFERIR_DOCUMENTO_FISICO' && 'AÇÃO RECOMENDADA: CONFERIR DOCUMENTO FÍSICO ORIGINAL'}
+                            {dpResult.acao_recomendada_dp === 'PREENCHER_MANUALMENTE' && 'AÇÃO RECOMENDADA: PREENCHIMENTO MANUAL ASSISTIDO'}
+                          </h4>
+                          <p className="text-xs text-slate-300 mt-1 leading-relaxed">
+                            {dpResult.acao_recomendada_dp === 'APROVAR' && 'Documento analisado sem divergências formais ou anomalias estruturais registradas. Dados em conformidade.'}
+                            {dpResult.acao_recomendada_dp === 'CONFERIR_DOCUMENTO_FISICO' && 'Identificadas inconsistências formais, alertas de distância ou anomalias de metadados. Recomenda-se conferência administrativa do documento físico.'}
+                            {dpResult.acao_recomendada_dp === 'PREENCHER_MANUALMENTE' && 'Baixa legibilidade do arquivo ou campos obrigatórios ausentes. Utilize o painel de digitação assistida com consulta CFM.'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* CARD 2: PASTA DO COLABORADOR (HISTÓRICO NO ANO VIGENTE) */}
+                    {dpResult.pasta_colaborador && (
+                      <div className="p-6 rounded-2xl bg-slate-900/80 border border-indigo-500/30 space-y-4 shadow-xl">
+                        <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                          <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                            <FolderOpen className="w-4 h-4 text-indigo-400" />
+                            Pasta do Colaborador: Histórico Anual de Absenteísmo ({new Date().getFullYear()})
+                          </h4>
+                          <span className="text-xs font-mono text-indigo-300 font-bold">{dpResult.dados_extraidos.colaborador_nome}</span>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                            <span className="text-[10px] text-slate-400 block">Total de Atestados</span>
+                            <span className="text-xl font-black text-white">{dpResult.pasta_colaborador.total_atestados_ano}</span>
+                          </div>
+                          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                            <span className="text-[10px] text-slate-400 block">Dias de Afastamento</span>
+                            <span className="text-xl font-black text-sky-400">{dpResult.pasta_colaborador.total_dias_ano} dias</span>
+                          </div>
+                          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                            <span className="text-[10px] text-slate-400 block">Reincidência Grupo CID</span>
+                            <span className={`text-sm font-black ${dpResult.pasta_colaborador.reincidencia_cid_grupo ? 'text-amber-400' : 'text-emerald-400'}`}>
+                              {dpResult.pasta_colaborador.reincidencia_cid_grupo ? 'Sim (Detectado)' : 'Não'}
+                            </span>
+                          </div>
+                          <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                            <span className="text-[10px] text-slate-400 block">Histórico Inconsistências</span>
+                            <span className={`text-xl font-black ${dpResult.pasta_colaborador.historico_inconsistencias > 0 ? 'text-rose-400' : 'text-slate-300'}`}>
+                              {dpResult.pasta_colaborador.historico_inconsistencias}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* CARD 3: INTELIGÊNCIA PREDITIVA E CRUZAMENTO DE EVENTOS */}
+                    <div className="p-6 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 shadow-xl">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                          <Clock className="w-4 h-4 text-sky-400" />
+                          Inteligência Preditiva & Cruzamento de Eventos
+                        </h4>
+                        <span className="text-[10px] bg-sky-500/10 text-sky-400 px-2 py-0.5 rounded-full border border-sky-500/20 font-mono">
+                          Calendário Oficial + DP
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                        <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+                          <span className="text-slate-400">Coincidência com Feriado:</span>
+                          <span className={`font-bold ${dpResult.analise_preditiva.coincidencia_feriado ? 'text-amber-400' : 'text-slate-300'}`}>
+                            {dpResult.analise_preditiva.coincidencia_feriado ? 'Sim' : 'Não'}
+                          </span>
+                        </div>
+                        <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex items-center justify-between">
+                          <span className="text-slate-400">Coincidência com Evento do DP:</span>
+                          <span className={`font-bold ${dpResult.analise_preditiva.coincidencia_evento_dp ? 'text-amber-400' : 'text-slate-300'}`}>
+                            {dpResult.analise_preditiva.coincidencia_evento_dp ? 'Sim' : 'Não'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {dpResult.analise_preditiva.nome_evento && (
+                        <div className="p-3 bg-amber-950/20 border border-amber-500/30 rounded-xl text-xs text-amber-200">
+                          <strong>Evento Sinalizado:</strong> {dpResult.analise_preditiva.nome_evento}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* CARD 4: ALERTAS DE SEGURANÇA E OPERACIONAIS */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                      {/* Alertas de Segurança */}
+                      <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                        <span className="font-bold text-white flex items-center gap-1.5 text-xs">
+                          <Lock className="w-3.5 h-3.5 text-rose-400" /> Alertas de Segurança (Metadados/PAdES)
+                        </span>
+                        {dpResult.alertas_seguranca.length > 0 ? (
+                          <ul className="space-y-1.5 text-rose-300">
+                            {dpResult.alertas_seguranca.map((al, idx) => (
+                              <li key={idx} className="p-2 rounded-lg bg-rose-950/20 border border-rose-500/30 text-[11px] leading-tight">
+                                • {al}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-[11px] text-emerald-400 flex items-center gap-1 pt-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Nenhuma alteração técnica ou anomalia detectada.
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Alertas Operacionais */}
+                      <div className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-2">
+                        <span className="font-bold text-white flex items-center gap-1.5 text-xs">
+                          <Compass className="w-3.5 h-3.5 text-amber-400" /> Alertas Operacionais (Distância/Pontes)
+                        </span>
+                        {dpResult.alertas_operacionais.length > 0 ? (
+                          <ul className="space-y-1.5 text-amber-300">
+                            {dpResult.alertas_operacionais.map((al, idx) => (
+                              <li key={idx} className="p-2 rounded-lg bg-amber-950/20 border border-amber-500/30 text-[11px] leading-tight">
+                                • {al}
+                              </li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p className="text-[11px] text-emerald-400 flex items-center gap-1 pt-1">
+                            <CheckCircle2 className="w-3.5 h-3.5" /> Prazos e localidade em conformidade operacional.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* CARD 5: DADOS EXTRAÍDOS & INTEROPERABILIDADE JSON */}
+                    <div className="p-5 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3">
+                      <div className="flex items-center justify-between border-b border-slate-800 pb-2">
+                        <span className="font-bold text-white text-xs">Dados Extraídos do Atestado:</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(JSON.stringify(dpResult, null, 2));
+                            setCopiedDpJson(true);
+                            setTimeout(() => setCopiedDpJson(false), 2500);
+                          }}
+                          className="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-sky-400 text-xs font-semibold flex items-center gap-1 transition-all"
+                        >
+                          <Copy className="w-3 h-3" />
+                          <span>{copiedDpJson ? 'JSON Copiado!' : 'Copiar Resposta JSON'}</span>
+                        </button>
+                      </div>
+
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                        <div className="p-2 bg-slate-950 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block">Colaborador</span>
+                          <span className="font-bold text-white truncate block">{dpResult.dados_extraidos.colaborador_nome}</span>
+                        </div>
+                        <div className="p-2 bg-slate-950 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block">Médico</span>
+                          <span className="font-bold text-white truncate block">{dpResult.dados_extraidos.medico_nome}</span>
+                        </div>
+                        <div className="p-2 bg-slate-950 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block">CRM / UF</span>
+                          <span className="font-bold text-sky-400">{dpResult.dados_extraidos.crm_uf}</span>
+                        </div>
+                        <div className="p-2 bg-slate-950 rounded-lg border border-slate-800">
+                          <span className="text-[10px] text-slate-500 block">Período</span>
+                          <span className="font-bold text-white">{dpResult.dados_extraidos.dias_afastamento} dia(s)</span>
+                        </div>
+                      </div>
+                    </div>
+
+                  </div>
+                ) : (
+                  /* Estado Vazio de Espera */
+                  <div className="p-12 rounded-2xl bg-slate-900/40 border border-dashed border-slate-800 text-center space-y-3">
+                    <Briefcase className="w-12 h-12 text-slate-600 mx-auto" />
+                    <h4 className="text-base font-bold text-slate-300">Aguardando Ingestão de Documento</h4>
+                    <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                      Selecione um arquivo PDF ou foto ao lado (ou utilize o painel de Digitação Assistida) para processar as 4 etapas de compliance, inteligência preditiva e alimentar a pasta do colaborador.
+                    </p>
+                  </div>
+                )}
+
+              </div>
+
+            </div>
           </div>
         )}
 
