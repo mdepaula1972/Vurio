@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { validateMedicalAttestation } from '@/lib/crypto/validator';
 import { formatWhatsAppResponse, formatEmployeeReceiptMessage } from '@/lib/whatsapp/message-formatter';
-import { getCompanyById } from '@/lib/services/company-service';
+import { getCompanyById, getCompanyByInstance, getAllCompanies } from '@/lib/services/company-service';
 import { sendWhatsAppMessage } from '@/lib/whatsapp/client';
 import { getCompanyDocumentHashes, saveValidationLog, deductCredit } from '@/lib/supabase/service';
+import { formatProtocolId, buildForensicReport } from '@/lib/services/compliance-report-service';
 import { 
   isAdminPhone, 
   isRegisteredCompanyPhone, 
@@ -34,6 +35,7 @@ export async function POST(req: NextRequest) {
     // Extrair remetente e detalhes da mídia ou texto
     const { 
       phone, 
+      instanceName,
       mediaUrl, 
       mimeType, 
       fileName, 
@@ -129,6 +131,7 @@ export async function POST(req: NextRequest) {
           return await processClientAttestationFlow({
             payload,
             phone,
+            instanceName,
             text,
             mediaUrl,
             mimeType,
@@ -180,6 +183,7 @@ export async function POST(req: NextRequest) {
     return await processClientAttestationFlow({
       payload,
       phone,
+      instanceName,
       text,
       mediaUrl,
       mimeType,
@@ -201,9 +205,13 @@ export async function POST(req: NextRequest) {
 /**
  * Fluxo de recepção e análise de atestados médicos de clientes cadastrados
  */
+/**
+ * Fluxo de recepção e análise de atestados médicos de clientes cadastrados
+ */
 async function processClientAttestationFlow(params: {
   payload: any;
   phone: string;
+  instanceName?: string;
   text: string;
   mediaUrl: string;
   mimeType: string;
@@ -211,7 +219,7 @@ async function processClientAttestationFlow(params: {
   mediaBase64: string;
   rawEvolutionData: any;
 }) {
-  const { payload, phone, text, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData } = params;
+  const { payload, phone, instanceName, text, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData } = params;
 
   // Se for mensagem de texto sem anexo
   if (!mediaUrl && !mediaBase64) {
@@ -263,7 +271,7 @@ async function processClientAttestationFlow(params: {
   } else if (rawEvolutionData) {
     try {
       const apiUrl = process.env.WHATSAPP_API_URL || '';
-      const instanceId = process.env.WHATSAPP_INSTANCE_ID || 'vurio';
+      const instanceId = instanceName || process.env.WHATSAPP_INSTANCE_ID || 'vurio';
       const apiKey = process.env.WHATSAPP_API_TOKEN || '';
       if (apiUrl && instanceId) {
         const decryptRes = await fetch(`${apiUrl}/chat/getBase64FromMediaMessage/${instanceId}`, {
@@ -301,56 +309,78 @@ async function processClientAttestationFlow(params: {
     return NextResponse.json({ error: 'Falha no download da mídia' }, { status: 400 });
   }
 
-  const companyId = payload.companyId || 'demo-company-1';
+  // 3. Resolução Dinâmica de Tenant (Empresa vinculada à instância ou payload)
+  let company = null;
+  if (payload.companyId) {
+    company = await getCompanyById(payload.companyId);
+  }
+  if (!company && instanceName) {
+    company = await getCompanyByInstance(instanceName);
+  }
+  if (!company) {
+    const allCompanies = await getAllCompanies();
+    company = allCompanies[0] || null;
+  }
+  const companyId = company?.id || 'solucione-matriz';
 
-  // 3. Buscar hashes para trava de duplicidade
+  // 4. Buscar hashes para trava de duplicidade
   const existingHashes = await getCompanyDocumentHashes(companyId);
 
-  // 4. Executar validação criptográfica e triagem do documento
+  // 5. Executar validação criptográfica e triagem do documento
   const startTime = Date.now();
   const report = await validateMedicalAttestation(fileBuffer, mimeType, fileName, existingHashes);
   const executionTimeMs = Date.now() - startTime;
 
-  // 5. Salvar auditoria LGPD e debitar crédito (somente para atestados médicos válidos)
-  await saveValidationLog(companyId, report, fileName, executionTimeMs);
+  // 6. Formatar identificador oficial de protocolo (#VR-XXXXX) e laudo pericial sanitizado (Zero CID)
+  const protocolId = formatProtocolId(report.fileSha256);
+  const forensicReport = buildForensicReport(report, protocolId, 'WHATSAPP');
+
+  // 7. Salvar auditoria LGPD completa (Zero Storage de arquivos em disco e Zero persistência de CID)
+  await saveValidationLog({
+    companyId,
+    report,
+    fileName,
+    executionTimeMs,
+    protocolId,
+    channel: 'WHATSAPP',
+    senderPhone: phone,
+    patientName: report.patient?.name || null,
+    forensicReport
+  });
+
   if (report.status !== 'NOT_AN_ATTESTATION') {
     await deductCredit(companyId);
   }
 
-  // 6. Formatar identificador de protocolo asséptico e relatórios
-  const protocolId = report.fileSha256
-    ? `VUR-${report.fileSha256.substring(0, 8).toUpperCase()}`
-    : `VUR-${Date.now().toString(36).toUpperCase()}`;
-
-  const employeeReceipt = formatEmployeeReceiptMessage(protocolId);
+  // 8. Segregação de Mensagens: Recibo Neutro para Colaborador vs. Parecer Pericial para DP
+  const employeeReceipt = formatEmployeeReceiptMessage(protocolId, new Date());
   const dpDetailedReport = formatWhatsAppResponse(report);
 
   // Identifica se o remetente é o próprio contato autorizado do DP/RH ou administrador
-  const company = await getCompanyById(companyId);
   const dpAuthorizedPhone = company?.whatsappPhone || process.env.DP_NOTIFICATION_PHONE;
   const isSenderAuthorizedDP = 
     (dpAuthorizedPhone && normalizePhone(phone) === normalizePhone(dpAuthorizedPhone)) || 
     isAdminPhone(phone);
 
   if (isSenderAuthorizedDP) {
-    // 7.1. Se o remetente for o próprio DP/RH, devolve o relatório pericial detalhado diretamente
+    // 8.1. Se o remetente for o próprio DP/RH, devolve o relatório pericial detalhado diretamente
     await sendWhatsAppMessage({
       phone,
       message: dpDetailedReport
     });
   } else {
-    // 7.2. Se o remetente for o COLABORADOR, devolve ESTRITAMENTE a confirmação asséptica de protocolo
-    // (Blindagem jurídica contra constrangimento / passivo trabalhista)
+    // 8.2. Se o remetente for o COLABORADOR, devolve ESTRITAMENTE a confirmação asséptica de protocolo
+    // (Blindagem jurídica contra constrangimento / passivo trabalhista - Art. 483 CLT)
     await sendWhatsAppMessage({
       phone,
       message: employeeReceipt
     });
 
-    // 7.3. O relatório pericial detalhado é direcionado exclusivamente ao contato/grupo autorizado do DP/RH
+    // 8.3. O relatório pericial detalhado é direcionado exclusivamente ao contato/grupo autorizado do DP/RH
     if (dpAuthorizedPhone && normalizePhone(dpAuthorizedPhone) !== normalizePhone(phone)) {
       await sendWhatsAppMessage({
         phone: dpAuthorizedPhone,
-        message: `📋 *Novo Atestado Triado - Protocolo #${protocolId}*\n*Remetente (Colaborador):* ***${phone.slice(-4)}\n\n` + dpDetailedReport
+        message: `📋 *Novo Atestado Triado - Protocolo ${protocolId}*\n*Remetente (Colaborador):* ***${phone.slice(-4)}\n*Paciente:* ${report.patient?.name || 'Não identificado'}\n\n` + dpDetailedReport
       });
     }
   }
@@ -362,7 +392,7 @@ async function processClientAttestationFlow(params: {
     status: report.status,
     executionTimeMs,
     employeeReceiptSent: !isSenderAuthorizedDP,
-    dpReportSent: true
+    dpReportSent: Boolean(dpAuthorizedPhone)
   });
 }
 
@@ -371,6 +401,7 @@ async function processClientAttestationFlow(params: {
  */
 function extractMediaInfoFromPayload(payload: any) {
   let phone = '';
+  let instanceName = '';
   let mediaUrl = '';
   let mimeType = '';
   let fileName = '';
@@ -380,6 +411,12 @@ function extractMediaInfoFromPayload(payload: any) {
   let messageId = '';
   let fromMe = false;
   let isGroup = false;
+
+  // Extração do nome da instância
+  if (payload.instance) instanceName = String(payload.instance);
+  else if (payload.instanceId) instanceName = String(payload.instanceId);
+  else if (payload.instance_id) instanceName = String(payload.instance_id);
+  else if (payload.data?.instance) instanceName = String(payload.data.instance);
 
   // Formato Z-API
   if (payload.phone) {
@@ -448,5 +485,5 @@ function extractMediaInfoFromPayload(payload: any) {
     mediaBase64 = mediaBase64.split('base64,')[1];
   }
 
-  return { phone, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData, text, messageId, fromMe, isGroup };
+  return { phone, instanceName, mediaUrl, mimeType, fileName, mediaBase64, rawEvolutionData, text, messageId, fromMe, isGroup };
 }

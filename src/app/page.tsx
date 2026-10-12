@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { APP_VERSION_LABEL } from '@/lib/version';
 import { INFINITEPAY_LINKS } from '@/lib/services/payment-links';
 import { 
   ShieldCheck, 
@@ -1355,7 +1356,11 @@ export default function LandingHomePage() {
           </Link>
         </div>
 
-        <p className="text-[10px] text-slate-600 pt-2">
+        <p className="text-[10px] text-slate-500 font-mono pt-2">
+          {APP_VERSION_LABEL}
+        </p>
+
+        <p className="text-[10px] text-slate-600">
           © 2026 Vurio Tecnologia & Triagem Digital LTDA. Todos os direitos reservados. CNPJ: 42.189.542/0001-90.
         </p>
       </footer>

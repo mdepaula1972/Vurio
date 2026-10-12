@@ -52,29 +52,65 @@ function extractNeutralFileFormat(fileName?: string): string {
   return 'documento';
 }
 
+export interface SaveValidationLogParams {
+  companyId: string;
+  report: AttestationValidationReport;
+  fileName?: string;
+  executionTimeMs?: number;
+  protocolId?: string;
+  channel?: 'WHATSAPP' | 'WEB';
+  senderPhone?: string | null;
+  patientName?: string | null;
+  forensicReport?: any;
+}
+
 export async function saveValidationLog(
-  companyId: string,
-  report: AttestationValidationReport,
-  fileName?: string,
-  executionTimeMs?: number
+  companyIdOrParams: string | SaveValidationLogParams,
+  legacyReport?: AttestationValidationReport,
+  legacyFileName?: string,
+  legacyExecutionTimeMs?: number
 ) {
+  const { formatProtocolId, buildForensicReport } = require('../services/compliance-report-service');
+
+  const params: SaveValidationLogParams = typeof companyIdOrParams === 'string'
+    ? {
+        companyId: companyIdOrParams,
+        report: legacyReport!,
+        fileName: legacyFileName,
+        executionTimeMs: legacyExecutionTimeMs,
+        protocolId: formatProtocolId(legacyReport?.fileSha256),
+        channel: 'WEB',
+        patientName: legacyReport?.patient?.name || null
+      }
+    : companyIdOrParams;
+
+  const protocolId = params.protocolId || formatProtocolId(params.report.fileSha256);
+  const channel = params.channel || 'WEB';
+  const forensicReport = params.forensicReport || buildForensicReport(params.report, protocolId, channel);
+
   const logEntry = {
-    company_id: companyId,
-    file_hash: report.fileSha256,
-    file_name: extractNeutralFileFormat(fileName),
-    status: report.status,
-    is_authentic: report.isAuthentic,
-    doctor_name: report.doctor.name,
+    id: 'log-' + Math.random().toString(36).substring(2, 10),
+    company_id: params.companyId,
+    protocol_id: protocolId,
+    channel,
+    sender_phone: params.senderPhone || null,
+    patient_name: params.patientName || params.report.patient?.name || null,
+    file_hash: params.report.fileSha256,
+    file_name: extractNeutralFileFormat(params.fileName),
+    status: params.report.status,
+    is_authentic: params.report.isAuthentic,
+    doctor_name: params.report.doctor.name,
     doctor_cpf: null, // Minimização de dados LGPD: não grava CPF do médico
-    crm: report.doctor.crm,
-    uf: report.doctor.uf,
-    issuer: report.signature.issuer,
-    rest_days: report.restPeriod?.days || null,
-    start_date: report.restPeriod?.startDate || null,
-    calculated_sha256: report.signature.calculatedSha256,
-    expected_sha256: report.signature.expectedSha256,
-    qr_code_url: report.qrCode?.qrData || null,
-    execution_time_ms: executionTimeMs || 0,
+    crm: params.report.doctor.crm,
+    uf: params.report.doctor.uf,
+    issuer: params.report.signature.issuer,
+    rest_days: params.report.restPeriod?.days || null,
+    start_date: params.report.restPeriod?.startDate || null,
+    calculated_sha256: params.report.signature.calculatedSha256,
+    expected_sha256: params.report.signature.expectedSha256,
+    qr_code_url: params.report.qrCode?.qrData || null,
+    execution_time_ms: params.executionTimeMs || 0,
+    forensic_report: forensicReport,
     created_at: new Date().toISOString()
   };
 

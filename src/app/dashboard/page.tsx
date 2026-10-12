@@ -48,12 +48,15 @@ import {
   Smartphone,
   Users,
   Radio,
-  ChevronDown
+  ChevronDown,
+  Printer
 } from 'lucide-react';
 import { TaxRegime } from '@/lib/services/batch-audit-service';
 import { auditGeoDistance, GeoAuditResult } from '@/lib/services/geo-audit-service';
 import { getCompanyPolicy, updateCompanyPolicy, CompanyPolicyConfig } from '@/lib/services/company-policy-service';
 import { CompanyAccount } from '@/lib/services/company-service';
+import { formatProtocolId, generateHumanizedComplianceReport, buildForensicReport } from '@/lib/services/compliance-report-service';
+import { APP_VERSION, APP_VERSION_LABEL } from '@/lib/version';
 
 interface ValidationLog {
   id: string;
@@ -70,6 +73,12 @@ interface ValidationLog {
   execution_time_ms: number;
   inquiry_status?: string;
   created_at: string;
+  // Campos de Rastreabilidade e Auditoria Segregada
+  protocol_id?: string;
+  channel?: 'WHATSAPP' | 'WEB';
+  sender_phone?: string | null;
+  patient_name?: string | null;
+  forensic_report?: any;
 }
 
 export default function DashboardClientPage() {
@@ -82,6 +91,25 @@ export default function DashboardClientPage() {
   const [lastResult, setLastResult] = useState<any | null>(null);
   const [copiedWebhook, setCopiedWebhook] = useState(false);
   const [dragActive, setDragActive] = useState(false);
+
+  // Busca e Filtros na Tabela de Logs
+  const [logSearchQuery, setLogSearchQuery] = useState('');
+  const [selectedChannelFilter, setSelectedChannelFilter] = useState<'ALL' | 'WHATSAPP' | 'WEB'>('ALL');
+
+  // Balcão de Recepção / Upload Presencial
+  const [counterEmployeePhone, setCounterEmployeePhone] = useState('');
+  const [counterNotifyWhatsApp, setCounterNotifyWhatsApp] = useState(false);
+
+  // Modal de Laudo Pericial Didático (Trust Architecture)
+  const [laudoModalOpen, setLaudoModalOpen] = useState(false);
+  const [selectedLogForLaudo, setSelectedLogForLaudo] = useState<ValidationLog | null>(null);
+  const [copiedProtocolId, setCopiedProtocolId] = useState<string | null>(null);
+
+  // Modal de Comprovante de Balcão
+  const [receiptModalOpen, setReceiptModalOpen] = useState(false);
+  const [selectedLogForReceipt, setSelectedLogForReceipt] = useState<ValidationLog | null>(null);
+  const [sendingReceiptWhatsApp, setSendingReceiptWhatsApp] = useState(false);
+  const [receiptSentSuccess, setReceiptSentSuccess] = useState(false);
 
   // Tab WhatsApp
   const [waData, setWaData] = useState<{
@@ -170,10 +198,12 @@ export default function DashboardClientPage() {
     fetchWhatsAppStatus('vurio');
   }, []);
 
-  const fetchLogs = async () => {
+  const fetchLogs = async (overrideCompanyId?: string) => {
     try {
       setLoadingLogs(true);
-      const res = await fetch('/api/logs');
+      const cId = overrideCompanyId || selectedCompany?.id;
+      const url = cId ? `/api/logs?companyId=${cId}` : '/api/logs';
+      const res = await fetch(url);
       const data = await res.json();
       if (data.logs) {
         setLogs(data.logs);
@@ -306,7 +336,13 @@ export default function DashboardClientPage() {
 
       const formData = new FormData();
       formData.append('file', file);
-      formData.append('company_id', '00000000-0000-0000-0000-000000000001');
+      formData.append('company_id', selectedCompany?.id || 'solucione-matriz');
+      if (counterEmployeePhone) {
+        formData.append('employeePhone', counterEmployeePhone);
+      }
+      if (counterNotifyWhatsApp) {
+        formData.append('notifyWhatsApp', 'true');
+      }
 
       const res = await fetch('/api/validate-attestation', {
         method: 'POST',
@@ -467,6 +503,9 @@ export default function DashboardClientPage() {
                   <span className="font-black text-base tracking-tight text-white">Vurio</span>
                   <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[#02c1db]/15 text-[#02c1db] border border-[#02c1db]/30">
                     Painel DP
+                  </span>
+                  <span className="text-[9px] font-mono text-slate-400 bg-slate-900 border border-slate-800 px-1.5 py-0.5 rounded-full">
+                    {APP_VERSION}
                   </span>
                 </div>
                 <span className="text-[9.5px] text-slate-400 font-medium hidden md:block">
@@ -712,7 +751,7 @@ export default function DashboardClientPage() {
                     Envie o arquivo PDF original ou foto nítida do receituário.
                   </p>
                   
-                  <label className="inline-flex items-center justify-center px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all shadow">
+                  <label className="inline-flex items-center justify-center px-4 py-2 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-semibold cursor-pointer transition-all shadow mb-3">
                     <span>Selecionar Documento</span>
                     <input
                       type="file"
@@ -725,6 +764,30 @@ export default function DashboardClientPage() {
                       className="hidden"
                     />
                   </label>
+
+                  {/* Fluxo de Balcão (Recepção/RH Presencial) */}
+                  <div className="pt-3 border-t border-slate-800/80 space-y-2 text-left">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-slate-300">Entrega de Balcão (Presencial):</span>
+                      <span className="text-[10px] text-sky-400 font-medium">Opcional</span>
+                    </div>
+                    <input
+                      type="text"
+                      placeholder="WhatsApp do Colaborador (ex: 13999998888)"
+                      value={counterEmployeePhone}
+                      onChange={(e) => setCounterEmployeePhone(e.target.value)}
+                      className="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                    />
+                    <label className="flex items-center space-x-2 text-[11px] text-slate-400 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={counterNotifyWhatsApp}
+                        onChange={(e) => setCounterNotifyWhatsApp(e.target.checked)}
+                        className="rounded bg-slate-900 border-slate-700 text-sky-600 focus:ring-0"
+                      />
+                      <span>Disparar recibo neutro no WhatsApp</span>
+                    </label>
+                  </div>
                 </div>
 
                 {/* Status da Conexão com WhatsApp */}
@@ -734,7 +797,7 @@ export default function DashboardClientPage() {
                     <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">Ativo & Conectado</span>
                   </div>
                   <p className="text-[11px] text-slate-500">
-                    Seus colaboradores podem enviar o atestado direto no WhatsApp da empresa para auditoria em segundos.
+                    Seus colaboradores podem enviar o atestado direto no WhatsApp da empresa com recibo asséptico imediato.
                   </p>
                 </div>
               </div>
@@ -750,19 +813,107 @@ export default function DashboardClientPage() {
                 ) : lastResult ? (
                   <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
                     <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                      <span className="text-sm font-bold text-white">Resultado da Auditoria</span>
+                      <div className="flex items-center space-x-2">
+                        <span className="text-sm font-bold text-white">Resultado da Auditoria</span>
+                        <span className="px-2 py-0.5 rounded-full bg-sky-500/20 text-sky-300 font-mono text-[10px] font-bold">
+                          {lastResult.protocolId || '#VR-GERADO'}
+                        </span>
+                      </div>
                       <span className="text-xs text-slate-400">{lastResult.report?.executionTimeMs || 0} ms</span>
                     </div>
 
-                    <div className="space-y-3 text-xs">
-                      <p className="text-slate-300"><strong>Arquivo:</strong> {lastResult.report?.fileName}</p>
-                      <p className="text-slate-300"><strong>Status:</strong> {lastResult.report?.status}</p>
-                      {lastResult.report?.doctor?.name && (
-                        <p className="text-slate-300"><strong>Médico:</strong> {lastResult.report.doctor.name} ({lastResult.report.doctor.crm}/{lastResult.report.doctor.uf})</p>
-                      )}
-                      {lastResult.report?.restPeriod?.days && (
-                        <p className="text-slate-300"><strong>Afastamento:</strong> {lastResult.report.restPeriod.days} dias</p>
-                      )}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
+                      <div className="space-y-1.5">
+                        <p className="text-slate-400">Colaborador / Paciente:</p>
+                        <p className="text-white font-bold">{lastResult.report?.patient?.name || 'Não identificado no layout'}</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-slate-400">Médico / Conselho:</p>
+                        <p className="text-white font-bold">
+                          {lastResult.report?.doctor?.name ? `Dr(a). ${lastResult.report.doctor.name}` : 'Médico Não Identificado'} 
+                          {lastResult.report?.doctor?.crm ? ` (${lastResult.report.doctor.crm}/${lastResult.report.doctor.uf || 'BR'})` : ''}
+                        </p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-slate-400">Afastamento:</p>
+                        <p className="text-white font-bold">{lastResult.report?.restPeriod?.days ? `${lastResult.report.restPeriod.days} dias` : 'Não quantificado'}</p>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-slate-400">Status Geral:</p>
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase ${
+                          lastResult.isAuthentic 
+                            ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40' 
+                            : lastResult.report?.status === 'REPRINTED_BROWSER_PDF'
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                            : 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
+                        }`}>
+                          {lastResult.report?.status === 'REPRINTED_BROWSER_PDF'
+                            ? 'REIMPRESSÃO WEB (PDFium)'
+                            : lastResult.report?.status || 'AVALIAÇÃO'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex flex-wrap gap-2">
+                      <button
+                        onClick={() => {
+                          const mockLog: ValidationLog = {
+                            id: 'last',
+                            file_name: lastResult.report?.fileName || 'documento.pdf',
+                            status: lastResult.report?.status || 'VALID_INTACT',
+                            is_authentic: lastResult.report?.isAuthentic || false,
+                            doctor_name: lastResult.report?.doctor?.name || null,
+                            crm: lastResult.report?.doctor?.crm || null,
+                            uf: lastResult.report?.doctor?.uf || null,
+                            issuer: lastResult.report?.signature?.issuer || null,
+                            rest_days: lastResult.report?.restPeriod?.days || null,
+                            start_date: lastResult.report?.restPeriod?.startDate || null,
+                            file_hash: lastResult.report?.fileSha256 || '',
+                            execution_time_ms: lastResult.executionTimeMs || 0,
+                            protocol_id: lastResult.protocolId,
+                            channel: 'WEB',
+                            patient_name: lastResult.report?.patient?.name || null,
+                            forensic_report: lastResult.forensicReport,
+                            created_at: new Date().toISOString()
+                          };
+                          setSelectedLogForLaudo(mockLog);
+                          setLaudoModalOpen(true);
+                        }}
+                        className="py-2 px-3 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs flex items-center gap-1.5 shadow"
+                      >
+                        <ShieldCheck className="w-3.5 h-3.5" />
+                        <span>Abrir Parecer Didático do DP</span>
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const mockLog: ValidationLog = {
+                            id: 'last',
+                            file_name: lastResult.report?.fileName || 'documento.pdf',
+                            status: lastResult.report?.status || 'VALID_INTACT',
+                            is_authentic: lastResult.report?.isAuthentic || false,
+                            doctor_name: lastResult.report?.doctor?.name || null,
+                            crm: lastResult.report?.doctor?.crm || null,
+                            uf: lastResult.report?.doctor?.uf || null,
+                            issuer: lastResult.report?.signature?.issuer || null,
+                            rest_days: lastResult.report?.restPeriod?.days || null,
+                            start_date: lastResult.report?.restPeriod?.startDate || null,
+                            file_hash: lastResult.report?.fileSha256 || '',
+                            execution_time_ms: lastResult.executionTimeMs || 0,
+                            protocol_id: lastResult.protocolId,
+                            channel: 'WEB',
+                            patient_name: lastResult.report?.patient?.name || null,
+                            sender_phone: counterEmployeePhone || null,
+                            created_at: new Date().toISOString()
+                          };
+                          setSelectedLogForReceipt(mockLog);
+                          setReceiptModalOpen(true);
+                        }}
+                        className="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center gap-1.5 border border-slate-700"
+                      >
+                        <FileText className="w-3.5 h-3.5 text-sky-400" />
+                        <span>Comprovante de Balcão</span>
+                      </button>
                     </div>
                   </div>
                 ) : (
@@ -777,49 +928,175 @@ export default function DashboardClientPage() {
 
             {/* Tabela de Logs Recentes */}
             <div className="p-6 rounded-2xl bg-slate-900/60 border border-slate-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-sm font-bold text-white">Histórico de Atestados Auditados</h3>
-                <span className="text-xs text-slate-400">{logs.length} registros</span>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+                <div>
+                  <h3 className="text-sm font-bold text-white">Histórico de Atestados Auditados</h3>
+                  <p className="text-[11px] text-slate-400">Fila unificada com segregação de veredito: WhatsApp e Balcão de Recepção.</p>
+                </div>
+                <span className="text-xs text-slate-400">{logs.length} registros no total</span>
               </div>
 
+              {/* Filtros e Busca */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                  <input
+                    type="text"
+                    placeholder="Filtrar por protocolo (#VR-...), colaborador ou médico..."
+                    value={logSearchQuery}
+                    onChange={(e) => setLogSearchQuery(e.target.value)}
+                    className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-sky-500"
+                  />
+                </div>
+
+                <div className="flex items-center space-x-1.5">
+                  <button
+                    onClick={() => setSelectedChannelFilter('ALL')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
+                      selectedChannelFilter === 'ALL'
+                        ? 'bg-sky-600 text-white'
+                        : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+                    }`}
+                  >
+                    Todos ({logs.length})
+                  </button>
+                  <button
+                    onClick={() => setSelectedChannelFilter('WHATSAPP')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                      selectedChannelFilter === 'WHATSAPP'
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-slate-950 text-emerald-400 hover:bg-slate-900 border border-slate-800'
+                    }`}
+                  >
+                    <Smartphone className="w-3 h-3" />
+                    <span>WhatsApp</span>
+                  </button>
+                  <button
+                    onClick={() => setSelectedChannelFilter('WEB')}
+                    className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1 ${
+                      selectedChannelFilter === 'WEB'
+                        ? 'bg-sky-600 text-white'
+                        : 'bg-slate-950 text-sky-300 hover:bg-slate-900 border border-slate-800'
+                    }`}
+                  >
+                    <Building2 className="w-3 h-3" />
+                    <span>Balcão</span>
+                  </button>
+                  <button
+                    onClick={() => fetchLogs()}
+                    title="Atualizar lista"
+                    className="p-1.5 rounded-lg bg-slate-950 text-slate-400 hover:text-white border border-slate-800 ml-1"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 ${loadingLogs ? 'animate-spin' : ''}`} />
+                  </button>
+                </div>
+              </div>
+
+              {/* Tabela de Dados */}
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-xs text-slate-300">
                   <thead className="bg-slate-950 text-slate-400 uppercase tracking-wider border-b border-slate-800">
                     <tr>
                       <th className="py-2.5 px-3">Data</th>
-                      <th className="py-2.5 px-3">Arquivo</th>
-                      <th className="py-2.5 px-3">Médico</th>
-                      <th className="py-2.5 px-3">CRM</th>
+                      <th className="py-2.5 px-3">Protocolo</th>
+                      <th className="py-2.5 px-3">Canal</th>
+                      <th className="py-2.5 px-3">Colaborador</th>
+                      <th className="py-2.5 px-3">Médico / CRM</th>
                       <th className="py-2.5 px-3">Afastamento</th>
                       <th className="py-2.5 px-3">Parecer</th>
-                      <th className="py-2.5 px-3">Ação</th>
+                      <th className="py-2.5 px-3 text-right">Ações</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-800/60">
-                    {logs.map((log) => (
-                      <tr key={log.id} className="hover:bg-slate-900/40">
-                        <td className="py-2.5 px-3 text-slate-500">{new Date(log.created_at).toLocaleDateString('pt-BR')}</td>
-                        <td className="py-2.5 px-3 text-white font-medium truncate max-w-[150px]">{log.file_name}</td>
-                        <td className="py-2.5 px-3">{log.doctor_name || '—'}</td>
-                        <td className="py-2.5 px-3">{log.crm ? `${log.crm}/${log.uf}` : '—'}</td>
-                        <td className="py-2.5 px-3">{log.rest_days ? `${log.rest_days} dias` : '—'}</td>
-                        <td className="py-2.5 px-3">
-                          {log.is_authentic ? (
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold">Conforme</span>
-                          ) : (
-                            <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 text-[10px] font-bold">Averiguação</span>
-                          )}
-                        </td>
-                        <td className="py-2.5 px-3">
-                          <button
-                            onClick={() => openInquiryModal(log)}
-                            className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-sky-400 text-[11px] font-semibold"
-                          >
-                            Diligência
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
+                    {logs
+                      .filter((log) => {
+                        if (selectedChannelFilter === 'WHATSAPP' && log.channel !== 'WHATSAPP') return false;
+                        if (selectedChannelFilter === 'WEB' && log.channel === 'WHATSAPP') return false;
+                        if (!logSearchQuery) return true;
+                        const q = logSearchQuery.toLowerCase();
+                        const prot = (log.protocol_id || formatProtocolId(log.file_hash)).toLowerCase();
+                        const pat = (log.patient_name || '').toLowerCase();
+                        const doc = (log.doctor_name || '').toLowerCase();
+                        const crm = (log.crm || '').toLowerCase();
+                        return prot.includes(q) || pat.includes(q) || doc.includes(q) || crm.includes(q);
+                      })
+                      .map((log) => {
+                        const protId = log.protocol_id || formatProtocolId(log.file_hash);
+                        return (
+                          <tr key={log.id} className="hover:bg-slate-900/40">
+                            <td className="py-2.5 px-3 text-slate-500 whitespace-nowrap">
+                              {new Date(log.created_at).toLocaleDateString('pt-BR')}
+                            </td>
+                            <td className="py-2.5 px-3 whitespace-nowrap">
+                              <span className="font-mono font-bold text-sky-400 bg-sky-950/40 px-2 py-0.5 rounded border border-sky-800/30">
+                                {protId}
+                              </span>
+                            </td>
+                            <td className="py-2.5 px-3 whitespace-nowrap">
+                              {log.channel === 'WHATSAPP' ? (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/20 flex items-center gap-1 w-fit">
+                                  <Smartphone className="w-3 h-3" />
+                                  <span>WhatsApp {log.sender_phone ? `(${log.sender_phone.slice(-4)})` : ''}</span>
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-300 text-[10px] font-bold border border-sky-500/20 flex items-center gap-1 w-fit">
+                                  <Building2 className="w-3 h-3" />
+                                  <span>Balcão</span>
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 text-white font-medium max-w-[140px] truncate">
+                              {log.patient_name || 'Colaborador Registrado'}
+                            </td>
+                            <td className="py-2.5 px-3 whitespace-nowrap">
+                              <span className="font-medium text-slate-200">{log.doctor_name || '—'}</span>
+                              <span className="text-[10px] text-slate-400 block">{log.crm ? `${log.crm}/${log.uf}` : '—'}</span>
+                            </td>
+                            <td className="py-2.5 px-3 whitespace-nowrap">{log.rest_days ? `${log.rest_days} dias` : '—'}</td>
+                            <td className="py-2.5 px-3 whitespace-nowrap">
+                              {log.is_authentic ? (
+                                <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-bold border border-emerald-500/30">Conforme</span>
+                              ) : log.status === 'REPRINTED_BROWSER_PDF' || log.forensic_report?.status === 'REPRINTED_BROWSER_PDF' ? (
+                                <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 text-[10px] font-bold border border-amber-500/30">Reimpressão Web</span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-300 text-[10px] font-bold border border-rose-500/30">Averiguação</span>
+                              )}
+                            </td>
+                            <td className="py-2.5 px-3 text-right whitespace-nowrap">
+                              <div className="flex items-center justify-end space-x-1.5">
+                                <button
+                                  onClick={() => {
+                                    setSelectedLogForLaudo(log);
+                                    setLaudoModalOpen(true);
+                                  }}
+                                  title="Abrir Parecer Didático e Verificável"
+                                  className="px-2 py-1 rounded bg-sky-600/20 hover:bg-sky-600/30 text-sky-300 text-[11px] font-semibold border border-sky-500/30 flex items-center gap-1"
+                                >
+                                  <ShieldCheck className="w-3 h-3" />
+                                  <span>Parecer</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedLogForReceipt(log);
+                                    setReceiptModalOpen(true);
+                                  }}
+                                  title="Ver Comprovante de Entrega"
+                                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[11px] font-semibold"
+                                >
+                                  Recibo
+                                </button>
+                                <button
+                                  onClick={() => openInquiryModal(log)}
+                                  title="Ofício de 1-Clique para Clínica"
+                                  className="px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-amber-400 text-[11px] font-semibold"
+                                >
+                                  Diligência
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                   </tbody>
                 </table>
               </div>
@@ -1636,6 +1913,12 @@ export default function DashboardClientPage() {
           </div>
         )}
 
+        {/* RODAPÉ OPERACIONAL COM VERSIONAMENTO */}
+        <footer className="mt-12 py-6 border-t border-slate-800/80 text-center text-xs text-slate-500 font-mono space-y-1">
+          <p>{APP_VERSION_LABEL}</p>
+          <p className="text-[10px] text-slate-600">Zero Storage Architecture • Processamento Volátil em Memória RAM • Sem Persistência de CID</p>
+        </footer>
+
       </main>
 
       {/* MODAL: CADASTRAR NOVA EMPRESA */}
@@ -2062,6 +2345,325 @@ export default function DashboardClientPage() {
           </div>
         </div>
       )}
+
+      {/* MODAL: LAUDO PERICIAL DIDÁTICO & HUMANIZADO (TRUST ARCHITECTURE) */}
+      {laudoModalOpen && selectedLogForLaudo && (() => {
+        const prot = selectedLogForLaudo.protocol_id || formatProtocolId(selectedLogForLaudo.file_hash);
+        const sanitized = selectedLogForLaudo.forensic_report || {
+          protocolId: prot,
+          channel: selectedLogForLaudo.channel || 'WEB',
+          status: selectedLogForLaudo.status,
+          isAuthentic: selectedLogForLaudo.is_authentic,
+          evaluatedAt: selectedLogForLaudo.created_at,
+          fileSha256: selectedLogForLaudo.file_hash,
+          doctor: {
+            name: selectedLogForLaudo.doctor_name,
+            crm: selectedLogForLaudo.crm,
+            uf: selectedLogForLaudo.uf
+          },
+          patient: {
+            name: selectedLogForLaudo.patient_name
+          },
+          restPeriod: {
+            days: selectedLogForLaudo.rest_days,
+            startDate: selectedLogForLaudo.start_date
+          },
+          padesSignature: {
+            hasSignature: selectedLogForLaudo.is_authentic,
+            isIcpBrasil: selectedLogForLaudo.is_authentic,
+            issuer: selectedLogForLaudo.issuer,
+            signingTime: null,
+            integrityConfirmed: selectedLogForLaudo.is_authentic,
+            calculatedSha256: null,
+            expectedSha256: null
+          },
+          revalidationGuides: {
+            itiValidatorUrl: 'https://validar.iti.gov.br',
+            cfmDoctorSearchUrl: selectedLogForLaudo.crm && selectedLogForLaudo.uf 
+              ? `https://portal.cfm.org.br/busca-medicos/?crm=${selectedLogForLaudo.crm}&uf=${selectedLogForLaudo.uf}`
+              : 'https://portal.cfm.org.br/busca-medicos/',
+            cfmPrescriptionUrl: 'https://prescricao.cfm.org.br'
+          }
+        };
+        const human = generateHumanizedComplianceReport(sanitized);
+
+        return (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn overflow-y-auto">
+            <div className="bg-slate-900 border border-slate-700 w-full max-w-3xl rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl my-8">
+              {/* Top bar with protocol and badge */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-800 gap-3">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <ShieldCheck className="w-5 h-5 text-sky-400" />
+                    <h3 className="text-lg font-bold text-white tracking-tight">Parecer Técnico de Triagem</h3>
+                    <span className="font-mono text-xs font-bold text-sky-400 bg-sky-950/60 px-2.5 py-0.5 rounded-full border border-sky-800/40">
+                      {prot}
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-400">
+                    Canal: <strong className="text-slate-200">{selectedLogForLaudo.channel === 'WHATSAPP' ? 'WhatsApp Corporativo' : 'Balcão de Atendimento'}</strong> • Registrado em {new Date(selectedLogForLaudo.created_at).toLocaleString('pt-BR')}
+                  </p>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => window.print()}
+                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all"
+                    title="Imprimir Laudo"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span className="hidden sm:inline">Imprimir</span>
+                  </button>
+                  <button
+                    onClick={() => setLaudoModalOpen(false)}
+                    className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs font-bold transition-all"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              {/* Status Card Acolhedor */}
+              <div className={`p-4 rounded-2xl border ${
+                human.statusBadge.color === 'emerald'
+                  ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                  : human.statusBadge.color === 'rose'
+                  ? 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                  : 'bg-amber-500/10 border-amber-500/30 text-amber-300'
+              } space-y-1.5`}>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
+                    {human.statusBadge.color === 'emerald' ? <CheckCircle2 className="w-4 h-4" /> : <AlertTriangle className="w-4 h-4" />}
+                    {human.statusBadge.text}
+                  </span>
+                  <span className="text-[11px] font-medium opacity-80">Conformidade LGPD (Sem CID)</span>
+                </div>
+                <p className="text-xs text-slate-200 leading-relaxed">
+                  {human.statusBadge.description}
+                </p>
+              </div>
+
+              {/* Resumo Executivo Didático */}
+              <div className="p-4 rounded-2xl bg-slate-950/80 border border-slate-800 space-y-2 text-xs">
+                <h4 className="font-bold text-white uppercase text-[11px] tracking-wider text-slate-400">1. Resumo Executivo Didático</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Colaborador / Paciente:</span>
+                    <span className="text-white font-semibold text-sm">{selectedLogForLaudo.patient_name || 'Não identificado no documento'}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Profissional Emissor:</span>
+                    <span className="text-white font-semibold text-sm">{selectedLogForLaudo.doctor_name || 'Médico Informado'}</span>
+                    <span className="text-slate-400 text-[11px] block">{selectedLogForLaudo.crm ? `CRM ${selectedLogForLaudo.crm}/${selectedLogForLaudo.uf || 'BR'}` : ''}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Período de Afastamento:</span>
+                    <span className="text-white font-semibold">{selectedLogForLaudo.rest_days ? `${selectedLogForLaudo.rest_days} dias` : 'Afastamento não especificado'} {selectedLogForLaudo.start_date ? `(início em ${selectedLogForLaudo.start_date})` : ''}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 block text-[11px]">Hash Único SHA-256 (Trava de Duplicidade):</span>
+                    <span className="font-mono text-[10px] text-sky-400 break-all">{selectedLogForLaudo.file_hash}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Pilares da Auditoria Forense */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-white uppercase text-[11px] tracking-wider text-slate-400">2. Metodologia & Evidências Técnicas</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-1">
+                    <span className="font-bold text-sky-300 flex items-center gap-1.5 text-[11px]">
+                      <ShieldCheck className="w-3.5 h-3.5" /> Assinatura ICP-Brasil (PAdES)
+                    </span>
+                    <p className="text-slate-300 text-[11px]">
+                      {sanitized.padesSignature?.hasSignature 
+                        ? `Assinatura digital padrão ICP-Brasil detectada (${sanitized.padesSignature.issuer || 'AC Válida'}).` 
+                        : 'Documento não possui certificado digital ICP-Brasil acoplado (foto de papel tradicional ou PDF não assinado).'}
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-1">
+                    <span className="font-bold text-emerald-300 flex items-center gap-1.5 text-[11px]">
+                      <Stethoscope className="w-3.5 h-3.5" /> Habilitação Profissional (CFM/CRM)
+                    </span>
+                    <p className="text-slate-300 text-[11px]">
+                      {sanitized.cfmAudit 
+                        ? `Situação perante o ${sanitized.cfmAudit.regionalCouncil}: ${sanitized.cfmAudit.statusDescription}`
+                        : `Consulta ao conselho regional com o CRM informado (${selectedLogForLaudo.crm || 'N/A'}).`}
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-1">
+                    <span className="font-bold text-amber-300 flex items-center gap-1.5 text-[11px]">
+                      <MapPin className="w-3.5 h-3.5" /> Compatibilidade Territorial (Geo-Shield)
+                    </span>
+                    <p className="text-slate-300 text-[11px]">
+                      {sanitized.geoAudit?.telemedicineDetected 
+                        ? 'Atendimento por Telemedicina detectado (dispensa limite de deslocamento geográfico).'
+                        : sanitized.geoAudit 
+                        ? `Deslocamento estimado: ~${sanitized.geoAudit.distanceKm} km entre a clínica e a base do colaborador.`
+                        : 'Endereço em conformidade territorial com as regras da organização.'}
+                    </p>
+                  </div>
+
+                  <div className="p-3 bg-slate-950/60 rounded-xl border border-slate-800/80 space-y-1">
+                    <span className="font-bold text-indigo-300 flex items-center gap-1.5 text-[11px]">
+                      <Sliders className="w-3.5 h-3.5" /> Prazos CLT & Regras Internas
+                    </span>
+                    <p className="text-slate-300 text-[11px]">
+                      {sanitized.consistency?.hasInconsistencies
+                        ? `${sanitized.consistency.alerts.length} observação(ões) técnica(s) para aplicação dos critérios usuais da organização.`
+                        : 'Prazos de submissão e períodos de afastamento em conformidade.'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Guia de Revalidação Autônoma (Trust Architecture) */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-950/40 via-slate-950 to-indigo-950/40 border border-sky-500/20 space-y-3 text-xs">
+                <div className="flex items-center justify-between">
+                  <span className="font-bold text-white flex items-center gap-2 text-xs">
+                    <ExternalLink className="w-4 h-4 text-sky-400" /> Guia de Revalidação Autônoma (Fontes Oficiais)
+                  </span>
+                  <span className="text-[10px] text-sky-300 font-semibold">Qualquer pessoa pode checar diretamente</span>
+                </div>
+                
+                <p className="text-slate-300 text-[11px] leading-relaxed">
+                  Em observância ao princípio da transparência e verificabilidade, os dados podem ser conferidos de forma independente nos portais públicos do Governo Federal e do CFM:
+                </p>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <a
+                    href="https://validar.iti.gov.br"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white flex items-center justify-between transition-all group"
+                  >
+                    <div>
+                      <span className="font-bold block text-sky-300 text-xs">Validador Oficial ITI / ICP-Brasil</span>
+                      <span className="text-[10px] text-slate-400">validar.iti.gov.br (submeta o PDF)</span>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-sky-300" />
+                  </a>
+
+                  <a
+                    href={sanitized.revalidationGuides?.cfmDoctorSearchUrl || 'https://portal.cfm.org.br/busca-medicos/'}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-700/80 text-white flex items-center justify-between transition-all group"
+                  >
+                    <div>
+                      <span className="font-bold block text-emerald-300 text-xs">Consulta Pública CFM</span>
+                      <span className="text-[10px] text-slate-400">Checar CRM {selectedLogForLaudo.crm || ''} no Conselho</span>
+                    </div>
+                    <ExternalLink className="w-3.5 h-3.5 text-slate-500 group-hover:text-emerald-300" />
+                  </a>
+                </div>
+              </div>
+
+              {/* Footer do Modal */}
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-800">
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(human.fullMarkdownReport);
+                    setCopiedProtocolId(prot);
+                    setTimeout(() => setCopiedProtocolId(null), 3000);
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-all"
+                >
+                  {copiedProtocolId === prot ? <Check className="w-4 h-4 text-emerald-400" /> : <Copy className="w-4 h-4 text-sky-400" />}
+                  <span>{copiedProtocolId === prot ? 'Parecer Copiado em Markdown!' : 'Copiar Texto Completo do Parecer'}</span>
+                </button>
+
+                <button
+                  onClick={() => setLaudoModalOpen(false)}
+                  className="px-5 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white text-xs font-bold transition-all shadow"
+                >
+                  Concluir Leitura
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* MODAL: COMPROVANTE DE ENTREGA DE BALCÃO */}
+      {receiptModalOpen && selectedLogForReceipt && (() => {
+        const prot = selectedLogForReceipt.protocol_id || formatProtocolId(selectedLogForReceipt.file_hash);
+        return (
+          <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-fadeIn overflow-y-auto">
+            <div className="bg-slate-900 border border-slate-700 w-full max-w-lg rounded-3xl p-6 sm:p-8 space-y-6 shadow-2xl my-8">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-800">
+                <div className="flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-sky-400" />
+                  <h3 className="text-base font-bold text-white">Comprovante de Entrega de Balcão</h3>
+                </div>
+                <button
+                  onClick={() => { setReceiptModalOpen(false); setReceiptSentSuccess(false); }}
+                  className="p-1.5 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-lg text-xs"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Layout do Recibo Físico/Digital */}
+              <div className="p-5 bg-white text-slate-900 rounded-2xl space-y-4 font-sans text-xs shadow-inner">
+                <div className="flex items-center justify-between border-b pb-3 border-slate-200">
+                  <div>
+                    <span className="font-black text-sm text-slate-900 block tracking-tight">VURIO COMPLIANCE</span>
+                    <span className="text-[10px] text-slate-500">Recibo de Protocolo Administrativo</span>
+                  </div>
+                  <span className="font-mono text-xs font-black bg-slate-100 text-slate-800 px-2 py-0.5 rounded border border-slate-300">
+                    {prot}
+                  </span>
+                </div>
+
+                <div className="space-y-2 text-xs">
+                  <p><strong>Empresa:</strong> {selectedCompany?.tradeName || 'Empresa Empregadora'}</p>
+                  <p><strong>Colaborador / Paciente:</strong> {selectedLogForReceipt.patient_name || 'Colaborador Identificado'}</p>
+                  <p><strong>Médico / CRM:</strong> {selectedLogForReceipt.doctor_name || 'Dr(a). Não especificado'} {selectedLogForReceipt.crm ? `(CRM ${selectedLogForReceipt.crm}/${selectedLogForReceipt.uf || 'BR'})` : ''}</p>
+                  <p><strong>Afastamento Solicitado:</strong> {selectedLogForReceipt.rest_days ? `${selectedLogForReceipt.rest_days} dia(s)` : 'Afastamento'} {selectedLogForReceipt.start_date ? `a partir de ${selectedLogForReceipt.start_date}` : ''}</p>
+                  <p><strong>Data/Hora do Recebimento:</strong> {new Date(selectedLogForReceipt.created_at).toLocaleString('pt-BR')}</p>
+                  <p><strong>Canal de Entrada:</strong> {selectedLogForReceipt.channel === 'WHATSAPP' ? 'WhatsApp Corporativo' : 'Balcão de Recepção / RH'}</p>
+                </div>
+
+                <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-[11px] text-slate-600 leading-relaxed italic">
+                  "Documento protocolado com sucesso na recepção/RH para conferência administrativa junto ao Departamento Pessoal. A entrega deste protocolo não substitui a homologação interna conforme normas da organização."
+                </div>
+
+                <div className="pt-4 grid grid-cols-2 gap-4 text-center text-[10px] text-slate-500 border-t border-slate-200">
+                  <div>
+                    <div className="border-b border-slate-400 mb-1 h-6"></div>
+                    <span>Assinatura do Colaborador</span>
+                  </div>
+                  <div>
+                    <div className="border-b border-slate-400 mb-1 h-6"></div>
+                    <span>Recepção / Departamento Pessoal</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Ações */}
+              <div className="flex flex-col sm:flex-row gap-2 pt-2 justify-between">
+                <button
+                  onClick={() => window.print()}
+                  className="py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition-all"
+                >
+                  <Printer className="w-4 h-4 text-sky-400" />
+                  <span>Imprimir Recibo</span>
+                </button>
+
+                <button
+                  onClick={() => setReceiptModalOpen(false)}
+                  className="py-2.5 px-5 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-bold text-xs transition-all shadow"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

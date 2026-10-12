@@ -126,6 +126,13 @@ export async function getCompanyById(id: string): Promise<CompanyAccount | null>
   return all.find(c => c.id === id) || null;
 }
 
+export async function getCompanyByInstance(instanceName?: string): Promise<CompanyAccount | null> {
+  if (!instanceName) return null;
+  const all = await getAllCompanies();
+  const clean = instanceName.toLowerCase().trim();
+  return all.find(c => (c.whatsappInstance || '').toLowerCase().trim() === clean) || null;
+}
+
 export async function createCompany(newCompany: Omit<CompanyAccount, 'id' | 'createdAt' | 'monthlyAuditsCount'>): Promise<CompanyAccount> {
   const id = 'comp-' + Math.random().toString(36).substring(2, 9);
   const company: CompanyAccount = {

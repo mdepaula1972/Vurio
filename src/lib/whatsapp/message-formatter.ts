@@ -205,11 +205,18 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
 /**
  * Confirmação asséptica e neutra de protocolo para o colaborador.
  * Blindagem jurídica contra passivo trabalhista e alegação de constrangimento (Art. 483 CLT).
+ * Fornece estritamente confirmação de entrega com número de protocolo e carimbo de data/hora oficial.
  */
-export function formatEmployeeReceiptMessage(protocolId: string): string {
+export function formatEmployeeReceiptMessage(protocolId: string, timestamp: Date = new Date()): string {
+  const cleanProtocol = protocolId.startsWith('#') ? protocolId : `#${protocolId}`;
+  const formattedDate = timestamp.toLocaleDateString('pt-BR');
+  const formattedTime = timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
   return (
     `✅ *Documento recebido com sucesso.*\n\n` +
-    `Protocolo *#${protocolId}* registrado para triagem do Departamento Pessoal.\n\n` +
-    `_As informações foram encaminhadas para conferência interna junto à empresa._`
+    `📋 *Protocolo de Entrega:* *${cleanProtocol}*\n` +
+    `🕒 *Horário do Registro:* ${formattedDate} às ${formattedTime}\n\n` +
+    `_Seu documento foi protocolado com segurança e encaminhado para conferência administrativa junto ao Departamento Pessoal da empresa._\n\n` +
+    `_Por favor, guarde este número de protocolo como comprovante de entrega da sua solicitação._`
   );
 }

@@ -31,8 +31,21 @@ export function analyzePkcs7Envelope(signatureBuffer: Buffer): Pkcs7ValidationRe
   try {
     const rawDer = signatureBuffer.toString('binary');
     // Em assinaturas PAdES, o /Contents reservado costuma conter zeros de padding no final.
-    // Usar parseAllBytes: false e strict: false permite decodificar ignorando os bytes remanescentes de padding.
-    const asn1 = (forge.asn1.fromDer as any)(rawDer, { parseAllBytes: false, strict: false });
+    let asn1: any;
+    try {
+      asn1 = (forge.asn1.fromDer as any)(rawDer, false);
+    } catch (parseErr: any) {
+      if (parseErr && typeof parseErr.remaining === 'number' && parseErr.remaining > 0 && parseErr.byteCount) {
+        const validLength = parseErr.byteCount - parseErr.remaining;
+        if (validLength > 0) {
+          asn1 = (forge.asn1.fromDer as any)(rawDer.substring(0, validLength), false);
+        } else {
+          throw parseErr;
+        }
+      } else {
+        throw parseErr;
+      }
+    }
     const p7 = forge.pkcs7.messageFromAsn1(asn1);
 
     // Identificar algoritmo de digest (padrão SHA-256)

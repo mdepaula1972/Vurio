@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import pdfParse from 'pdf-parse';
-import { extractPdfSignatures, getSignedBytes } from './pdf-parser';
+import { extractPdfSignatures, getSignedBytes, inspectPdfReprint } from './pdf-parser';
 import { analyzePkcs7Envelope } from './pkcs7-analyzer';
 import { extractCrmAndUf } from './crm-extractor';
 import { scanQrCodeFromImageBuffer, QrScanResult } from './qr-scanner';
@@ -15,6 +15,7 @@ export type AttestationValidationStatus =
   | 'VALID_INTACT'          // Caso A1: PDF Nativo com Assinatura Criptográfica ICP-Brasil Íntegra
   | 'PHOTO_WITH_QR_CODE'    // Caso A2: Foto de Papel com QR Code de Validação Oficial (CFM/Memed/ITI)
   | 'PHOTO_MANUAL_PAPER'    // Caso B1: Foto de Papel Tradicional (Caneta/Carimbo físico, sem QR Code)
+  | 'REPRINTED_BROWSER_PDF' // Caso B2: PDF Re-salvo via Navegador / Impressora Virtual (PDFium/Chromium)
   | 'TAMPERED'              // Caso C1: Documento Adulterado (Hash do PDF não confere)
   | 'DUPLICATE_DOCUMENT'    // Caso C2: Documento já submetido anteriormente na empresa
   | 'NO_DIGITAL_SIGNATURE'  // PDF comum sem assinatura digital
@@ -254,7 +255,60 @@ export async function validateMedicalAttestation(
     };
   }
 
+  // Inspeção forense de impressoras virtuais e reimpressão em navegador (PDFium/Chromium/Skia)
+  const reprintInspection = inspectPdfReprint(fileBuffer);
+
   if (signatures.length === 0) {
+    if (reprintInspection.isReprintedPdf) {
+      let recoveredDoctor = {
+        name: null as string | null,
+        crm: crmInfo.crm,
+        uf: crmInfo.uf,
+        cpf: null as string | null
+      };
+      let isIcpBrasil = false;
+      let issuer = reprintInspection.producerMetadata.virtualPrinterEngine || 'Navegador Web';
+      let signingTime: Date | null = null;
+
+      if (reprintInspection.recoveredSignatureBuffer) {
+        const p7Recovery = analyzePkcs7Envelope(reprintInspection.recoveredSignatureBuffer);
+        if (p7Recovery.doctorInfo) {
+          recoveredDoctor = {
+            name: p7Recovery.doctorInfo.doctorName || null,
+            crm: crmInfo.crm,
+            uf: crmInfo.uf,
+            cpf: p7Recovery.doctorInfo.cpf || null
+          };
+          isIcpBrasil = p7Recovery.doctorInfo.isIcpBrasil;
+          issuer = p7Recovery.doctorInfo.issuerName || issuer;
+          signingTime = p7Recovery.doctorInfo.signingTime;
+        }
+      }
+
+      return await finalizeReport({
+        status: 'REPRINTED_BROWSER_PDF',
+        isAuthentic: false,
+        fileSha256,
+        doctor: recoveredDoctor,
+        patient: {
+          name: patientInfo.patientName,
+          cpf: patientInfo.patientCpf
+        },
+        cid: patientInfo.cid,
+        signature: {
+          hasSignature: !!reprintInspection.recoveredSignatureBuffer,
+          isIcpBrasil,
+          issuer,
+          signingTime,
+          integrityConfirmed: false,
+          calculatedSha256: null,
+          expectedSha256: null
+        },
+        restPeriod,
+        details: `Aviso Técnico: Documento re-salvo via navegador ou impressora virtual (identificado motor ${reprintInspection.producerMetadata.virtualPrinterEngine || 'PDFium/Chromium'}). A assinatura digital original foi suprimida durante o processo de impressão virtual. Orientação recomendada: Solicite ao colaborador o arquivo PDF original baixado diretamente do portal/e-mail da clínica ou valide a autenticidade através da chave/QR Code do CFM.`
+      }, patientInfo);
+    }
+
     return await finalizeReport({
       status: 'NO_DIGITAL_SIGNATURE',
       isAuthentic: false,
@@ -327,6 +381,36 @@ export async function validateMedicalAttestation(
   }
 
   if (!integrityConfirmed) {
+    if (reprintInspection.isReprintedPdf) {
+      return await finalizeReport({
+        status: 'REPRINTED_BROWSER_PDF',
+        isAuthentic: false,
+        fileSha256,
+        doctor: {
+          name: p7Result.doctorInfo?.doctorName || null,
+          crm: crmInfo.crm,
+          uf: crmInfo.uf,
+          cpf: p7Result.doctorInfo?.cpf || null
+        },
+        patient: {
+          name: patientInfo.patientName,
+          cpf: patientInfo.patientCpf
+        },
+        cid: patientInfo.cid,
+        signature: {
+          hasSignature: true,
+          isIcpBrasil: p7Result.doctorInfo?.isIcpBrasil || false,
+          issuer: p7Result.doctorInfo?.issuerName || reprintInspection.producerMetadata.virtualPrinterEngine || 'Navegador Web',
+          signingTime: p7Result.doctorInfo?.signingTime || null,
+          integrityConfirmed: false,
+          calculatedSha256,
+          expectedSha256
+        },
+        restPeriod,
+        details: `Aviso Técnico: Documento re-salvo via navegador ou impressora virtual (identificado motor ${reprintInspection.producerMetadata.virtualPrinterEngine || 'PDFium/Chromium'}). A assinatura digital original foi suprimida durante o processo de impressão virtual. Orientação recomendada: Solicite ao colaborador o arquivo PDF original baixado diretamente do portal/e-mail da clínica ou valide a autenticidade através da chave/QR Code do CFM.`
+      }, patientInfo);
+    }
+
     return await finalizeReport({
       status: 'TAMPERED',
       isAuthentic: false,

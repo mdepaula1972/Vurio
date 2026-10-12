@@ -45,6 +45,15 @@ CREATE TABLE IF NOT EXISTS public.validation_logs (
     qr_code_url TEXT,
     execution_time_ms INTEGER,
     
+    -- Rastreabilidade de Ingestão e Protocolo
+    protocol_id VARCHAR(30), -- Identificador oficial (#VR-XXXXX)
+    channel VARCHAR(20) DEFAULT 'WEB', -- WHATSAPP ou WEB
+    sender_phone VARCHAR(30), -- Telefone do remetente (quando via WhatsApp)
+    patient_name VARCHAR(255), -- Nome do colaborador/paciente
+
+    -- Laudo Pericial Sanitizado (Zero CID / Zero Storage de Arquivos)
+    forensic_report JSONB,
+
     -- Status de Diligência Complementar
     inquiry_status VARCHAR(50) DEFAULT 'NONE', -- NONE, PENDING, CONFIRMED, REPUDIATED
     
