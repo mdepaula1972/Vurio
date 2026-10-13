@@ -8,7 +8,7 @@ import { extractRestDaysAndPeriod, RestPeriodInfo } from './days-extractor';
 import { auditDoctorCrm, CfmDoctorAuditResult } from '../services/cfm-service';
 import { auditAttestationConsistency, ConsistencyAuditResult } from '../services/consistency-service';
 import { extractAttestationFromImageBuffer } from '../services/vision-ocr-service';
-import { auditGeoDistance, GeoAuditResult } from '../services/geo-audit-service';
+import { auditGeoDistance, extractCityFromAddress, GeoAuditResult } from '../services/geo-audit-service';
 import { getCompanyPolicy } from '../services/company-policy-service';
 
 export type AttestationValidationStatus =
@@ -555,19 +555,36 @@ function extractPatientInfoFromText(text: string) {
     cid = cidMatch[1].toUpperCase();
   }
 
-  // 4. Extração Inteligente do Nome do Paciente (Múltiplas Fórmulas Típicas de Atestado no Brasil)
+  // 4. Detecção de Telemedicina no corpo do texto
+  const isTelemedicine = /telemedicina/i.test(text);
+
+  // 5. Extração de Endereço da Clínica / Atendimento no texto do PDF
+  let clinicAddress: string | null = null;
+  const addressMatch = text.match(/(?:endere[çc]o|local(?:idade)?|cl[íi]nica|hospital)[\s:]+([^\r\n]{5,100})/i);
+  if (addressMatch) {
+    clinicAddress = addressMatch[1].trim();
+  }
+
+  // 6. Extração Inteligente do Nome do Paciente (Múltiplas Fórmulas Típicas de Atestado no Brasil)
+  // Delimitadores comuns de fim de campo em formulários e tabelas:
+  // Sexo, Idade, CPF, RG, DN, Nasc, Data, Cartão, Convênio, quebra de linha ou 2+ espaços
+  const delimiters = '(?:\\r?\\n|\\s{2,}|[,;|\\(\\)\\/\\\\]|\\s+(?:sexo|idade|cpf|rg|dn|nasc|data|cart[ãa]o|conv[êe]nio|matr[íi]cula|leito|prontu[áa]rio)[:\\s]|$)';
+
   const patientPatterns = [
-    // Padrão A: "Nome:", "Nome do Paciente:", "Paciente:", "Colaborador:"
-    /(?:nome\s*(?:completo)?\s*(?:do\s*paciente)?|paciente|colaborador|identifica[çc][ãa]o\s*do\s*paciente)[\s:]+([A-Za-zÀ-ÿ\s'\-]{3,60})(?:\r?\n|[,;|\(\/\\]|\s+CPF|\s+RG|\s+DN|\s+nasc|\s+idade|$)/i,
+    // Padrão 1: "Paciente:" ou "Colaborador:" ou "Nome:" interrompido antes de Sexo, Idade, CPF ou espaços duplos
+    new RegExp(`(?:nome\\s*(?:completo)?(?:\\s*do\\s*paciente)?|paciente|colaborador|identifica[çc][ãa]o\\s*do\\s*paciente)[\\s:]+([A-Za-zÀ-ÿ\\s'\\-]{3,60}?)(?=${delimiters})`, 'i'),
 
-    // Padrão B: "Atesto para os devidos fins que o(a) Sr(a)..." ou "Atesto que o(a) Sr(a)..."
-    /atesto(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60})(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i,
+    // Padrão 2: Formato de linha única com múltiplos espaços (ex: "Paciente: Luisa Ebling Uggeri   Sexo:")
+    /(?:paciente|colaborador)[\s:]+([A-Za-zÀ-ÿ\s'\-]{3,50}?)(?:\s+(?:sexo|idade|cpf|rg|dn|nasc|data)|\s{2,}|\r?\n|$)/i,
 
-    // Padrão C: "Declaro para os devidos fins que..." ou "Declaro que..."
-    /declaro(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60})(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i,
+    // Padrão 3: "Atesto para os devidos fins que o(a) Sr(a)..." ou "Atesto que o(a) Sr(a)..."
+    /atesto(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60}?)(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i,
 
-    // Padrão D: "Certifico que o(a)..."
-    /certifico\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60})(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i
+    // Padrão 4: "Declaro para os devidos fins que..." ou "Declaro que..."
+    /declaro(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60}?)(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i,
+
+    // Padrão 5: "Certifico que o(a)..."
+    /certifico\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60}?)(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i
   ];
 
   for (const pattern of patientPatterns) {
@@ -577,7 +594,7 @@ function extractPatientInfoFromText(text: string) {
 
       // Limpeza de sufixos residuais que possam ter entrado na captura
       const cutWords = [
-        'portador', 'portadora', 'compareceu', 'esteve', 'necessita', 
+        'sexo', 'idade', 'portador', 'portadora', 'compareceu', 'esteve', 'necessita', 
         'afastado', 'afastada', 'encontra-se', 'encontra', 'atendido', 
         'atendida', 'residente', 'inscrito', 'inscrita', 'cpf', 'rg'
       ];
@@ -610,7 +627,9 @@ function extractPatientInfoFromText(text: string) {
     patientName,
     patientCpf,
     emissionDate,
-    cid
+    cid,
+    isTelemedicine,
+    clinicAddress
   };
 }
 
@@ -626,6 +645,7 @@ async function finalizeReport(
     cid?: string | null;
     clinicName?: string | null;
     clinicAddress?: string | null;
+    isTelemedicine?: boolean;
   }
 ): Promise<AttestationValidationReport> {
   const policy = getCompanyPolicy();
@@ -653,15 +673,25 @@ async function finalizeReport(
   });
 
   // 3. Auditoria Geográfica (Geo-Shield Add-on)
-  // IMPORTANTE: rawAddress deve vir exclusivamente de contexto de endereço da clínica/médico,
-  // JAMAIS de baseReport.details (que armazena pareceres técnicos ou mensagens forenses).
   if (policy.geoShieldEnabled) {
+    const isTelemedicine = context?.isTelemedicine || false;
     const rawAddress = context?.clinicAddress || context?.clinicName || '';
-    if (rawAddress && policy.workCity) {
+
+    if (isTelemedicine) {
+      baseReport.geoAudit = {
+        hasAddonActive: true,
+        isCompatible: true,
+        distanceKm: 0,
+        clinicCity: rawAddress ? extractCityFromAddress(rawAddress) || 'Atendimento Digital' : 'Atendimento Digital',
+        workCity: policy.workCity || 'Base da Empresa',
+        telemedicineDetected: true
+      };
+    } else if (rawAddress && policy.workCity) {
       baseReport.geoAudit = auditGeoDistance({
         clinicAddressOrCity: rawAddress,
         employeeWorkCity: policy.workCity,
-        distanceThresholdKm: policy.maxAllowedDistanceKm
+        distanceThresholdKm: policy.maxAllowedDistanceKm,
+        isTelemedicine
       });
     } else {
       // Se não há endereço explícito da clínica ou do colaborador, não calcula distância fictícia
