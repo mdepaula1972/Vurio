@@ -3311,6 +3311,52 @@ export default function DashboardClientPage() {
                 </div>
               </div>
 
+              {/* Seção Didática: Esclarecimento Técnico de Validadores Externos (Trust Architecture) */}
+              {human.externalValidatorsNotice && (
+                <div className="p-4 sm:p-5 rounded-2xl bg-cyan-950/25 border border-cyan-500/30 space-y-3 text-xs shadow-xl">
+                  <div className="flex flex-wrap items-center justify-between gap-2 pb-2.5 border-b border-cyan-800/40">
+                    <div className="flex items-center gap-2">
+                      <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                      <h4 className="font-bold text-white text-xs uppercase tracking-wide">
+                        3. {human.externalValidatorsNotice.title}
+                      </h4>
+                    </div>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 uppercase tracking-wider">
+                      Orientação Estratégica ao RH / DP
+                    </span>
+                  </div>
+
+                  <div className="space-y-2.5">
+                    <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
+                      <span className="font-bold text-emerald-300 flex items-center gap-1.5 text-xs">
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> Onde é Válido:
+                      </span>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        {human.externalValidatorsNotice.whereIsValid}
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
+                      <span className="font-bold text-amber-300 flex items-center gap-1.5 text-xs">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-400" /> Por que o Validador do ITI (validar.iti.gov.br) aponta ausência de assinatura:
+                      </span>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        {human.externalValidatorsNotice.whyItiFails}
+                      </p>
+                    </div>
+
+                    <div className="p-3 bg-slate-950/80 rounded-xl border border-slate-800 space-y-1">
+                      <span className="font-bold text-rose-300 flex items-center gap-1.5 text-xs">
+                        <AlertOctagon className="w-3.5 h-3.5 text-rose-400" /> Por que NÃO utilizar o Atesta CFM para este documento:
+                      </span>
+                      <p className="text-[11px] text-slate-300 leading-relaxed">
+                        {human.externalValidatorsNotice.whyAtestaCfmFails}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Guia de Revalidação Autônoma (Trust Architecture) */}
               <div className="p-4 rounded-2xl bg-gradient-to-r from-sky-950/40 via-slate-950 to-indigo-950/40 border border-sky-500/20 space-y-3 text-xs">
                 <div className="flex items-center justify-between">

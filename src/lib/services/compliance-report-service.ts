@@ -201,13 +201,33 @@ export function buildForensicReport(
  * Gera o texto didático, humanizado e verificável do Parecer Técnico de Triagem.
  * Concebido com linguagem clara, acolhedora e baseada em evidências, sem termos acusatórios.
  */
-export function generateHumanizedComplianceReport(data: SanitizedForensicReport): {
+export interface HumanizedComplianceReportResult {
   executiveSummary: string;
   statusBadge: { text: string; color: 'emerald' | 'amber' | 'rose'; description: string };
   methodologyText: string;
   revalidationGuideText: string;
+  externalValidatorsNotice?: {
+    title: string;
+    whereIsValid: string;
+    whyItiFails: string;
+    whyAtestaCfmFails: string;
+  };
   fullMarkdownReport: string;
-} {
+}
+
+/**
+ * Gera o texto didático, humanizado e verificável do Parecer Técnico de Triagem.
+ * Concebido com linguagem clara, acolhedora e baseada em evidências, sem termos acusatórios.
+ */
+export function generateHumanizedComplianceReport(data: SanitizedForensicReport): HumanizedComplianceReportResult {
+  const portal = data.verificationPortal || resolveVerificationPortal(
+    data.revalidationGuides?.verificationCode,
+    data.padesSignature.hasSignature
+  );
+
+  const hasCfmCloudCode = portal.portalType === 'CFM_PRESCRICAO' && Boolean(portal.verificationCode);
+  const isCfmCloudValidated = hasCfmCloudCode && !data.padesSignature.hasSignature;
+
   const isConforme = data.isAuthentic && data.status === 'VALID_INTACT';
   const isQrCodeValido = data.status === 'PHOTO_WITH_QR_CODE';
   const isFisicoTradicional = data.status === 'PHOTO_MANUAL_PAPER';
@@ -221,7 +241,13 @@ export function generateHumanizedComplianceReport(data: SanitizedForensicReport)
     description: 'Documento assinado digitalmente com certificado ICP-Brasil íntegro e ativo.'
   };
 
-  if (isQrCodeValido) {
+  if (isCfmCloudValidated) {
+    statusBadge = {
+      text: 'Conforme / Autenticado na Nuvem Oficial do CFM',
+      color: 'emerald',
+      description: `Ato médico homologado e assinado digitalmente nos servidores centrais do CFM sob a chave oficial ${portal.verificationCode}. A assinatura digital é gerenciada em nuvem pela autoridade emissora.`
+    };
+  } else if (isQrCodeValido) {
     statusBadge = {
       text: 'Validado via QR Code Oficial',
       color: 'emerald',
@@ -269,10 +295,21 @@ export function generateHumanizedComplianceReport(data: SanitizedForensicReport)
     `3. **Normas Trabalhistas (CLT & Políticas Internas):** Checagem de prazos regulamentares de entrega e limites de afastamento.\n` +
     `4. **Auditoria de Deslocamento (Geo-Shield):** Compatibilidade territorial do atendimento em relação à localidade da organização.`;
 
-  const portal = data.verificationPortal || resolveVerificationPortal(
-    data.revalidationGuides?.verificationCode,
-    data.padesSignature.hasSignature
-  );
+  let externalValidatorsNotice: {
+    title: string;
+    whereIsValid: string;
+    whyItiFails: string;
+    whyAtestaCfmFails: string;
+  } | undefined = undefined;
+
+  if (isCfmCloudValidated) {
+    externalValidatorsNotice = {
+      title: 'Esclarecimento Técnico de Validadores Externos (Trust Architecture)',
+      whereIsValid: `O ato médico está devidamente homologado e assinado digitalmente nos servidores centrais do Conselho Federal de Medicina (CFM) sob a chave oficial ${portal.verificationCode}. A conferência de legitimidade e integridade deve ser feita exclusivamente no portal oficial de Prescrição do CFM: ${portal.validationUrl}.`,
+      whyItiFails: `O arquivo apresentado é uma via de visualização/impressão cujo certificado digital é custodiado e assinado na nuvem governamental do CFM. O validador do ITI (validar.iti.gov.br) analisa estritamente envelopes de assinatura PAdES embutidos diretamente no binário do arquivo local. A indicação de "documento sem assinatura" no ITI decorre apenas da ausência desse envelope local nesta via, e NÃO indica fraude, adulteração ou ilegitimidade.`,
+      whyAtestaCfmFails: `As plataformas do CFM possuem finalidades e padrões de máscara distintos: o portal Atesta CFM (validar.atestacfm.org.br) exige o formato XXXX-XX-XXXXXX, enquanto o Portal de Prescrição Eletrônica do CFM utiliza o padrão ${portal.verificationCode}. Inserir este código no Atesta CFM resultará em erro de formato por divergência de máscara, o que NÃO representa falsidade do documento.`
+    };
+  }
 
   let targetPortalItem = '';
   if (portal.portalType === 'CFM_PRESCRICAO') {
@@ -317,6 +354,16 @@ export function generateHumanizedComplianceReport(data: SanitizedForensicReport)
       `   * Acesse: [portal.cfm.org.br/busca-medicos](https://portal.cfm.org.br/busca-medicos/)\n` +
       `   * Informe CRM **${data.doctor.crm || ''}** e UF **${data.doctor.uf || ''}** para averiguar a situação profissional.` : '');
 
+  let externalNoticeMarkdown = '';
+  if (externalValidatorsNotice) {
+    externalNoticeMarkdown =
+      `### 3. ${externalValidatorsNotice.title}\n\n` +
+      `* **Onde é Válido:** ${externalValidatorsNotice.whereIsValid}\n\n` +
+      `* **Por que o Validador do ITI (validar.iti.gov.br) aponta ausência de assinatura:** ${externalValidatorsNotice.whyItiFails}\n\n` +
+      `* **Por que NÃO utilizar o Atesta CFM (validar.atestacfm.org.br):** ${externalValidatorsNotice.whyAtestaCfmFails}\n\n` +
+      `---\n\n`;
+  }
+
   const fullMarkdownReport = 
     `# Parecer Técnico de Triagem de Atestado — Protocolo ${data.protocolId}\n\n` +
     `**Canal de Entrada:** ${data.channel === 'WHATSAPP' ? 'WhatsApp Corporativo' : 'Balcão de Atendimento (Web)'}\n` +
@@ -326,6 +373,7 @@ export function generateHumanizedComplianceReport(data: SanitizedForensicReport)
     `### 1. Resumo Executivo\n${executiveSummary}\n\n` +
     `### 2. Metodologia Aplicada\n${methodologyText}\n\n` +
     `---\n\n` +
+    externalNoticeMarkdown +
     `${revalidationGuideText}`;
 
   return {
@@ -333,6 +381,7 @@ export function generateHumanizedComplianceReport(data: SanitizedForensicReport)
     statusBadge,
     methodologyText,
     revalidationGuideText,
+    externalValidatorsNotice,
     fullMarkdownReport
   };
 }
