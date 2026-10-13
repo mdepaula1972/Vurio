@@ -83,7 +83,7 @@ export function formatWhatsAppResponse(report: AttestationValidationReport): str
       `\n\n📍 *Auditoria de Localização (Geo-Shield)*\n` +
       `• *Local do Atendimento:* ${report.geoAudit.clinicCity}\n` +
       `• *Base de Trabalho:* ${report.geoAudit.workCity}\n` +
-      `• *Distância Estimada:* ~${report.geoAudit.distanceKm} km\n` +
+      `• *Distância Estimada:* ${report.geoAudit.distanceKm !== null ? `~${report.geoAudit.distanceKm} km` : 'Não mensurável'}\n` +
       `• 📌 *Apontamento:* ${report.geoAudit.alert.description}\n`;
   }
 

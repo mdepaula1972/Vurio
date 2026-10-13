@@ -532,16 +532,85 @@ function checkMedicalVocabulary(text: string): boolean {
  * Extrai dados cadastrais do paciente e datas presentes no texto do PDF
  */
 function extractPatientInfoFromText(text: string) {
-  const patientMatch = text.match(/(?:paciente|colaborador)[\s:]*([A-Za-zÀ-ÿ\s]{3,35})(?:\s*[\|\n\r]|$)/i);
-  const cpfMatch = text.match(/CPF[\s:]*([0-9\*\.\-]{11,14})/i);
-  const emissionMatch = text.match(/(?:data|emiss[ãa]o|s[ãa]o\s*paulo,?)[\s:]*(\d{2}[\/\.-]\d{2}[\/\.-]\d{4})/i);
-  const cidMatch = text.match(/CID(?:-10)?[\s:]*([A-Z][0-9]{2}(?:\.[0-9]{1,2})?)/i);
+  let patientName: string | null = null;
+  let patientCpf: string | null = null;
+  let emissionDate: string | null = null;
+  let cid: string | null = null;
+
+  // 1. CPF do paciente / colaborador
+  const cpfMatch = text.match(/(?:CPF|C\.P\.F\.)[\s:]*([0-9\*\.\-]{11,14})/i);
+  if (cpfMatch) {
+    patientCpf = cpfMatch[1].trim();
+  }
+
+  // 2. Data de emissão do atestado
+  const emissionMatch = text.match(/(?:data\s*(?:de)?\s*(?:emiss[ãa]o)?|emiss[ãa]o|s[ãa]o\s*paulo,?)[\s:]*(\d{2}[\/\.-]\d{2}[\/\.-]\d{4})/i);
+  if (emissionMatch) {
+    emissionDate = emissionMatch[1].replace(/[\.-]/g, '/');
+  }
+
+  // 3. CID (captura preliminar no documento)
+  const cidMatch = text.match(/CID(?:-?10)?[\s:]*([A-Z][0-9]{2}(?:\.[0-9]{1,2})?)/i);
+  if (cidMatch) {
+    cid = cidMatch[1].toUpperCase();
+  }
+
+  // 4. Extração Inteligente do Nome do Paciente (Múltiplas Fórmulas Típicas de Atestado no Brasil)
+  const patientPatterns = [
+    // Padrão A: "Nome:", "Nome do Paciente:", "Paciente:", "Colaborador:"
+    /(?:nome\s*(?:completo)?\s*(?:do\s*paciente)?|paciente|colaborador|identifica[çc][ãa]o\s*do\s*paciente)[\s:]+([A-Za-zÀ-ÿ\s'\-]{3,60})(?:\r?\n|[,;|\(\/\\]|\s+CPF|\s+RG|\s+DN|\s+nasc|\s+idade|$)/i,
+
+    // Padrão B: "Atesto para os devidos fins que o(a) Sr(a)..." ou "Atesto que o(a) Sr(a)..."
+    /atesto(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60})(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i,
+
+    // Padrão C: "Declaro para os devidos fins que..." ou "Declaro que..."
+    /declaro(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60})(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i,
+
+    // Padrão D: "Certifico que o(a)..."
+    /certifico\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60})(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i
+  ];
+
+  for (const pattern of patientPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1]) {
+      let rawName = match[1].replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
+
+      // Limpeza de sufixos residuais que possam ter entrado na captura
+      const cutWords = [
+        'portador', 'portadora', 'compareceu', 'esteve', 'necessita', 
+        'afastado', 'afastada', 'encontra-se', 'encontra', 'atendido', 
+        'atendida', 'residente', 'inscrito', 'inscrita', 'cpf', 'rg'
+      ];
+      for (const cut of cutWords) {
+        const cutIdx = rawName.toLowerCase().indexOf(` ${cut}`);
+        if (cutIdx > 0) {
+          rawName = rawName.substring(0, cutIdx).trim();
+        }
+      }
+
+      // Validação de sanidade do nome (comprimento e ausência de termos médicos genéricos)
+      const cleanLower = rawName.toLowerCase();
+      if (
+        rawName.length >= 3 && 
+        rawName.length <= 60 && 
+        !cleanLower.includes('crm') && 
+        !cleanLower.includes('medico') && 
+        !cleanLower.includes('médico') && 
+        !cleanLower.includes('atestado') &&
+        !cleanLower.includes('clinica') &&
+        !cleanLower.includes('clínica')
+      ) {
+        patientName = rawName;
+        break;
+      }
+    }
+  }
 
   return {
-    patientName: patientMatch ? patientMatch[1].trim() : null,
-    patientCpf: cpfMatch ? cpfMatch[1].trim() : null,
-    emissionDate: emissionMatch ? emissionMatch[1].replace(/[\.-]/g, '/') : null,
-    cid: cidMatch ? cidMatch[1].toUpperCase() : null
+    patientName,
+    patientCpf,
+    emissionDate,
+    cid
   };
 }
 
@@ -584,14 +653,26 @@ async function finalizeReport(
   });
 
   // 3. Auditoria Geográfica (Geo-Shield Add-on)
+  // IMPORTANTE: rawAddress deve vir exclusivamente de contexto de endereço da clínica/médico,
+  // JAMAIS de baseReport.details (que armazena pareceres técnicos ou mensagens forenses).
   if (policy.geoShieldEnabled) {
-    const rawAddress = context?.clinicAddress || context?.clinicName || baseReport.details || '';
-    if (rawAddress) {
+    const rawAddress = context?.clinicAddress || context?.clinicName || '';
+    if (rawAddress && policy.workCity) {
       baseReport.geoAudit = auditGeoDistance({
         clinicAddressOrCity: rawAddress,
         employeeWorkCity: policy.workCity,
         distanceThresholdKm: policy.maxAllowedDistanceKm
       });
+    } else {
+      // Se não há endereço explícito da clínica ou do colaborador, não calcula distância fictícia
+      baseReport.geoAudit = {
+        hasAddonActive: true,
+        isCompatible: true,
+        distanceKm: null,
+        clinicCity: 'Não informada no documento',
+        workCity: policy.workCity || 'Não informada no cadastro',
+        telemedicineDetected: false
+      };
     }
   }
 

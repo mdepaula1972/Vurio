@@ -54,7 +54,7 @@ export interface SanitizedForensicReport {
   geoAudit?: {
     hasAddonActive: boolean;
     isCompatible: boolean;
-    distanceKm: number;
+    distanceKm: number | null;
     clinicCity: string;
     workCity: string;
     telemedicineDetected: boolean;

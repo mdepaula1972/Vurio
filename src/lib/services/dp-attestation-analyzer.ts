@@ -168,7 +168,7 @@ export async function analyzeDpAttestation(params: {
       distanceThresholdKm: 50 // Limite de 50 km da diretriz
     });
 
-    if (geoAudit.distanceKm > 50 && !geoAudit.telemedicineDetected) {
+    if (geoAudit.distanceKm !== null && geoAudit.distanceKm > 50 && !geoAudit.telemedicineDetected) {
       alertas_operacionais.push(`Consulta realizada a ${geoAudit.distanceKm} km da residência/unidade.`);
     }
   }

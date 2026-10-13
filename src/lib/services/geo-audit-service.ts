@@ -15,7 +15,7 @@ export interface GeoAuditInput {
 export interface GeoAuditResult {
   hasAddonActive: boolean;
   isCompatible: boolean;
-  distanceKm: number;
+  distanceKm: number | null;
   clinicCity: string;
   workCity: string;
   telemedicineDetected: boolean;
@@ -66,11 +66,26 @@ const BRAZIL_CITY_COORDINATES: Record<string, { lat: number; lng: number }> = {
   'niteroi': { lat: -22.8832, lng: -43.1034 },
   'niterói': { lat: -22.8832, lng: -43.1034 },
   'belo horizonte': { lat: -19.9167, lng: -43.9345 },
+  'contagem': { lat: -19.9386, lng: -44.0539 },
+  'betim': { lat: -19.9678, lng: -44.1983 },
+  'uberlandia': { lat: -18.9186, lng: -48.2772 },
+  'uberlândia': { lat: -18.9186, lng: -48.2772 },
+  'juiz de fora': { lat: -21.7595, lng: -43.3498 },
   'curitiba': { lat: -25.4284, lng: -49.2733 },
+  'londrina': { lat: -23.3103, lng: -51.1628 },
   'porto alegre': { lat: -30.0346, lng: -51.2177 },
+  'caxias do sul': { lat: -29.1678, lng: -51.1794 },
+  'florianopolis': { lat: -27.5954, lng: -48.5480 },
+  'florianópolis': { lat: -27.5954, lng: -48.5480 },
   'salvador': { lat: -12.9777, lng: -38.5016 },
+  'recife': { lat: -8.0476, lng: -34.8770 },
+  'fortaleza': { lat: -3.7172, lng: -38.5433 },
   'brasilia': { lat: -15.7975, lng: -47.8919 },
   'brasília': { lat: -15.7975, lng: -47.8919 },
+  'goiania': { lat: -16.6869, lng: -49.2648 },
+  'goiânia': { lat: -16.6869, lng: -49.2648 },
+  'vitoria': { lat: -20.3155, lng: -40.3128 },
+  'vitória': { lat: -20.3155, lng: -40.3128 }
 };
 
 /**
@@ -150,9 +165,11 @@ function calculateHaversineDistance(lat1: number, lon1: number, lat2: number, lo
 }
 
 /**
- * Normaliza e identifica a cidade a partir de um texto de endereço
+ * Normaliza e identifica a cidade a partir de um texto de endereço.
+ * Retorna null se não houver cidade identificável no texto (evita fallbacks arbitrários).
  */
-export function extractCityFromAddress(address: string): string {
+export function extractCityFromAddress(address?: string | null): string | null {
+  if (!address || !address.trim()) return null;
   const normalized = address.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
   for (const city of Object.keys(BRAZIL_CITY_COORDINATES)) {
@@ -162,13 +179,16 @@ export function extractCityFromAddress(address: string): string {
     }
   }
 
-  // Fallback: extração padrão "Cidade - UF" ou "Cidade/UF"
+  // Fallback para padrão "Cidade - UF" ou "Cidade/UF"
   const match = address.match(/(?:em|de|[\-,])\s*([A-Za-zÀ-ÿ\s]{3,25})\s*(?:[\/-]\s*[A-Z]{2}|\b)/i);
   if (match && match[1]) {
-    return match[1].trim();
+    const candidate = match[1].trim();
+    if (candidate.length >= 3 && !candidate.toLowerCase().includes('rua') && !candidate.toLowerCase().includes('av')) {
+      return candidate;
+    }
   }
 
-  return 'São Paulo';
+  return null;
 }
 
 /**
@@ -179,11 +199,35 @@ export function auditGeoDistance(input: GeoAuditInput): GeoAuditResult {
   const workCity = extractCityFromAddress(input.employeeWorkCity);
   const clinicCity = extractCityFromAddress(input.clinicAddressOrCity);
 
+  // Se uma das localidades não pôde ser determinada, não inventa distância
+  if (!workCity || !clinicCity) {
+    return {
+      hasAddonActive: true,
+      isCompatible: true,
+      distanceKm: null,
+      clinicCity: clinicCity || 'Não informada no atestado',
+      workCity: workCity || input.employeeWorkCity || 'Não informada no cadastro',
+      telemedicineDetected: !!input.isTelemedicine
+    };
+  }
+
   const workKey = workCity.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const clinicKey = clinicCity.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
 
-  const coordsWork = BRAZIL_CITY_COORDINATES[workKey] || BRAZIL_CITY_COORDINATES['sao paulo'];
-  const coordsClinic = BRAZIL_CITY_COORDINATES[clinicKey] || BRAZIL_CITY_COORDINATES['sao paulo'];
+  const coordsWork = BRAZIL_CITY_COORDINATES[workKey];
+  const coordsClinic = BRAZIL_CITY_COORDINATES[clinicKey];
+
+  // Se uma das cidades não tiver coordenadas conhecidas
+  if (!coordsWork || !coordsClinic) {
+    return {
+      hasAddonActive: true,
+      isCompatible: true,
+      distanceKm: null,
+      clinicCity,
+      workCity,
+      telemedicineDetected: !!input.isTelemedicine
+    };
+  }
 
   // 1. Se são a mesma cidade: compatibilidade total imediata
   if (workKey === clinicKey) {

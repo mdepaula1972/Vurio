@@ -2449,11 +2449,17 @@ export default function DashboardClientPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs text-slate-400">Distância Rodoviária Estimada:</p>
-                      <p className="text-2xl font-black text-white">~{geoResult.distanceKm} km</p>
+                      <p className="text-2xl font-black text-white">
+                        {geoResult.distanceKm !== null ? `~${geoResult.distanceKm} km` : 'Não aplicável'}
+                      </p>
                     </div>
 
                     <div>
-                      {geoResult.isCompatible ? (
+                      {geoResult.distanceKm === null ? (
+                        <span className="px-3 py-1 rounded-full bg-slate-500/10 text-slate-300 border border-slate-500/30 text-xs font-bold">
+                          ℹ️ LOCAL NÃO INFORMADO
+                        </span>
+                      ) : geoResult.isCompatible ? (
                         <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 text-xs font-bold">
                           ✓ COERENTE
                         </span>
@@ -3214,7 +3220,7 @@ export default function DashboardClientPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
                   <div>
                     <span className="text-slate-400 block text-[11px]">Colaborador / Paciente:</span>
-                    <span className="text-white font-semibold text-sm">{selectedLogForLaudo.patient_name || 'Não identificado no documento'}</span>
+                    <span className="text-white font-semibold text-sm">{selectedLogForLaudo.patient_name || sanitized.patient?.name || 'Não identificado no documento'}</span>
                   </div>
                   <div>
                     <span className="text-slate-400 block text-[11px]">Profissional Emissor:</span>
@@ -3279,9 +3285,9 @@ export default function DashboardClientPage() {
                     <p className="text-slate-300 text-[11px]">
                       {sanitized.geoAudit?.telemedicineDetected 
                         ? 'Atendimento por Telemedicina detectado (dispensa limite de deslocamento geográfico).'
-                        : sanitized.geoAudit 
+                        : sanitized.geoAudit && sanitized.geoAudit.distanceKm !== null && sanitized.geoAudit.distanceKm !== undefined
                         ? `Deslocamento estimado: ~${sanitized.geoAudit.distanceKm} km entre a clínica e a base do colaborador.`
-                        : 'Endereço em conformidade territorial com as regras da organização.'}
+                        : 'Aferição territorial não aplicável: local de trabalho ou endereço da clínica não informados no documento.'}
                     </p>
                   </div>
 
