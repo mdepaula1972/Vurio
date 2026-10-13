@@ -229,7 +229,7 @@ export async function validateMedicalAttestation(
   const hasMedicalContext = checkMedicalVocabulary(pdfText);
   const restPeriod = extractRestDaysAndPeriod(pdfText);
   const crmInfo = await extractCrmAndUf(fileBuffer);
-  const patientInfo = extractPatientInfoFromText(pdfText);
+  const patientInfo = extractPatientInfoFromText(pdfText, fileBuffer);
 
   // 5. Extrair blocos de assinatura digital PAdES
   const signatures = extractPdfSignatures(fileBuffer);
@@ -531,95 +531,125 @@ function checkMedicalVocabulary(text: string): boolean {
 /**
  * Extrai dados cadastrais do paciente e datas presentes no texto do PDF
  */
-function extractPatientInfoFromText(text: string) {
+function extractPatientInfoFromText(text: string, fileBuffer?: Buffer) {
   let patientName: string | null = null;
   let patientCpf: string | null = null;
   let emissionDate: string | null = null;
   let cid: string | null = null;
 
-  // 1. CPF do paciente / colaborador
-  const cpfMatch = text.match(/(?:CPF|C\.P\.F\.)[\s:]*([0-9\*\.\-]{11,14})/i);
+  if (!text && fileBuffer) {
+    text = fileBuffer.toString('latin1');
+  }
+
+  // 1. Normaliza espaços especiais, unicode non-breaking spaces e tabs
+  const cleanText = (text || '')
+    .replace(/[\u00A0\u1680\u180e\u2000-\u200b\u202f\u205f\u3000\ufeff]/g, ' ');
+
+  // 2. CPF do paciente / colaborador
+  const cpfMatch = cleanText.match(/(?:CPF|C\.P\.F\.)[\s:]*([0-9\*\.\-]{11,14})/i);
   if (cpfMatch) {
     patientCpf = cpfMatch[1].trim();
   }
 
-  // 2. Data de emissão do atestado
-  const emissionMatch = text.match(/(?:data\s*(?:de)?\s*(?:emiss[ãa]o)?|emiss[ãa]o|s[ãa]o\s*paulo,?)[\s:]*(\d{2}[\/\.-]\d{2}[\/\.-]\d{4})/i);
+  // 3. Data de emissão do atestado
+  const emissionMatch = cleanText.match(/(?:data\s*(?:de)?\s*(?:emiss[ãa]o)?|emiss[ãa]o|s[ãa]o\s*paulo,?)[\s:]*(\d{2}[\/\.-]\d{2}[\/\.-]\d{4})/i);
   if (emissionMatch) {
     emissionDate = emissionMatch[1].replace(/[\.-]/g, '/');
   }
 
-  // 3. CID (captura preliminar no documento)
-  const cidMatch = text.match(/CID(?:-?10)?[\s:]*([A-Z][0-9]{2}(?:\.[0-9]{1,2})?)/i);
+  // 4. CID (captura preliminar no documento)
+  const cidMatch = cleanText.match(/CID(?:-?10)?[\s:]*([A-Z][0-9]{2}(?:\.[0-9]{1,2})?)/i);
   if (cidMatch) {
     cid = cidMatch[1].toUpperCase();
   }
 
-  // 4. Detecção de Telemedicina no corpo do texto
-  const isTelemedicine = /telemedicina/i.test(text);
+  // 5. Detecção de Telemedicina no corpo do texto ou buffer
+  const isTelemedicine = /telemedicina/i.test(cleanText) || (fileBuffer ? /telemedicina/i.test(fileBuffer.toString('latin1')) : false);
 
-  // 5. Extração de Endereço da Clínica / Atendimento no texto do PDF
+  // 6. Extração de Endereço da Clínica / Atendimento no texto do PDF
   let clinicAddress: string | null = null;
-  const addressMatch = text.match(/(?:endere[çc]o|local(?:idade)?|cl[íi]nica|hospital)[\s:]+([^\r\n]{5,100})/i);
+  const addressMatch = cleanText.match(/(?:endere[çc]o|local(?:idade)?|cl[íi]nica|hospital)[\s:]+([^\r\n]{5,100})/i);
   if (addressMatch) {
     clinicAddress = addressMatch[1].trim();
   }
 
-  // 6. Extração Inteligente do Nome do Paciente (Múltiplas Fórmulas Típicas de Atestado no Brasil)
-  // Delimitadores comuns de fim de campo em formulários e tabelas:
-  // Sexo, Idade, CPF, RG, DN, Nasc, Data, Cartão, Convênio, quebra de linha ou 2+ espaços
-  const delimiters = '(?:\\r?\\n|\\s{2,}|[,;|\\(\\)\\/\\\\]|\\s+(?:sexo|idade|cpf|rg|dn|nasc|data|cart[ãa]o|conv[êe]nio|matr[íi]cula|leito|prontu[áa]rio)[:\\s]|$)';
+  // 7. Extração de Nome do Paciente (Estratégia A: Busca direta após rótulos com corte por split)
+  const candidatePool: string[] = [];
 
-  const patientPatterns = [
-    // Padrão 1: "Paciente:" ou "Colaborador:" ou "Nome:" interrompido antes de Sexo, Idade, CPF ou espaços duplos
-    new RegExp(`(?:nome\\s*(?:completo)?(?:\\s*do\\s*paciente)?|paciente|colaborador|identifica[çc][ãa]o\\s*do\\s*paciente)[\\s:]+([A-Za-zÀ-ÿ\\s'\\-]{3,60}?)(?=${delimiters})`, 'i'),
-
-    // Padrão 2: Formato de linha única com múltiplos espaços (ex: "Paciente: Luisa Ebling Uggeri   Sexo:")
-    /(?:paciente|colaborador)[\s:]+([A-Za-zÀ-ÿ\s'\-]{3,50}?)(?:\s+(?:sexo|idade|cpf|rg|dn|nasc|data)|\s{2,}|\r?\n|$)/i,
-
-    // Padrão 3: "Atesto para os devidos fins que o(a) Sr(a)..." ou "Atesto que o(a) Sr(a)..."
-    /atesto(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60}?)(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i,
-
-    // Padrão 4: "Declaro para os devidos fins que..." ou "Declaro que..."
-    /declaro(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60}?)(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i,
-
-    // Padrão 5: "Certifico que o(a)..."
-    /certifico\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([A-Za-zÀ-ÿ\s'\-]{3,60}?)(?:[,;|\(\/\\]|\s+portador|\s+compareceu|\s+esteve|\s+necessita|\s+encontra|\s+foi|\s+CPF|\s+RG|$)/i
+  const labelPatterns = [
+    /(?:paciente|colaborador|nome\s*(?:completo)?(?:\s*do\s*paciente)?|identifica[çc][ãa]o\s*do\s*paciente)[\s:]+([^\r\n]+)/gi,
+    /(?:atesto|declaro|certifico)(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([^\r\n]+)/gi
   ];
 
-  for (const pattern of patientPatterns) {
-    const match = text.match(pattern);
-    if (match && match[1]) {
-      let rawName = match[1].replace(/\r?\n/g, ' ').replace(/\s+/g, ' ').trim();
+  for (const regex of labelPatterns) {
+    let match;
+    while ((match = regex.exec(cleanText)) !== null) {
+      if (match[1]) {
+        let candidate = match[1].trim();
 
-      // Limpeza de sufixos residuais que possam ter entrado na captura
-      const cutWords = [
-        'sexo', 'idade', 'portador', 'portadora', 'compareceu', 'esteve', 'necessita', 
-        'afastado', 'afastada', 'encontra-se', 'encontra', 'atendido', 
-        'atendida', 'residente', 'inscrito', 'inscrita', 'cpf', 'rg'
-      ];
-      for (const cut of cutWords) {
-        const cutIdx = rawName.toLowerCase().indexOf(` ${cut}`);
-        if (cutIdx > 0) {
-          rawName = rawName.substring(0, cutIdx).trim();
+        // Se a linha tinha apenas o rótulo (ex: "Paciente:\n"), tenta pegar o conteúdo logo abaixo
+        if (!candidate || candidate.length < 2) {
+          const rest = cleanText.substring(regex.lastIndex);
+          const nextLine = rest.split(/\r?\n/).map(l => l.trim()).find(l => l.length > 2);
+          if (nextLine) candidate = nextLine;
+        }
+
+        // Corta instantaneamente no primeiro delimitador de formulário/tabela
+        candidate = candidate.split(/(?:sexo|idade|cpf|rg|dn|data|nasc|matr[íi]cula|leito|prontu[áa]rio|conv[êe]nio|portador|compareceu|esteve|necessita|encontra|afastad)/i)[0].trim();
+        candidate = candidate.replace(/[;,:|_\-\/\\]+$/, '').trim();
+
+        if (candidate.length >= 3 && candidate.length <= 60) {
+          candidatePool.push(candidate);
         }
       }
+    }
+  }
 
-      // Validação de sanidade do nome (comprimento e ausência de termos médicos genéricos)
-      const cleanLower = rawName.toLowerCase();
-      if (
-        rawName.length >= 3 && 
-        rawName.length <= 60 && 
-        !cleanLower.includes('crm') && 
-        !cleanLower.includes('medico') && 
-        !cleanLower.includes('médico') && 
-        !cleanLower.includes('atestado') &&
-        !cleanLower.includes('clinica') &&
-        !cleanLower.includes('clínica')
-      ) {
-        patientName = rawName;
-        break;
+  // Estratégia B: Varredura Linha a Linha (imune a layouts multi-coluna do Chromium)
+  const lines = cleanText.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const pMatch = line.match(/^(?:paciente|colaborador|nome)[\s:]*(.*)/i);
+    if (pMatch) {
+      let candidate = pMatch[1].trim();
+      if (!candidate && i + 1 < lines.length) {
+        candidate = lines[i + 1].trim();
       }
+      candidate = candidate.split(/(?:sexo|idade|cpf|rg|dn|data|nasc|matr[íi]cula|leito|prontu[áa]rio|conv[êe]nio|portador|compareceu|esteve|necessita|encontra|afastad)/i)[0].trim();
+      candidate = candidate.replace(/[;,:|_\-\/\\]+$/, '').trim();
+
+      if (candidate.length >= 3 && candidate.length <= 60) {
+        candidatePool.push(candidate);
+      }
+    }
+  }
+
+  // Estratégia C: Fallback para strings Tj no buffer binário se o PDF estiver fragmentado
+  if (candidatePool.length === 0 && fileBuffer) {
+    const rawBufferStr = fileBuffer.toString('latin1');
+    const rawMatches = rawBufferStr.match(/Paciente[\s:]*([A-Za-zÀ-ÿ\s]{3,40})/i);
+    if (rawMatches && rawMatches[1]) {
+      let cand = rawMatches[1].trim();
+      cand = cand.split(/(?:sexo|idade|cpf|rg)/i)[0].trim();
+      if (cand.length >= 3) candidatePool.push(cand);
+    }
+  }
+
+  // Validação dos candidatos selecionados
+  for (const cand of candidatePool) {
+    const lower = cand.toLowerCase();
+    if (
+      !lower.includes('crm') &&
+      !lower.includes('medico') &&
+      !lower.includes('médico') &&
+      !lower.includes('atestado') &&
+      !lower.includes('clinica') &&
+      !lower.includes('clínica') &&
+      !lower.includes('receituario') &&
+      !lower.includes('declaracao')
+    ) {
+      patientName = cand;
+      break;
     }
   }
 
