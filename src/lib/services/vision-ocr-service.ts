@@ -62,10 +62,12 @@ export async function extractAttestationFromImageBuffer(
     process.env.GOOGLE_API_KEY ||
     '';
 
+  const openaiKey = process.env.OPENAI_API_KEY || '';
+
   // 1. Se possuir chave do Google AI Studio configurada, utiliza o Gemini Vision (com fallback resiliente)
   if (apiKey) {
     const base64Image = imageBuffer.toString('base64');
-    const modelsToTry = ['gemini-3.8-flash', 'gemini-flash-latest'];
+    const modelsToTry = ['gemini-1.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'];
 
     for (const model of modelsToTry) {
       try {
@@ -140,7 +142,73 @@ export async function extractAttestationFromImageBuffer(
     }
   }
 
-  // 2. Fallback sem chave ou em erro de rede:
+  // 2. Se possuir chave da OpenAI e o arquivo for imagem, tenta GPT-4o-mini Vision
+  if (openaiKey && mimeType.startsWith('image/')) {
+    try {
+      const base64Image = imageBuffer.toString('base64');
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${openaiKey}`
+        },
+        body: JSON.stringify({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                { text: FORENSIC_OCR_PROMPT, type: 'text' },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: `data:${mimeType};base64,${base64Image}`
+                  }
+                }
+              ]
+            }
+          ],
+          response_format: { type: 'json_object' },
+          temperature: 0.1
+        })
+      });
+
+      if (response.ok) {
+        const json = await response.json();
+        const rawContent = json.choices?.[0]?.message?.content || '';
+        if (rawContent) {
+          const parsed = JSON.parse(rawContent);
+          const isMedical = parsed.isMedicalAttestation !== false;
+          const rawCouncil = parsed.councilType ? String(parsed.councilType).toUpperCase().trim() : (parsed.crm ? 'CRM' : null);
+          const validCouncil = (rawCouncil && ['CRM', 'CRO', 'CRP', 'CREFITO', 'CRN', 'RMS'].includes(rawCouncil)) ? rawCouncil : 'CRM';
+          const num = isMedical && parsed.crm ? String(parsed.crm).replace(/\D/g, '') : null;
+
+          return {
+            isMedicalAttestation: isMedical,
+            doctorName: isMedical ? (parsed.doctorName || null) : null,
+            crm: validCouncil === 'CRM' ? num : null,
+            councilType: isMedical ? (validCouncil as any) : null,
+            councilNumber: isMedical ? num : null,
+            professionalTitle: validCouncil === 'CRO' ? 'Cirurgião-Dentista' : validCouncil === 'CRP' ? 'Psicólogo(a)' : 'Médico(a)',
+            uf: isMedical && parsed.uf ? String(parsed.uf).toUpperCase() : (isMedical ? 'SP' : null),
+            patientName: isMedical ? (parsed.patientName || null) : null,
+            patientCpf: isMedical ? (parsed.patientCpf || null) : null,
+            emissionDate: isMedical ? (parsed.emissionDate || null) : null,
+            startDate: isMedical ? (parsed.startDate || parsed.emissionDate || null) : null,
+            days: isMedical && parsed.days ? parseInt(parsed.days, 10) : null,
+            cid: isMedical ? (parsed.cid || null) : null,
+            clinicName: isMedical ? (parsed.clinicName || null) : null,
+            rawExtractedText: rawContent,
+            source: 'GEMINI_VISION'
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('[VisionOCR] Erro ao chamar OpenAI Vision:', (err as any)?.message);
+    }
+  }
+
+  // 3. Fallback sem chave ou em erro de rede:
   // Retorna seguro sem inventar médicos ou CRMs fictícios
   return parseHeuristicFromImage(imageBuffer);
 }

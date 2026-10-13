@@ -229,7 +229,25 @@ export async function validateMedicalAttestation(
   const hasMedicalContext = checkMedicalVocabulary(pdfText);
   const restPeriod = extractRestDaysAndPeriod(pdfText);
   const crmInfo = await extractCrmAndUf(fileBuffer);
-  const patientInfo = extractPatientInfoFromText(pdfText, fileBuffer);
+  let patientInfo = extractPatientInfoFromText(pdfText, fileBuffer);
+
+  // Fallback de Visão Computacional (OCR): se o parser textual não identificou o paciente no PDF, aciona o Vision OCR
+  if (!patientInfo.patientName) {
+    try {
+      const visionExtracted = await extractAttestationFromImageBuffer(fileBuffer, 'application/pdf');
+      if (visionExtracted.patientName) {
+        patientInfo.patientName = visionExtracted.patientName;
+      }
+      if (!patientInfo.patientCpf && visionExtracted.patientCpf) {
+        patientInfo.patientCpf = visionExtracted.patientCpf;
+      }
+      if (!restPeriod.days && visionExtracted.days) {
+        restPeriod.days = visionExtracted.days;
+      }
+    } catch {
+      // Continua com os dados obtidos
+    }
+  }
 
   // 5. Extrair blocos de assinatura digital PAdES
   const signatures = extractPdfSignatures(fileBuffer);
@@ -571,49 +589,75 @@ function extractPatientInfoFromText(text: string, fileBuffer?: Buffer) {
   const addressMatch = cleanText.match(/(?:endere[çc]o|local(?:idade)?|cl[íi]nica|hospital)[\s:]+([^\r\n]{5,100})/i);
   if (addressMatch) {
     clinicAddress = addressMatch[1].trim();
+  } else {
+    // Padrão CFM: Endereço pode estar na linha anterior ao rótulo "Endereço:"
+    const rawLines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    const endIdx = rawLines.findIndex(l => /^endere[çc]o[\s:]*$/i.test(l));
+    if (endIdx > 0 && rawLines[endIdx - 1].length >= 5) {
+      clinicAddress = rawLines[endIdx - 1].trim();
+    }
   }
 
-  // 7. Extração de Nome do Paciente - Abordagem Direta "Logo após Paciente"
+  // 7. Extração de Nome do Paciente - Abordagem Bidirecional Inteligente (Suporte a CFM e Formulários em Grade)
   const forbidden = [
     'supra citad', 'acima citad', 'acima identificad', 'supramencionad',
     'referid', 'o mesmo', 'a mesma', 'crm', 'medico', 'médico', 'atestado',
     'clinica', 'clínica', 'declaracao', 'declaração', 'receituario'
   ];
 
-  // Passo 1: Busca em todas as ocorrências de rótulo de paciente/colaborador
-  const pacienteRegex = /\b(?:paciente|colaborador|nome\s*(?:completo)?(?:\s*do\s*paciente)?)\b[\s:]*/gi;
-  let match;
+  const lines = cleanText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
 
-  while ((match = pacienteRegex.exec(cleanText)) !== null) {
-    const startIdx = match.index + match[0].length;
-    let substring = cleanText.substring(startIdx);
-
-    // Corta nos delimitadores comuns de formulário (Sexo, Idade, CPF, Quebra de linha, etc.)
-    substring = substring.split(/(?:\r?\n|sexo|idade|cpf|rg|dn|data|nasc|matr[íi]cula|leito|prontu[áa]rio|conv[êe]nio|portador|compareceu|esteve|necessita|encontra|afastad|[;|_|\/|\\])/i)[0];
-    
-    // Limpa caracteres especiais residuais
-    let candidate = substring.replace(/^[\s:_\-]+/, '').replace(/[\s:_\-]+$/, '').trim();
-
-    // Se tiver mais de 5 palavras, pega até 4 (nome próprio)
-    const words = candidate.split(/\s+/).filter(w => w.length > 0);
-    if (words.length > 5) {
-      candidate = words.slice(0, 4).join(' ');
-    }
-
-    const lower = candidate.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const isBad = forbidden.some(f => lower.includes(f));
-
-    if (candidate.length >= 3 && candidate.length <= 60 && !isBad) {
-      patientName = candidate;
-      break;
+  // Passo 1: Padrão CFM / Formulários onde a célula de valor é emitida na linha ANTERIOR ao rótulo "Paciente:"
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^(?:paciente|colaborador)[\s:]*$/i.test(line)) {
+      if (i > 0) {
+        const prev = lines[i - 1].trim();
+        const prevLower = prev.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const isBad = forbidden.some(f => prevLower.includes(f)) || /\d{3,}/.test(prev);
+        if (prev.length >= 3 && prev.length <= 60 && !isBad) {
+          patientName = prev;
+          break;
+        }
+      }
     }
   }
 
-  // Passo 2: Fallback se o PDF gerou linhas fragmentadas ou tabelas
+  // Passo 2: Busca clássica em linha direta (ex: "Paciente: Fulano de Tal")
   if (!patientName) {
-    const lines = cleanText.split(/\r?\n/);
+    const pacienteRegex = /\b(?:paciente|colaborador|nome\s*(?:completo)?(?:\s*do\s*paciente)?)\b[\s:]*/gi;
+    let match;
+
+    while ((match = pacienteRegex.exec(cleanText)) !== null) {
+      const startIdx = match.index + match[0].length;
+      let substring = cleanText.substring(startIdx);
+
+      // Corta nos delimitadores comuns de formulário (Sexo, Idade, CPF, Quebra de linha, etc.)
+      substring = substring.split(/(?:\r?\n|sexo|idade|cpf|rg|dn|data|nasc|matr[íi]cula|leito|prontu[áa]rio|conv[êe]nio|portador|compareceu|esteve|necessita|encontra|afastad|[;|_|\/|\\])/i)[0];
+      
+      // Limpa caracteres especiais residuais
+      let candidate = substring.replace(/^[\s:_\-]+/, '').replace(/[\s:_\-]+$/, '').trim();
+
+      // Se tiver mais de 5 palavras, pega até 4 (nome próprio)
+      const words = candidate.split(/\s+/).filter(w => w.length > 0);
+      if (words.length > 5) {
+        candidate = words.slice(0, 4).join(' ');
+      }
+
+      const lower = candidate.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      const isBad = forbidden.some(f => lower.includes(f));
+
+      if (candidate.length >= 3 && candidate.length <= 60 && !isBad) {
+        patientName = candidate;
+        break;
+      }
+    }
+  }
+
+  // Passo 3: Se ainda não encontrou, busca na linha POSTERIOR ao rótulo
+  if (!patientName) {
     for (let i = 0; i < lines.length; i++) {
-      const line = lines[i].trim();
+      const line = lines[i];
       const pMatch = line.match(/(?:^|\b)(?:paciente|colaborador)[\s:]*(.*)/i);
       if (pMatch) {
         let candidate = pMatch[1].trim();
@@ -634,7 +678,7 @@ function extractPatientInfoFromText(text: string, fileBuffer?: Buffer) {
     }
   }
 
-  // Passo 3: Fallback em stream binário bruto (Tj operators)
+  // Passo 4: Fallback em stream binário bruto (Tj operators)
   if (!patientName && fileBuffer) {
     const rawBufferStr = fileBuffer.toString('latin1');
     const rawMatches = rawBufferStr.match(/Paciente[\s:]*([A-Za-zÀ-ÿ\s]{3,40})/i);

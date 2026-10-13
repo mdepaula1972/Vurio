@@ -240,6 +240,18 @@ async function runTests() {
   assert(psychInfo.councilNumber === '78910', 'Extrai número do CRP');
   assert(psychInfo.professionalTitle === 'Psicólogo(a)', 'Define título profissional como Psicólogo(a)');
 
+  // --- TESTE 10: Extração de Paciente em Atestado Real CFM (Luisa Ebling Uggeri) ---
+  console.log('\n--- TESTE 10: Extração de Paciente em Atestado CFM ---');
+  const realPdfPath = 'c:/Solucione/Vurio/Atestados/Ótica Léia/consulta-documento-2_261005_181847.pdf';
+  if (fs.existsSync(realPdfPath)) {
+    const realBuf = fs.readFileSync(realPdfPath);
+    const realReport = await validateMedicalAttestation(realBuf, 'application/pdf', 'consulta-documento-2_261005_181847.pdf');
+    assert(realReport.patient?.name === 'Luisa Ebling Uggeri', `Nome do paciente extraído com sucesso: ${realReport.patient?.name}`);
+    assert(realReport.restPeriod?.days === 7, `Afastamento de 7 dias extraído: ${realReport.restPeriod?.days} dias`);
+  } else {
+    console.log('⚠️ Arquivo de teste real não encontrado no caminho local, ignorando...');
+  }
+
   console.log('\n====================================================');
   console.log(`RESULTADO FINAL DOS TESTES AMPLIADOS: ${passedTests}/${totalTests} PASSARAM`);
   console.log('====================================================');

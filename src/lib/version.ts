@@ -2,10 +2,10 @@
  * Constantes de versionamento centralizadas da aplicação Vurio.
  * Utilizadas no frontend, cabeçalhos de resposta HTTP, diagnóstico pericial e deploy Vercel.
  */
-export const APP_VERSION = 'v1.4.6';
+export const APP_VERSION = 'v1.4.7';
 export const APP_BUILD_DATE = '12/10/2026';
 export const APP_ENGINE_NAME = 'Vurio DP Workstation';
-export const APP_VERSION_LABEL = `${APP_ENGINE_NAME} ${APP_VERSION} • Leitor Imediato Pós-Rótulo Paciente • Build ${APP_BUILD_DATE}`;
+export const APP_VERSION_LABEL = `${APP_ENGINE_NAME} ${APP_VERSION} • Leitor Bidirecional CFM & Multi-Camada OCR • Build ${APP_BUILD_DATE}`;
 
 export interface AppVersionInfo {
   version: string;
