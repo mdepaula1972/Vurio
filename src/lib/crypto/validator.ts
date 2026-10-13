@@ -10,6 +10,7 @@ import { auditAttestationConsistency, ConsistencyAuditResult } from '../services
 import { extractAttestationFromImageBuffer } from '../services/vision-ocr-service';
 import { auditGeoDistance, extractCityFromAddress, GeoAuditResult } from '../services/geo-audit-service';
 import { getCompanyPolicy } from '../services/company-policy-service';
+import { resolveVerificationPortal, extractVerificationCodeOrUrl, VerificationPortalResolution } from '../services/verification-portal-service';
 
 export type AttestationValidationStatus =
   | 'VALID_INTACT'          // Caso A1: PDF Nativo com Assinatura Criptográfica ICP-Brasil Íntegra
@@ -54,6 +55,9 @@ export interface AttestationValidationReport {
   cfmAudit?: CfmDoctorAuditResult;
   consistency?: ConsistencyAuditResult;
   geoAudit?: GeoAuditResult;
+  verificationPortal?: VerificationPortalResolution;
+  verificationCode?: string | null;
+  verificationUrl?: string | null;
   details: string;
 }
 
@@ -248,6 +252,14 @@ export async function validateMedicalAttestation(
       // Continua com os dados obtidos
     }
   }
+
+  // Extrair código ou link oficial de conferência externa (CFM Prescrição, Atesta CFM, Memed, ITI)
+  const verificationCodeOrUrl = extractVerificationCodeOrUrl(pdfText) || extractVerificationCodeOrUrl(fileBuffer.toString('latin1'));
+  patientInfo = {
+    ...patientInfo,
+    verificationCodeOrUrl,
+    rawText: pdfText
+  } as any;
 
   // 5. Extrair blocos de assinatura digital PAdES
   const signatures = extractPdfSignatures(fileBuffer);
@@ -714,6 +726,8 @@ async function finalizeReport(
     clinicName?: string | null;
     clinicAddress?: string | null;
     isTelemedicine?: boolean;
+    verificationCodeOrUrl?: string | null;
+    rawText?: string | null;
   }
 ): Promise<AttestationValidationReport> {
   const policy = getCompanyPolicy();
@@ -773,6 +787,18 @@ async function finalizeReport(
       };
     }
   }
+
+  // 4. Resolução do Portal Oficial de Validação (Prescrição CFM, Atesta CFM, Memed, ITI)
+  const codeOrUrl = context?.verificationCodeOrUrl || 
+    baseReport.qrCode?.qrData || 
+    (context?.rawText ? extractVerificationCodeOrUrl(context.rawText) : null);
+
+  const hasDigSig = baseReport.signature?.hasSignature || baseReport.signature?.isIcpBrasil || false;
+  const resolution = resolveVerificationPortal(codeOrUrl, hasDigSig);
+
+  baseReport.verificationPortal = resolution;
+  baseReport.verificationCode = resolution.verificationCode || null;
+  baseReport.verificationUrl = resolution.validationUrl || null;
 
   return baseReport;
 }

@@ -1,4 +1,15 @@
 import { AttestationValidationReport } from '../crypto/validator';
+import type { VerificationPortalResolution } from './verification-portal-service';
+import { 
+  resolveVerificationPortal,
+  extractVerificationCodeOrUrl 
+} from './verification-portal-service';
+
+export type { VerificationPortalResolution };
+export {
+  resolveVerificationPortal,
+  extractVerificationCodeOrUrl
+};
 
 export interface SanitizedForensicReport {
   protocolId: string;
@@ -65,10 +76,17 @@ export interface SanitizedForensicReport {
       recommendation: string;
     };
   };
+  verificationPortal?: VerificationPortalResolution;
   revalidationGuides: {
     itiValidatorUrl: string;
     cfmDoctorSearchUrl: string;
     cfmPrescriptionUrl?: string;
+    targetValidationUrl?: string;
+    targetPortalName?: string;
+    targetActionLabel?: string;
+    targetInstructionText?: string;
+    verificationCode?: string;
+    portalType?: 'CFM_PRESCRICAO' | 'ATESTA_CFM' | 'MEMED' | 'ITI_ICP_BRASIL' | 'GENERIC';
   };
 }
 
@@ -92,80 +110,92 @@ export function buildForensicReport(
   protocolId: string,
   channel: 'WHATSAPP' | 'WEB'
 ): SanitizedForensicReport {
+  const portal = report.verificationPortal || resolveVerificationPortal(
+    report.verificationCode || report.qrCode?.qrData,
+    report.signature?.hasSignature || report.signature?.isIcpBrasil
+  );
+
   return {
-    protocolId,
-    channel,
-    status: report.status,
-    isAuthentic: report.isAuthentic,
-    evaluatedAt: new Date().toISOString(),
-    fileSha256: report.fileSha256,
-    doctor: {
-      name: report.doctor?.name || null,
-      crm: report.doctor?.crm || null,
-      uf: report.doctor?.uf || null,
-      councilType: report.doctor?.councilType || 'CRM',
-      councilNumber: report.doctor?.councilNumber || report.doctor?.crm || null,
-      professionalTitle: report.doctor?.professionalTitle || 'Médico(a)'
-    },
-    patient: {
-      name: report.patient?.name || null
-      // LGPD: CID NUNCA É PERSISTIDO
-    },
-    restPeriod: {
-      days: report.restPeriod?.days || null,
-      startDate: report.restPeriod?.startDate || null
-    },
-    padesSignature: {
-      hasSignature: report.signature?.hasSignature || false,
-      isIcpBrasil: report.signature?.isIcpBrasil || false,
-      issuer: report.signature?.issuer || null,
-      signingTime: report.signature?.signingTime ? new Date(report.signature.signingTime).toISOString() : null,
-      integrityConfirmed: report.signature?.integrityConfirmed || false,
-      calculatedSha256: report.signature?.calculatedSha256 || null,
-      expectedSha256: report.signature?.expectedSha256 || null
-    },
-    cfmAudit: report.cfmAudit ? {
-      isRegistered: report.cfmAudit.isRegistered ?? true,
-      status: (report.cfmAudit.status === 'NOT_FOUND' && report.doctor?.crm) ? 'REGULAR' : report.cfmAudit.status,
-      statusDescription: report.cfmAudit.statusDescription?.includes('Não foi possível verificar') && report.doctor?.crm
-        ? `Inscrição profissional ativa e regular perante o ${report.cfmAudit.regionalCouncil}.`
-        : report.cfmAudit.statusDescription,
-      regionalCouncil: report.cfmAudit.regionalCouncil,
-      officialName: report.cfmAudit.officialName || report.doctor?.name,
-      primarySpecialty: report.cfmAudit.primarySpecialty || 'Clínica Geral',
-      divergenceAlert: report.cfmAudit.nameMatch?.divergenceAlert || null
-    } : undefined,
-    consistency: report.consistency ? {
-      hasInconsistencies: report.consistency.hasInconsistencies,
-      criticalCount: report.consistency.criticalCount,
-      warningCount: report.consistency.warningCount,
-      alerts: report.consistency.alerts.map(a => ({
-        severity: a.severity,
-        title: a.title,
-        description: a.description,
-        recommendation: a.recommendation
-      }))
-    } : undefined,
-    geoAudit: report.geoAudit ? {
-      hasAddonActive: report.geoAudit.hasAddonActive,
-      isCompatible: report.geoAudit.isCompatible,
-      distanceKm: report.geoAudit.distanceKm,
-      clinicCity: report.geoAudit.clinicCity,
-      workCity: report.geoAudit.workCity,
-      telemedicineDetected: report.geoAudit.telemedicineDetected,
-      alert: report.geoAudit.alert
-    } : undefined,
-    revalidationGuides: {
-      itiValidatorUrl: 'https://validar.iti.gov.br',
-      cfmDoctorSearchUrl: report.doctor?.crm && report.doctor?.uf 
-        ? `https://portal.cfm.org.br/busca-medicos/?crm=${report.doctor.crm}&uf=${report.doctor.uf}`
-        : 'https://portal.cfm.org.br/busca-medicos/',
-      cfmPrescriptionUrl: report.qrCode?.qrData?.includes('cfm.org.br') 
-        ? report.qrCode.qrData 
-        : 'https://prescricao.cfm.org.br'
-    }
-  };
-}
+      protocolId,
+      channel,
+      status: report.status,
+      isAuthentic: report.isAuthentic,
+      evaluatedAt: new Date().toISOString(),
+      fileSha256: report.fileSha256,
+      doctor: {
+        name: report.doctor?.name || null,
+        crm: report.doctor?.crm || null,
+        uf: report.doctor?.uf || null,
+        councilType: report.doctor?.councilType || 'CRM',
+        councilNumber: report.doctor?.councilNumber || report.doctor?.crm || null,
+        professionalTitle: report.doctor?.professionalTitle || 'Médico(a)'
+      },
+      patient: {
+        name: report.patient?.name || null
+        // LGPD: CID NUNCA É PERSISTIDO
+      },
+      restPeriod: {
+        days: report.restPeriod?.days || null,
+        startDate: report.restPeriod?.startDate || null
+      },
+      padesSignature: {
+        hasSignature: report.signature?.hasSignature || false,
+        isIcpBrasil: report.signature?.isIcpBrasil || false,
+        issuer: report.signature?.issuer || null,
+        signingTime: report.signature?.signingTime ? new Date(report.signature.signingTime).toISOString() : null,
+        integrityConfirmed: report.signature?.integrityConfirmed || false,
+        calculatedSha256: report.signature?.calculatedSha256 || null,
+        expectedSha256: report.signature?.expectedSha256 || null
+      },
+      cfmAudit: report.cfmAudit ? {
+        isRegistered: report.cfmAudit.isRegistered ?? true,
+        status: (report.cfmAudit.status === 'NOT_FOUND' && report.doctor?.crm) ? 'REGULAR' : report.cfmAudit.status,
+        statusDescription: report.cfmAudit.statusDescription?.includes('Não foi possível verificar') && report.doctor?.crm
+          ? `Inscrição profissional ativa e regular perante o ${report.cfmAudit.regionalCouncil}.`
+          : report.cfmAudit.statusDescription,
+        regionalCouncil: report.cfmAudit.regionalCouncil,
+        officialName: report.cfmAudit.officialName || report.doctor?.name,
+        primarySpecialty: report.cfmAudit.primarySpecialty || 'Clínica Geral',
+        divergenceAlert: report.cfmAudit.nameMatch?.divergenceAlert || null
+      } : undefined,
+      consistency: report.consistency ? {
+        hasInconsistencies: report.consistency.hasInconsistencies,
+        criticalCount: report.consistency.criticalCount,
+        warningCount: report.consistency.warningCount,
+        alerts: report.consistency.alerts.map(a => ({
+          severity: a.severity,
+          title: a.title,
+          description: a.description,
+          recommendation: a.recommendation
+        }))
+      } : undefined,
+      geoAudit: report.geoAudit ? {
+        hasAddonActive: report.geoAudit.hasAddonActive,
+        isCompatible: report.geoAudit.isCompatible,
+        distanceKm: report.geoAudit.distanceKm,
+        clinicCity: report.geoAudit.clinicCity,
+        workCity: report.geoAudit.workCity,
+        telemedicineDetected: report.geoAudit.telemedicineDetected,
+        alert: report.geoAudit.alert
+      } : undefined,
+      verificationPortal: portal,
+      revalidationGuides: {
+        itiValidatorUrl: 'https://validar.iti.gov.br',
+        cfmDoctorSearchUrl: report.doctor?.crm && report.doctor?.uf 
+          ? `https://portal.cfm.org.br/busca-medicos/?crm=${report.doctor.crm}&uf=${report.doctor.uf}`
+          : 'https://portal.cfm.org.br/busca-medicos/',
+        cfmPrescriptionUrl: portal.portalType === 'CFM_PRESCRICAO'
+          ? portal.validationUrl
+          : (report.qrCode?.qrData?.includes('cfm.org.br') ? report.qrCode.qrData : 'https://prescricao.cfm.org.br/documento'),
+        targetValidationUrl: portal.validationUrl,
+        targetPortalName: portal.portalName,
+        targetActionLabel: portal.actionLabel,
+        targetInstructionText: portal.instructionText,
+        verificationCode: portal.verificationCode,
+        portalType: portal.portalType
+      }
+    };
+  }
 
 /**
  * Gera o texto didático, humanizado e verificável do Parecer Técnico de Triagem.
@@ -239,17 +269,53 @@ export function generateHumanizedComplianceReport(data: SanitizedForensicReport)
     `3. **Normas Trabalhistas (CLT & Políticas Internas):** Checagem de prazos regulamentares de entrega e limites de afastamento.\n` +
     `4. **Auditoria de Deslocamento (Geo-Shield):** Compatibilidade territorial do atendimento em relação à localidade da organização.`;
 
+  const portal = data.verificationPortal || resolveVerificationPortal(
+    data.revalidationGuides?.verificationCode,
+    data.padesSignature.hasSignature
+  );
+
+  let targetPortalItem = '';
+  if (portal.portalType === 'CFM_PRESCRICAO') {
+    targetPortalItem =
+      `1. **Portal de Prescrição Eletrônica do CFM (Portal Oficial Indicado):**\n` +
+      `   * Acesse: [${portal.validationUrl}](${portal.validationUrl})\n` +
+      `   * Chave de Consulta: **${portal.verificationCode || 'Consultar Documento'}**\n` +
+      `   * ${portal.instructionText}\n` +
+      `   * ⚠️ **Aviso ao DP:** O formato desta chave (\`CFMP-\`) é exclusivo do portal de Prescrição do CFM. Não tente validar este código no Atesta CFM, pois a máscara é diferente e gerará falso erro de formato.\n\n`;
+  } else if (portal.portalType === 'ATESTA_CFM') {
+    targetPortalItem =
+      `1. **Plataforma Atesta CFM (Portal Oficial Indicado):**\n` +
+      `   * Acesse: [${portal.validationUrl}](${portal.validationUrl})\n` +
+      `   * Código de Validação: **${portal.verificationCode || 'XXXX-XX-XXXXXX'}**\n` +
+      `   * ${portal.instructionText}\n\n`;
+  } else if (portal.portalType === 'MEMED') {
+    targetPortalItem =
+      `1. **Plataforma Emissora Homologada (Memed):**\n` +
+      `   * Acesse: [${portal.validationUrl}](${portal.validationUrl})\n` +
+      `   * ${portal.instructionText}\n\n`;
+  } else if (portal.portalType === 'ITI_ICP_BRASIL') {
+    targetPortalItem =
+      `1. **Validador Oficial do Governo Federal (ITI / ICP-Brasil):**\n` +
+      `   * Acesse: [validar.iti.gov.br](https://validar.iti.gov.br)\n` +
+      `   * Submeta o arquivo PDF original para conferir a integridade do certificado ICP-Brasil.\n\n`;
+  } else {
+    targetPortalItem =
+      `1. **Consulta Pública de Médicos (Conselho Federal de Medicina):**\n` +
+      `   * Acesse: [portal.cfm.org.br/busca-medicos](https://portal.cfm.org.br/busca-medicos/)\n` +
+      `   * Informe o CRM **${data.doctor.crm || ''}** e UF **${data.doctor.uf || ''}**.\n\n`;
+  }
+
   const revalidationGuideText =
     `### Como o DP ou Colaborador Pode Revalidar de Forma Autônoma:\n\n` +
     `Qualquer pessoa com acesso aos documentos públicos oficiais pode realizar a conferência direta nos portais governamentais:\n\n` +
-    `1. **Validador Oficial do Governo Federal (ITI / ICP-Brasil):**\n` +
-    `   * Acesse: [validar.iti.gov.br](https://validar.iti.gov.br)\n` +
-    `   * Carregue o arquivo PDF original. O portal confirmará o nome do médico signatário e a integridade do arquivo.\n\n` +
-    `2. **Consulta Pública de Médicos (Conselho Federal de Medicina):**\n` +
-    `   * Acesse: [portal.cfm.org.br/busca-medicos](https://portal.cfm.org.br/busca-medicos/)\n` +
-    `   * Informe o CRM **${data.doctor.crm || ''}** e o Estado **${data.doctor.uf || ''}** para checar a situação cadastral do profissional.\n\n` +
-    `3. **Plataforma de Prescrição CFM (quando emitido pelo CFM):**\n` +
-    `   * Acesse: [prescricao.cfm.org.br](https://prescricao.cfm.org.br) com o código verificador do documento.`;
+    targetPortalItem +
+    (portal.portalType !== 'ITI_ICP_BRASIL' && data.padesSignature.hasSignature ?
+      `2. **Validador ICP-Brasil (Governo Federal / ITI):**\n` +
+      `   * Acesse: [validar.iti.gov.br](https://validar.iti.gov.br) para atestar a assinatura digital do médico.\n\n` : '') +
+    (portal.portalType !== 'GENERIC' ?
+      `3. **Consulta Pública de Médicos (CFM):**\n` +
+      `   * Acesse: [portal.cfm.org.br/busca-medicos](https://portal.cfm.org.br/busca-medicos/)\n` +
+      `   * Informe CRM **${data.doctor.crm || ''}** e UF **${data.doctor.uf || ''}** para averiguar a situação profissional.` : '');
 
   const fullMarkdownReport = 
     `# Parecer Técnico de Triagem de Atestado — Protocolo ${data.protocolId}\n\n` +

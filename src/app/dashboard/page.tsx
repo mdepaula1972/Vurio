@@ -60,6 +60,7 @@ import { auditGeoDistance, GeoAuditResult } from '@/lib/services/geo-audit-servi
 import { getCompanyPolicy, updateCompanyPolicy, CompanyPolicyConfig } from '@/lib/services/company-policy-service';
 import { CompanyAccount } from '@/lib/services/company-service';
 import { formatProtocolId, generateHumanizedComplianceReport, buildForensicReport } from '@/lib/services/compliance-report-service';
+import { resolveVerificationPortal, VerificationPortalResolution } from '@/lib/services/verification-portal-service';
 import { APP_VERSION, APP_VERSION_LABEL, APP_ENGINE_NAME, APP_BUILD_DATE } from '@/lib/version';
 import { DpAttestationAnalysisResponse } from '@/lib/services/dp-attestation-analyzer';
 import { NotableDpEvent } from '@/lib/services/absenteeism-service';
@@ -142,6 +143,7 @@ export default function DashboardClientPage() {
   const [laudoModalOpen, setLaudoModalOpen] = useState(false);
   const [selectedLogForLaudo, setSelectedLogForLaudo] = useState<ValidationLog | null>(null);
   const [copiedProtocolId, setCopiedProtocolId] = useState<string | null>(null);
+  const [copiedPortalCode, setCopiedPortalCode] = useState<string | null>(null);
 
   // Modal de Comprovante de Balcão
   const [receiptModalOpen, setReceiptModalOpen] = useState(false);
@@ -3156,6 +3158,11 @@ export default function DashboardClientPage() {
             cfmPrescriptionUrl: 'https://prescricao.cfm.org.br'
           }
         };
+        const portal: VerificationPortalResolution = sanitized.verificationPortal || (rawReport as any)?.verificationPortal || resolveVerificationPortal(
+          (rawReport as any)?.verificationCode || (rawReport as any)?.revalidationGuides?.verificationCode,
+          sanitized.padesSignature?.hasSignature
+        );
+        sanitized.verificationPortal = portal;
         const human = generateHumanizedComplianceReport(sanitized);
 
         return (
@@ -3316,6 +3323,63 @@ export default function DashboardClientPage() {
                 <p className="text-slate-300 text-[11px] leading-relaxed">
                   Em observância ao princípio da transparência e verificabilidade, os dados podem ser conferidos de forma independente nos portais públicos do Governo Federal e do CFM:
                 </p>
+
+                {/* CARD DESTAQUE: Roteador Oficial de Validação */}
+                {portal && (
+                  <div className="p-3.5 rounded-xl bg-slate-900/95 border border-sky-500/40 space-y-2.5 shadow-lg">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                          portal.portalType === 'CFM_PRESCRICAO' 
+                            ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
+                            : portal.portalType === 'ATESTA_CFM'
+                            ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                            : portal.portalType === 'MEMED'
+                            ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                            : 'bg-sky-500/20 text-sky-300 border border-sky-500/40'
+                        }`}>
+                          {portal.portalType === 'CFM_PRESCRICAO' ? 'Prescrição CFM' : portal.portalType === 'ATESTA_CFM' ? 'Atesta CFM' : portal.portalType === 'MEMED' ? 'Memed' : 'ITI ICP-Brasil'}
+                        </span>
+                        <span className="font-bold text-white text-xs">{portal.portalName}</span>
+                      </div>
+                      <a
+                        href={portal.validationUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1 bg-sky-600 hover:bg-sky-500 text-white rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all shadow"
+                      >
+                        <span>{portal.actionLabel}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+
+                    {portal.verificationCode && (
+                      <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 bg-slate-950 rounded-lg border border-slate-800">
+                        <div className="flex items-center gap-2">
+                          <span className="text-[11px] text-slate-400 font-medium">Chave Oficial do Documento:</span>
+                          <span className="font-mono text-xs font-bold text-sky-400 select-all tracking-wider">{portal.verificationCode}</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            if (portal.verificationCode) {
+                              navigator.clipboard.writeText(portal.verificationCode);
+                              setCopiedPortalCode(portal.verificationCode);
+                              setTimeout(() => setCopiedPortalCode(null), 2500);
+                            }
+                          }}
+                          className="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-[10px] font-semibold flex items-center gap-1 transition-all"
+                        >
+                          {copiedPortalCode === portal.verificationCode ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3 text-sky-400" />}
+                          <span>{copiedPortalCode === portal.verificationCode ? 'Copiado!' : 'Copiar Chave'}</span>
+                        </button>
+                      </div>
+                    )}
+
+                    <p className="text-[11px] text-slate-300 leading-relaxed">
+                      💡 {portal.instructionText}
+                    </p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <a

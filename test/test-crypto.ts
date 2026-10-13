@@ -5,6 +5,7 @@ import { validateMedicalAttestation } from '../src/lib/crypto/validator';
 import { parseCrmFromText } from '../src/lib/crypto/crm-extractor';
 import { extractRestDaysAndPeriod } from '../src/lib/crypto/days-extractor';
 import { formatWhatsAppResponse } from '../src/lib/whatsapp/message-formatter';
+import { resolveVerificationPortal, extractVerificationCodeOrUrl } from '../src/lib/services/verification-portal-service';
 
 async function runTests() {
   console.log('====================================================');
@@ -248,9 +249,45 @@ async function runTests() {
     const realReport = await validateMedicalAttestation(realBuf, 'application/pdf', 'consulta-documento-2_261005_181847.pdf');
     assert(realReport.patient?.name === 'Luisa Ebling Uggeri', `Nome do paciente extraído com sucesso: ${realReport.patient?.name}`);
     assert(realReport.restPeriod?.days === 7, `Afastamento de 7 dias extraído: ${realReport.restPeriod?.days} dias`);
+    assert(realReport.verificationPortal?.portalType === 'CFM_PRESCRICAO', `Portal resolvido como CFM_PRESCRICAO: ${realReport.verificationPortal?.portalType}`);
+    assert(realReport.verificationPortal?.verificationCode === 'CFMP-AT-USVLG4BW', `Código de verificação extraído: ${realReport.verificationPortal?.verificationCode}`);
   } else {
     console.log('⚠️ Arquivo de teste real não encontrado no caminho local, ignorando...');
   }
+
+  // --- TESTE 11: Roteador de Portais Oficiais de Validação ---
+  console.log('\n--- TESTE 11: Roteador de Portais Oficiais de Validação ---');
+  
+  // 11.1 - Prescrição CFM por código
+  const portalCfmCode = resolveVerificationPortal('CFMP-AT-USVLG4BW');
+  assert(portalCfmCode.portalType === 'CFM_PRESCRICAO', 'Resolução de código CFMP-AT- como CFM_PRESCRICAO');
+  assert(portalCfmCode.validationUrl === 'https://prescricao.cfm.org.br/documento', 'URL correta do CFM Prescrição');
+  assert(portalCfmCode.verificationCode === 'CFMP-AT-USVLG4BW', 'Preserva código de validação CFMP');
+
+  // 11.2 - Prescrição CFM por URL
+  const portalCfmUrl = resolveVerificationPortal('https://prescricao.cfm.org.br/documento?_format=application/pdf');
+  assert(portalCfmUrl.portalType === 'CFM_PRESCRICAO', 'Resolução por URL prescricao.cfm.org.br');
+
+  // 11.3 - Atesta CFM (Máscara estrita XXXX-XX-XXXXXX)
+  const portalAtesta = resolveVerificationPortal('ABCD-12-34EF56');
+  assert(portalAtesta.portalType === 'ATESTA_CFM', 'Resolução de máscara estrita como ATESTA_CFM');
+  assert(portalAtesta.validationUrl === 'https://validar.atestacfm.org.br', 'URL correta do Atesta CFM');
+  assert(portalAtesta.verificationCode === 'ABCD-12-34EF56', 'Preserva código Atesta CFM');
+
+  // 11.4 - Plataforma Memed
+  const portalMemed = resolveVerificationPortal('https://memed.com.br/receita/12345');
+  assert(portalMemed.portalType === 'MEMED', 'Resolução de emissor Memed');
+  assert(!portalMemed.isOfficialGov, 'Memed categorizada como emissora privada');
+
+  // 11.5 - Assinatura ICP-Brasil sem código externo (Validador ITI)
+  const portalIti = resolveVerificationPortal(null, true);
+  assert(portalIti.portalType === 'ITI_ICP_BRASIL', 'Resolução para ITI quando há assinatura digital');
+  assert(portalIti.validationUrl === 'https://validar.iti.gov.br', 'URL correta do validador ITI');
+
+  // 11.6 - Documento genérico sem código e sem assinatura (Busca Médicos CFM)
+  const portalGeneric = resolveVerificationPortal(null, false);
+  assert(portalGeneric.portalType === 'GENERIC', 'Fallback para GENERIC em documento não assinado');
+  assert(portalGeneric.validationUrl === 'https://portal.cfm.org.br/busca-medicos/', 'URL correta de busca médica');
 
   console.log('\n====================================================');
   console.log(`RESULTADO FINAL DOS TESTES AMPLIADOS: ${passedTests}/${totalTests} PASSARAM`);
