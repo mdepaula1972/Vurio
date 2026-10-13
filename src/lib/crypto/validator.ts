@@ -573,98 +573,77 @@ function extractPatientInfoFromText(text: string, fileBuffer?: Buffer) {
     clinicAddress = addressMatch[1].trim();
   }
 
-  // 7. Extração de Nome do Paciente (Classificação Prioritária & Descarte de Termos Anafóricos)
-  const invalidNameKeywords = [
+  // 7. Extração de Nome do Paciente - Abordagem Direta "Logo após Paciente"
+  const forbidden = [
     'supra citad', 'acima citad', 'acima identificad', 'supramencionad',
-    'acima nominad', 'retro citad', 'em questao', 'referid', 'o mesmo', 'a mesma',
-    'paciente acima', 'colaborador acima', 'paciente abaixo', 'crm', 'medico', 'médico',
-    'atestado', 'clinica', 'clínica', 'receituario', 'declaracao', 'declaração',
-    'portador', 'portadora', 'compareceu', 'necessita', 'informado', 'informada',
-    'sexo', 'idade'
+    'referid', 'o mesmo', 'a mesma', 'crm', 'medico', 'médico', 'atestado',
+    'clinica', 'clínica', 'declaracao', 'declaração', 'receituario'
   ];
 
-  const candidatePool: Array<{ name: string; priority: number }> = [];
+  // Passo 1: Busca em todas as ocorrências de rótulo de paciente/colaborador
+  const pacienteRegex = /\b(?:paciente|colaborador|nome\s*(?:completo)?(?:\s*do\s*paciente)?)\b[\s:]*/gi;
+  let match;
 
-  // Prioridade 1 (Peso 10): Rótulos formais explícitos (ex: "Paciente: Luisa Ebling Uggeri")
-  const explicitLabels = [
-    /(?:paciente|colaborador|nome\s*(?:completo)?(?:\s*do\s*paciente)?|identifica[çc][ãa]o\s*do\s*paciente)[\s:]+([^\r\n]+)/gi
-  ];
+  while ((match = pacienteRegex.exec(cleanText)) !== null) {
+    const startIdx = match.index + match[0].length;
+    let substring = cleanText.substring(startIdx);
 
-  for (const regex of explicitLabels) {
-    let match;
-    while ((match = regex.exec(cleanText)) !== null) {
-      if (match[1]) {
-        let cand = match[1].trim();
-        cand = cand.split(/(?:sexo|idade|cpf|rg|dn|data|nasc|matr[íi]cula|leito|prontu[áa]rio|conv[êe]nio|portador|compareceu|esteve|necessita|encontra|afastad)/i)[0].trim();
-        cand = cand.replace(/[;,:|_\-\/\\]+$/, '').trim();
-        if (cand.length >= 3 && cand.length <= 60) {
-          candidatePool.push({ name: cand, priority: 10 });
+    // Corta nos delimitadores comuns de formulário (Sexo, Idade, CPF, Quebra de linha, etc.)
+    substring = substring.split(/(?:\r?\n|sexo|idade|cpf|rg|dn|data|nasc|matr[íi]cula|leito|prontu[áa]rio|conv[êe]nio|portador|compareceu|esteve|necessita|encontra|afastad|[;|_|\/|\\])/i)[0];
+    
+    // Limpa caracteres especiais residuais
+    let candidate = substring.replace(/^[\s:_\-]+/, '').replace(/[\s:_\-]+$/, '').trim();
+
+    // Se tiver mais de 5 palavras, pega até 4 (nome próprio)
+    const words = candidate.split(/\s+/).filter(w => w.length > 0);
+    if (words.length > 5) {
+      candidate = words.slice(0, 4).join(' ');
+    }
+
+    const lower = candidate.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const isBad = forbidden.some(f => lower.includes(f));
+
+    if (candidate.length >= 3 && candidate.length <= 60 && !isBad) {
+      patientName = candidate;
+      break;
+    }
+  }
+
+  // Passo 2: Fallback se o PDF gerou linhas fragmentadas ou tabelas
+  if (!patientName) {
+    const lines = cleanText.split(/\r?\n/);
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      const pMatch = line.match(/(?:^|\b)(?:paciente|colaborador)[\s:]*(.*)/i);
+      if (pMatch) {
+        let candidate = pMatch[1].trim();
+        if (!candidate && i + 1 < lines.length) {
+          candidate = lines[i + 1].trim();
+        }
+        candidate = candidate.split(/(?:sexo|idade|cpf|rg|dn|data|nasc|matr[íi]cula|leito|prontu[áa]rio|conv[êe]nio|portador|compareceu|esteve|necessita|encontra|afastad|[;|_|\/|\\])/i)[0].trim();
+        candidate = candidate.replace(/^[\s:_\-]+/, '').replace(/[\s:_\-]+$/, '').trim();
+
+        const lower = candidate.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+        const isBad = forbidden.some(f => lower.includes(f));
+
+        if (candidate.length >= 3 && candidate.length <= 60 && !isBad) {
+          patientName = candidate;
+          break;
         }
       }
     }
   }
 
-  // Prioridade 2 (Peso 8): Varredura Linha a Linha (imune a layouts multi-coluna do Chromium)
-  const lines = cleanText.split(/\r?\n/);
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i].trim();
-    const pMatch = line.match(/(?:^|\b)(?:paciente|colaborador|nome)[\s:]+(.*)/i);
-    if (pMatch) {
-      let cand = pMatch[1].trim();
-      if (!cand && i + 1 < lines.length) {
-        cand = lines[i + 1].trim();
-      }
-      cand = cand.split(/(?:sexo|idade|cpf|rg|dn|data|nasc|matr[íi]cula|leito|prontu[áa]rio|conv[êe]nio|portador|compareceu|esteve|necessita|encontra|afastad)/i)[0].trim();
-      cand = cand.replace(/[;,:|_\-\/\\]+$/, '').trim();
-      if (cand.length >= 3 && cand.length <= 60) {
-        candidatePool.push({ name: cand, priority: 8 });
-      }
-    }
-  }
-
-  // Prioridade 3 (Peso 3): Frases narrativas ("Atesto para os devidos fins que...")
-  const narrativePatterns = [
-    /(?:atesto|declaro|certifico)(?:\s+para\s+os\s+devidos\s+fins)?\s+que\s+(?:o\(a\)|a|o)?\s*(?:sr\(a\)\.?|sr\.?|sra\.?|paciente)?\s*([^\r\n]+)/gi
-  ];
-  for (const regex of narrativePatterns) {
-    let match;
-    while ((match = regex.exec(cleanText)) !== null) {
-      if (match[1]) {
-        let cand = match[1].trim();
-        cand = cand.split(/(?:sexo|idade|cpf|rg|dn|data|nasc|matr[íi]cula|leito|prontu[áa]rio|conv[êe]nio|portador|compareceu|esteve|necessita|encontra|afastad)/i)[0].trim();
-        cand = cand.replace(/[;,:|_\-\/\\]+$/, '').trim();
-        if (cand.length >= 3 && cand.length <= 60) {
-          candidatePool.push({ name: cand, priority: 3 });
-        }
-      }
-    }
-  }
-
-  // Fallback em Buffer Binário se nada foi localizado
-  if (candidatePool.length === 0 && fileBuffer) {
+  // Passo 3: Fallback em stream binário bruto (Tj operators)
+  if (!patientName && fileBuffer) {
     const rawBufferStr = fileBuffer.toString('latin1');
     const rawMatches = rawBufferStr.match(/Paciente[\s:]*([A-Za-zÀ-ÿ\s]{3,40})/i);
     if (rawMatches && rawMatches[1]) {
-      let cand = rawMatches[1].trim();
-      cand = cand.split(/(?:sexo|idade|cpf|rg)/i)[0].trim();
-      if (cand.length >= 3) candidatePool.push({ name: cand, priority: 5 });
-    }
-  }
-
-  // Ordena por prioridade decrescente
-  candidatePool.sort((a, b) => b.priority - a.priority);
-
-  // Seleciona o melhor candidato descartando termos anafóricos e palavras reservadas
-  for (const item of candidatePool) {
-    const normalized = item.name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-    const isInvalid = invalidNameKeywords.some(kw => {
-      const cleanKw = kw.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-      return normalized.includes(cleanKw);
-    });
-
-    if (!isInvalid) {
-      patientName = item.name;
-      break;
+      let cand = rawMatches[1].trim().split(/(?:sexo|idade|cpf|rg)/i)[0].trim();
+      const lower = cand.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+      if (cand.length >= 3 && !forbidden.some(f => lower.includes(f))) {
+        patientName = cand;
+      }
     }
   }
 

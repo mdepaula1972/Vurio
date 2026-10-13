@@ -1016,7 +1016,7 @@ export default function DashboardClientPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs">
                       <div className="space-y-1.5">
                         <p className="text-slate-400">Colaborador / Paciente:</p>
-                        <p className="text-white font-bold">{lastResult.report?.patient?.name || 'Não identificado no layout'}</p>
+                        <p className="text-white font-bold">{lastResult.report?.patient?.name || (lastResult as any)?.forensicReport?.patient?.name || 'Não identificado no layout'}</p>
                       </div>
                       <div className="space-y-1.5">
                         <p className="text-slate-400">Médico / Conselho:</p>
