@@ -1,7 +1,8 @@
 /**
 -- ==============================================================================
 -- TIPAGEM TYPE-SAFE DO VURIO GARÇOM
--- Modelagem de Atendimento Autônomo, Gestão de Mesas, KDS e Fechamento de Conta
+-- Modelagem de Atendimento Autônomo, Gestão de Mesas, KDS, Fechamento de Conta,
+-- Rateio com Confirmação e Protocolo de Segurança Discreta
 -- ==============================================================================
  */
 
@@ -14,6 +15,7 @@ export interface Establishment {
   pix_key?: string | null;
   pix_key_type?: PixKeyType | null;
   pix_beneficiary_name?: string | null;
+  max_tab_limit?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -25,6 +27,8 @@ export interface TableSession {
   establishment_id: string;
   table_number: string;
   status: TableSessionStatus;
+  client_phone?: string | null;
+  verified_adult?: boolean | null;
   opened_at: string;
   closed_at?: string | null;
 }
@@ -37,6 +41,7 @@ export interface OrderItem {
   unit_price: number;
   total_price: number;
   notes?: string;
+  is_alcoholic?: boolean;
 }
 
 export type OrderStatus = 'received' | 'preparing' | 'ready' | 'delivered' | 'cancelled';
@@ -80,6 +85,41 @@ export interface MenuItem {
   updated_at?: string;
 }
 
+export type SharedItemStatus = 'pending' | 'accepted' | 'rejected' | 'cancelled';
+
+export interface SharedOrderItem {
+  id: string;
+  session_id: string;
+  item_name: string;
+  total_price: number;
+  primary_client_phone: string;
+  invited_client_phone: string;
+  split_ratio: number;
+  status: SharedItemStatus;
+  created_at: string;
+  responded_at?: string | null;
+}
+
+export type SafetyAlertStatus = 'pending' | 'attended' | 'dismissed';
+
+export interface SafetyAlert {
+  id: string;
+  establishment_id: string;
+  table_number: string;
+  client_phone?: string | null;
+  notes?: string | null;
+  status: SafetyAlertStatus;
+  created_at: string;
+  attended_at?: string | null;
+}
+
+export interface ClientAgeConsent {
+  id: string;
+  client_phone: string;
+  is_adult: boolean;
+  consent_at: string;
+}
+
 export interface TableSessionWithOrders extends TableSession {
   orders: Order[];
   bill_request?: BillRequest | null;
@@ -90,6 +130,8 @@ export interface TableSessionWithOrders extends TableSession {
     unit_price: number;
     total: number;
   }[];
+  shared_items?: SharedOrderItem[];
+  is_near_tab_limit?: boolean;
 }
 
 export interface ChatMessage {
@@ -97,7 +139,18 @@ export interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: string;
-  action_type?: 'menu_display' | 'bill_preview' | 'bill_requested_pix' | 'bill_requested_card' | 'order_confirmed';
+  action_type?: 
+    | 'menu_display' 
+    | 'bill_preview' 
+    | 'bill_requested_pix' 
+    | 'bill_requested_card' 
+    | 'order_confirmed'
+    | 'age_verification_required'
+    | 'table_confirmation_required'
+    | 'split_requested'
+    | 'split_rejected_options'
+    | 'tab_limit_warning'
+    | 'safety_alert_triggered';
   metadata?: {
     total?: number;
     pix_key?: string;
@@ -105,5 +158,10 @@ export interface ChatMessage {
     pix_beneficiary?: string;
     pix_copy_paste?: string;
     order_items?: OrderItem[];
+    tab_limit?: number;
+    current_tab?: number;
+    table_confirmed?: string;
+    split_id?: string;
+    split_item?: string;
   };
 }

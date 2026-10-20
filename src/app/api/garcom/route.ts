@@ -8,7 +8,9 @@ import {
   updateOrderStatus, 
   getMenuItems, 
   upsertMenuItem, 
-  toggleMenuItemAvailability 
+  toggleMenuItemAvailability,
+  listPendingSafetyAlerts,
+  updateSafetyAlertStatus
 } from '@/lib/services/garcom-service';
 
 export async function GET(req: NextRequest) {
@@ -24,7 +26,8 @@ export async function GET(req: NextRequest) {
 
     if (action === 'tables') {
       const tables = await listActiveTablesWithDetails(establishment.id);
-      return NextResponse.json({ establishment, tables });
+      const safetyAlerts = await listPendingSafetyAlerts(establishment.id);
+      return NextResponse.json({ establishment, tables, safetyAlerts });
     }
 
     if (action === 'kitchen') {
@@ -35,6 +38,11 @@ export async function GET(req: NextRequest) {
     if (action === 'menu') {
       const menu = await getMenuItems(establishment.id, false);
       return NextResponse.json({ establishment, menu });
+    }
+
+    if (action === 'safety_alerts') {
+      const alerts = await listPendingSafetyAlerts(establishment.id);
+      return NextResponse.json({ alerts });
     }
 
     return NextResponse.json({ establishment });
@@ -52,13 +60,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'establishmentId obrigatório' }, { status: 400 });
     }
 
-    // 1. Atualizar Chave Pix do Dono
+    // 1. Atualizar Chave Pix e Limite de Comanda
     if (action === 'update_pix') {
-      const { pix_key, pix_key_type, pix_beneficiary_name } = body;
+      const { pix_key, pix_key_type, pix_beneficiary_name, max_tab_limit } = body;
       const success = await updateEstablishmentPix(establishmentId, {
         pix_key,
         pix_key_type,
-        pix_beneficiary_name
+        pix_beneficiary_name,
+        max_tab_limit: max_tab_limit ? parseFloat(max_tab_limit) : undefined
       });
       return NextResponse.json({ success });
     }
@@ -97,6 +106,16 @@ export async function POST(req: NextRequest) {
     if (action === 'toggle_menu_item') {
       const { itemId, isAvailable } = body;
       const success = await toggleMenuItemAvailability(itemId, isAvailable);
+      return NextResponse.json({ success });
+    }
+
+    // 6. Concluir Alerta de Segurança Discreta
+    if (action === 'attend_safety_alert') {
+      const { alertId } = body;
+      if (!alertId) {
+        return NextResponse.json({ error: 'alertId obrigatório' }, { status: 400 });
+      }
+      const success = await updateSafetyAlertStatus(alertId, 'attended');
       return NextResponse.json({ success });
     }
 

@@ -7,7 +7,10 @@ import {
   BillRequest, 
   MenuItem, 
   TableSessionWithOrders, 
-  PaymentMethod 
+  PaymentMethod,
+  SharedOrderItem,
+  SafetyAlert,
+  ClientAgeConsent
 } from '@/lib/types/garcom';
 
 /**
@@ -16,8 +19,7 @@ import {
 export async function getEstablishment(identifier: string): Promise<Establishment | null> {
   if (!supabase) return null;
 
-  // Tenta por slug primeiro, depois por UUID se for o caso
-  const { data: bySlug, error: errSlug } = await supabase
+  const { data: bySlug } = await supabase
     .from('establishments')
     .select('*')
     .eq('slug', identifier.toLowerCase().trim())
@@ -35,22 +37,28 @@ export async function getEstablishment(identifier: string): Promise<Establishmen
 }
 
 /**
- * Atualiza configurações de recebimento Pix do estabelecimento
+ * Atualiza configurações de recebimento Pix e limite de comanda do estabelecimento
  */
 export async function updateEstablishmentPix(
   establishmentId: string, 
-  pixData: { pix_key: string; pix_key_type: string; pix_beneficiary_name: string }
+  pixData: { pix_key: string; pix_key_type: string; pix_beneficiary_name: string; max_tab_limit?: number }
 ): Promise<boolean> {
   if (!supabase) return false;
 
+  const updatePayload: any = {
+    pix_key: pixData.pix_key.trim(),
+    pix_key_type: pixData.pix_key_type,
+    pix_beneficiary_name: pixData.pix_beneficiary_name.trim(),
+    updated_at: new Date().toISOString()
+  };
+
+  if (typeof pixData.max_tab_limit === 'number') {
+    updatePayload.max_tab_limit = pixData.max_tab_limit;
+  }
+
   const { error } = await supabase
     .from('establishments')
-    .update({
-      pix_key: pixData.pix_key.trim(),
-      pix_key_type: pixData.pix_key_type,
-      pix_beneficiary_name: pixData.pix_beneficiary_name.trim(),
-      updated_at: new Date().toISOString()
-    })
+    .update(updatePayload)
     .eq('id', establishmentId);
 
   return !error;
@@ -112,15 +120,53 @@ export async function toggleMenuItemAvailability(itemId: string, isAvailable: bo
 }
 
 /**
+ * Consulta de Consentimento Legal +18 por Telefone do Cliente
+ */
+export async function getClientAgeConsent(phone: string): Promise<ClientAgeConsent | null> {
+  if (!supabase || !phone) return null;
+
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const { data } = await supabase
+    .from('client_age_consents')
+    .select('*')
+    .eq('client_phone', cleanPhone)
+    .maybeSingle();
+
+  return (data as ClientAgeConsent) || null;
+}
+
+/**
+ * Registra Consentimento Legal +18
+ */
+export async function saveClientAgeConsent(phone: string, isAdult: boolean): Promise<boolean> {
+  if (!supabase || !phone) return false;
+
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const { error } = await supabase
+    .from('client_age_consents')
+    .upsert({
+      client_phone: cleanPhone,
+      is_adult: isAdult,
+      consent_at: new Date().toISOString()
+    });
+
+  return !error;
+}
+
+/**
  * Obtém a sessão ativa de uma mesa ou cria uma nova com status 'open' (Zero Atrito)
  */
-export async function getOrCreateActiveSession(establishmentId: string, tableNumber: string): Promise<TableSession | null> {
+export async function getOrCreateActiveSession(
+  establishmentId: string, 
+  tableNumber: string, 
+  clientPhone?: string
+): Promise<TableSession | null> {
   if (!supabase) return null;
 
   const cleanTableNumber = tableNumber.replace(/[^0-9a-zA-Z\s]/g, '').trim();
 
   // Busca sessão aberta ou com conta solicitada
-  const { data: existing, error: searchErr } = await supabase
+  const { data: existing } = await supabase
     .from('table_sessions')
     .select('*')
     .eq('establishment_id', establishmentId)
@@ -131,6 +177,12 @@ export async function getOrCreateActiveSession(establishmentId: string, tableNum
     .maybeSingle();
 
   if (existing) {
+    if (clientPhone && !existing.client_phone) {
+      await supabase
+        .from('table_sessions')
+        .update({ client_phone: clientPhone })
+        .eq('id', existing.id);
+    }
     return existing as TableSession;
   }
 
@@ -140,6 +192,7 @@ export async function getOrCreateActiveSession(establishmentId: string, tableNum
     .insert({
       establishment_id: establishmentId,
       table_number: cleanTableNumber,
+      client_phone: clientPhone || null,
       status: 'open',
       opened_at: new Date().toISOString()
     })
@@ -152,6 +205,21 @@ export async function getOrCreateActiveSession(establishmentId: string, tableNum
   }
 
   return created as TableSession;
+}
+
+/**
+ * Atualiza número da mesa da sessão se o cliente mudou de mesa
+ */
+export async function updateSessionTableNumber(sessionId: string, newTableNumber: string): Promise<boolean> {
+  if (!supabase) return false;
+
+  const cleanTableNumber = newTableNumber.replace(/[^0-9a-zA-Z\s]/g, '').trim();
+  const { error } = await supabase
+    .from('table_sessions')
+    .update({ table_number: cleanTableNumber })
+    .eq('id', sessionId);
+
+  return !error;
 }
 
 /**
@@ -223,6 +291,138 @@ export async function updateOrderStatus(orderId: string, status: Order['status']
 }
 
 /**
+ * Registra Item Compartilhado para Rateio
+ */
+export async function createSharedOrderItem(params: {
+  sessionId: string;
+  itemName: string;
+  totalPrice: number;
+  primaryPhone: string;
+  invitedPhone: string;
+  splitRatio?: number;
+}): Promise<SharedOrderItem | null> {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('shared_order_items')
+    .insert({
+      session_id: params.sessionId,
+      item_name: params.itemName,
+      total_price: params.totalPrice,
+      primary_client_phone: params.primaryPhone,
+      invited_client_phone: params.invitedPhone,
+      split_ratio: params.splitRatio || 0.50,
+      status: 'pending',
+      created_at: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return data as SharedOrderItem;
+}
+
+/**
+ * Responde a solicitação de divisão de item (Aceitar ou Recusar)
+ */
+export async function respondSharedOrderItem(
+  sharedId: string, 
+  status: 'accepted' | 'rejected'
+): Promise<boolean> {
+  if (!supabase) return false;
+
+  const { error } = await supabase
+    .from('shared_order_items')
+    .update({
+      status,
+      responded_at: new Date().toISOString()
+    })
+    .eq('id', sharedId);
+
+  return !error;
+}
+
+/**
+ * Lista itens compartilhados de uma sessão
+ */
+export async function listSessionSharedItems(sessionId: string): Promise<SharedOrderItem[]> {
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from('shared_order_items')
+    .select('*')
+    .eq('session_id', sessionId)
+    .order('created_at', { ascending: false });
+
+  return (data as SharedOrderItem[]) || [];
+}
+
+/**
+ * Registra Alerta de Segurança Discreta (Protocolo Não é Não)
+ */
+export async function createSafetyAlert(
+  establishmentId: string, 
+  tableNumber: string, 
+  clientPhone?: string,
+  notes?: string
+): Promise<SafetyAlert | null> {
+  if (!supabase) return null;
+
+  const { data, error } = await supabase
+    .from('safety_alerts')
+    .insert({
+      establishment_id: establishmentId,
+      table_number: tableNumber,
+      client_phone: clientPhone || null,
+      notes: notes || 'Solicitação de apoio discreto via chat',
+      status: 'pending',
+      created_at: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  if (error || !data) {
+    console.error('Erro ao registrar alerta de segurança:', error);
+    return null;
+  }
+
+  return data as SafetyAlert;
+}
+
+/**
+ * Lista alertas de segurança pendentes
+ */
+export async function listPendingSafetyAlerts(establishmentId: string): Promise<SafetyAlert[]> {
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from('safety_alerts')
+    .select('*')
+    .eq('establishment_id', establishmentId)
+    .eq('status', 'pending')
+    .order('created_at', { ascending: false });
+
+  return (data as SafetyAlert[]) || [];
+}
+
+/**
+ * Atualiza status do alerta de segurança
+ */
+export async function updateSafetyAlertStatus(alertId: string, status: 'attended' | 'dismissed'): Promise<boolean> {
+  if (!supabase) return false;
+
+  const { error } = await supabase
+    .from('safety_alerts')
+    .update({
+      status,
+      attended_at: new Date().toISOString()
+    })
+    .eq('id', alertId);
+
+  return !error;
+}
+
+/**
  * Calcula extrato consolidado de uma sessão
  */
 export async function getSessionSummary(sessionId: string): Promise<{
@@ -275,7 +475,6 @@ export async function requestBill(
 
   const { total_amount } = await getSessionSummary(sessionId);
 
-  // Registra a solicitação na tabela bill_requests
   const { data: billReq, error: billErr } = await supabase
     .from('bill_requests')
     .insert({
@@ -293,7 +492,6 @@ export async function requestBill(
     return null;
   }
 
-  // Atualiza status da sessão para 'bill_requested'
   await supabase
     .from('table_sessions')
     .update({ status: 'bill_requested' })
@@ -316,14 +514,12 @@ export async function confirmBillAndCloseSession(
 
   const now = new Date().toISOString();
 
-  // 1. Atualiza bill_request se houver
   if (billRequestId) {
     await supabase
       .from('bill_requests')
       .update({ status: 'confirmed', confirmed_at: now })
       .eq('id', billRequestId);
   } else {
-    // Confirma qualquer bill_request pendente daquela sessão
     await supabase
       .from('bill_requests')
       .update({ status: 'confirmed', confirmed_at: now })
@@ -331,7 +527,6 @@ export async function confirmBillAndCloseSession(
       .eq('status', 'pending');
   }
 
-  // 2. Atualiza a sessão da mesa para 'closed'
   const { error: sessionErr } = await supabase
     .from('table_sessions')
     .update({ 
@@ -344,12 +539,14 @@ export async function confirmBillAndCloseSession(
 }
 
 /**
- * Lista todas as mesas ativas ou recentes do estabelecimento para o Painel de Gestão e Caixa
+ * Lista todas as mesas com detalhes de consumo, limites e itens divididos
  */
 export async function listActiveTablesWithDetails(establishmentId: string): Promise<TableSessionWithOrders[]> {
   if (!supabase) return [];
 
-  // Busca sessões ativas (open e bill_requested) ou recém finalizadas nas últimas 12 horas
+  const establishment = await getEstablishment(establishmentId);
+  const maxLimit = establishment?.max_tab_limit || 250.00;
+
   const { data: sessions, error: sessErr } = await supabase
     .from('table_sessions')
     .select('*')
@@ -364,8 +561,8 @@ export async function listActiveTablesWithDetails(establishmentId: string): Prom
 
   for (const session of sessions) {
     const summary = await getSessionSummary(session.id);
+    const sharedItems = await listSessionSharedItems(session.id);
 
-    // Busca bill_request associado
     const { data: billReq } = await supabase
       .from('bill_requests')
       .select('*')
@@ -374,12 +571,16 @@ export async function listActiveTablesWithDetails(establishmentId: string): Prom
       .limit(1)
       .maybeSingle();
 
+    const isNearLimit = summary.total_amount >= (maxLimit * 0.80);
+
     results.push({
       ...(session as TableSession),
       orders: summary.orders,
       items_summary: summary.items_summary,
       total_consumed: summary.total_amount,
-      bill_request: (billReq as BillRequest) || null
+      bill_request: (billReq as BillRequest) || null,
+      shared_items: sharedItems,
+      is_near_tab_limit: isNearLimit
     });
   }
 
@@ -392,7 +593,6 @@ export async function listActiveTablesWithDetails(establishmentId: string): Prom
 export async function listKitchenOrdersWithSession(establishmentId: string): Promise<(Order & { session_status: TableSession['status'] })[]> {
   if (!supabase) return [];
 
-  // Busca pedidos ativos (received, preparing, ready)
   const { data: orders, error } = await supabase
     .from('orders')
     .select(`
