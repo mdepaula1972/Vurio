@@ -30,7 +30,11 @@ import {
   MoreVertical,
   CheckCheck,
   Send,
-  Mic
+  Mic,
+  Users,
+  Calendar,
+  AlertTriangle,
+  Scale
 } from 'lucide-react';
 
 export default function LandingPage() {
@@ -38,6 +42,21 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-[#040c18] text-slate-100 selection:bg-[#25D366] selection:text-[#040c18]">
+      {/* 1. BANNER DE TOPO: ALERTA DE URGÊNCIA ESCALA 6x1 */}
+      <div className="bg-gradient-to-r from-amber-950/90 via-[#2d1b04] to-amber-950/90 border-b border-amber-500/30 text-amber-200 text-xs py-2 px-4 text-center font-medium relative z-50 flex items-center justify-center gap-2 shadow-sm">
+        <span className="flex h-2 w-2 relative">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
+        </span>
+        <span>
+          <strong>⚠️ Escala 6x1 em debate?</strong> Prepare seu salão para operar no pico com equipe enxuta e sem inchar a folha.
+        </span>
+        <a href="#urgencia-6x1" className="hidden sm:inline-flex items-center gap-1 font-bold text-amber-300 hover:text-white underline ml-1">
+          <span>Entenda o impacto</span>
+          <ArrowRight className="w-3 h-3" />
+        </a>
+      </div>
+
       {/* GLOW BACKGROUND EFFECT */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
         <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[550px] bg-gradient-to-b from-[#25D366]/15 via-[#02c1db]/10 to-transparent blur-[140px] rounded-full" />
@@ -69,14 +88,15 @@ export default function LandingPage() {
 
           {/* DESKTOP NAV ATALHOS */}
           <nav className="hidden md:flex items-center gap-8">
+            <a href="#urgencia-6x1" className="text-sm font-semibold text-amber-300 hover:text-amber-200 transition-colors flex items-center gap-1">
+              <span>Impacto 6x1</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            </a>
             <a href="#diferenciais" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
               Diferenciais
             </a>
             <a href="#como-funciona" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
               Como Funciona
-            </a>
-            <a href="#comparativo" className="text-sm font-medium text-slate-300 hover:text-white transition-colors">
-              Comparativo
             </a>
             <Link 
               href="/admin" 
@@ -119,6 +139,13 @@ export default function LandingPage() {
         {mobileMenuOpen && (
           <div className="md:hidden bg-[#05162e] border-b border-[#02c1db]/20 px-4 py-6 space-y-4">
             <a 
+              href="#urgencia-6x1" 
+              onClick={() => setMobileMenuOpen(false)}
+              className="block text-sm font-bold text-amber-300 py-1"
+            >
+              ⚠️ Impacto Escala 6x1
+            </a>
+            <a 
               href="#diferenciais" 
               onClick={() => setMobileMenuOpen(false)}
               className="block text-sm font-medium text-slate-200 py-1"
@@ -131,13 +158,6 @@ export default function LandingPage() {
               className="block text-sm font-medium text-slate-200 py-1"
             >
               Como Funciona
-            </a>
-            <a 
-              href="#comparativo" 
-              onClick={() => setMobileMenuOpen(false)}
-              className="block text-sm font-medium text-slate-200 py-1"
-            >
-              Comparativo
             </a>
             <div className="pt-3 border-t border-white/10 space-y-2">
               <Link 
@@ -168,7 +188,7 @@ export default function LandingPage() {
       </header>
 
       {/* HERO SECTION */}
-      <section className="relative z-10 pt-16 pb-24 lg:pt-28 lg:pb-32 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <section className="relative z-10 pt-16 pb-20 lg:pt-24 lg:pb-28 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center">
           {/* LADO ESQUERDO: COPYWRITING REPOSICIONADO PARA O WHATSAPP */}
           <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
@@ -377,7 +397,117 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SEÇÃO 2: DIFERENCIAIS PROTAGONIZANDO O WHATSAPP */}
+      {/* ========================================================================= */}
+      {/* 2. NOVA SEÇÃO DE URGÊNCIA: O FIM DA ESCALA 6x1 E A SOBREVIVÊNCIA DO SALÃO */}
+      {/* ========================================================================= */}
+      <section id="urgencia-6x1" className="py-20 bg-gradient-to-b from-[#091b35] via-[#05152b] to-[#040c18] border-y-2 border-amber-500/25 relative z-10 shadow-2xl">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* HEADER DA SEÇÃO */}
+          <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/15 border border-amber-500/40 text-amber-300 text-xs font-black uppercase tracking-wider shadow-sm">
+              <Scale className="w-3.5 h-3.5 text-amber-400" />
+              <span>IMPACTO OPERACIONAL & TRABALHISTA</span>
+            </div>
+
+            <h2 className="text-2xl sm:text-4xl lg:text-5xl font-black text-white leading-tight">
+              Seu restaurante está preparado para a{' '}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500">
+                mudança na escala 6x1?
+              </span>
+            </h2>
+
+            <p className="text-sm sm:text-lg text-slate-300 font-normal leading-relaxed">
+              Mais folgas para cobrir, escassez de equipe nos fins de semana e risco de explosão na folha salarial. Como manter o salão rodando sem perder faturamento?
+            </p>
+          </div>
+
+          {/* GRID DE 3 CARDS DA SOLUÇÃO */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            {/* CARD 1: O GARGALO QUE VEM AÍ */}
+            <div className="p-7 rounded-3xl bg-gradient-to-b from-amber-950/25 to-[#0b172a] border border-amber-500/30 backdrop-blur-md flex flex-col justify-between hover:border-amber-400/50 transition-all shadow-lg">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 text-amber-400 flex items-center justify-center mb-5 font-bold shadow-md">
+                  <Calendar className="w-6 h-6" />
+                </div>
+                <div className="text-xs font-black uppercase tracking-widest text-amber-400 mb-1">
+                  O Desafio do Setor
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3 leading-snug">
+                  O Gargalo que Vem Aí
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Cobrir escalas reduzidas sem tecnologia exige contratar até <strong>25% mais garçons</strong> apenas para cobrir rodízio e folgas obrigatórias, inflando encargos e custos fixos.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-amber-500/20 text-[11px] font-semibold text-amber-300/80 flex items-center gap-1.5">
+                <AlertTriangle className="w-4 h-4 text-amber-400" />
+                <span>Risco de colapso de margem líquida</span>
+              </div>
+            </div>
+
+            {/* CARD 2: O WHATSAPP COMO GARÇOM INCANSÁVEL */}
+            <div className="p-7 rounded-3xl bg-gradient-to-b from-emerald-950/25 to-[#0b172a] border-2 border-[#25D366]/40 backdrop-blur-md flex flex-col justify-between hover:border-[#25D366] transition-all shadow-xl shadow-[#25D366]/10 relative">
+              <span className="absolute -top-3 right-6 px-3 py-0.5 bg-[#25D366] text-slate-950 font-black text-[10px] uppercase rounded-full shadow-md">
+                Solução Vurio
+              </span>
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-[#25D366]/15 border border-[#25D366]/30 text-[#25D366] flex items-center justify-center mb-5 font-bold shadow-md">
+                  <Zap className="w-6 h-6" />
+                </div>
+                <div className="text-xs font-black uppercase tracking-widest text-[#25D366] mb-1">
+                  Autonomia Total
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3 leading-snug">
+                  O WhatsApp como Garçom Incansável
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  O cliente pede e fecha a conta direto no WhatsApp. Sua equipe atual vira <strong>entregadora de hospitalidade</strong> e o salão roda liso mesmo nas noites de pico e com equipe enxuta.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-[#25D366]/20 text-[11px] font-semibold text-emerald-400 flex items-center gap-1.5">
+                <CheckCircle2 className="w-4 h-4 text-[#25D366]" />
+                <span>Zero sobrecarga física nos garçons</span>
+              </div>
+            </div>
+
+            {/* CARD 3: MARGEM PRESERVADA */}
+            <div className="p-7 rounded-3xl bg-gradient-to-b from-cyan-950/25 to-[#0b172a] border border-cyan-500/30 backdrop-blur-md flex flex-col justify-between hover:border-cyan-400/50 transition-all shadow-lg">
+              <div>
+                <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-400 flex items-center justify-center mb-5 font-bold shadow-md">
+                  <TrendingUp className="w-6 h-6" />
+                </div>
+                <div className="text-xs font-black uppercase tracking-widest text-cyan-400 mb-1">
+                  Resultado Financeiro
+                </div>
+                <h3 className="text-xl font-bold text-white mb-3 leading-snug">
+                  Margem Preservada
+                </h3>
+                <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                  Menos rotatividade, <strong>zero horas extras descontroladas</strong> e salão operando com capacidade máxima de mesas sem dobrar os custos fixos da folha de pagamento.
+                </p>
+              </div>
+              <div className="mt-6 pt-4 border-t border-cyan-500/20 text-[11px] font-semibold text-cyan-300/80 flex items-center gap-1.5">
+                <ShieldCheck className="w-4 h-4 text-cyan-400" />
+                <span>Salão blindado contra imprevistos</span>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA DA SEÇÃO DE URGÊNCIA */}
+          <div className="text-center pt-2">
+            <Link
+              href="/chat?establishment=exemplo&table=1"
+              target="_blank"
+              className="inline-flex items-center gap-3 px-8 py-4 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 hover:from-amber-400 hover:to-yellow-200 text-slate-950 font-black text-sm uppercase tracking-wider shadow-xl shadow-amber-500/20 hover:scale-105 transition-all"
+            >
+              <span>Blindar meu salão agora</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* SEÇÃO 3: DIFERENCIAIS PROTAGONIZANDO O WHATSAPP */}
       <section id="diferenciais" className="py-20 bg-[#020813]/60 border-y border-[#02c1db]/10 relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
@@ -461,7 +591,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SEÇÃO 3: COMO FUNCIONA EM 3 ETAPAS */}
+      {/* SEÇÃO 4: COMO FUNCIONA EM 3 ETAPAS */}
       <section id="como-funciona" className="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         <div className="text-center max-w-3xl mx-auto mb-16 space-y-3">
           <h2 className="text-xs font-bold uppercase tracking-widest text-[#25D366]">Jornada Sem Atrito</h2>
@@ -493,7 +623,7 @@ export default function LandingPage() {
             </p>
           </div>
 
-          <div className="p-8 rounded-3xl bg-[#082855]/25 border border-white/10 relative">
+          <div className="p-8 rounded-3xl bg-[#01cf9e]/20 text-[#01cf9e] p-8 rounded-3xl bg-[#082855]/25 border border-white/10 relative">
             <span className="text-5xl font-black text-[#01cf9e]/20 absolute top-6 right-6 font-mono">03</span>
             <div className="w-12 h-12 rounded-xl bg-[#01cf9e]/20 text-[#01cf9e] flex items-center justify-center font-bold text-lg mb-6">
               3
@@ -506,7 +636,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SEÇÃO 4: COMPARATIVO (TRADICIONAL VS VURIO WHATSAPP) */}
+      {/* SEÇÃO 5: COMPARATIVO (TRADICIONAL VS VURIO WHATSAPP) */}
       <section id="comparativo" className="py-20 bg-[#020813]/80 border-t border-[#02c1db]/15 relative z-10">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-14 space-y-2">
@@ -568,7 +698,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* SEÇÃO 5: BANNER DE CTA FINAL */}
+      {/* SEÇÃO 6: BANNER DE CTA FINAL */}
       <section className="py-24 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto relative z-10 text-center">
         <div className="p-10 sm:p-14 rounded-3xl bg-gradient-to-br from-[#082855] via-[#040c18] to-[#052d6b] border border-[#25D366]/30 shadow-2xl space-y-6">
           <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#25D366]/15 text-[#25D366] text-xs font-bold">
