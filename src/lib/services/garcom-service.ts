@@ -10,7 +10,9 @@ import {
   PaymentMethod,
   SharedOrderItem,
   SafetyAlert,
-  ClientAgeConsent
+  ClientAgeConsent,
+  ClientProfile,
+  InternalConsumptionAlert
 } from '@/lib/types/garcom';
 
 /**
@@ -37,28 +39,20 @@ export async function getEstablishment(identifier: string): Promise<Establishmen
 }
 
 /**
- * Atualiza configurações de recebimento Pix e limite de comanda do estabelecimento
+ * Atualiza configurações gerais do estabelecimento (Pix, Eventos, Couvert, Serviço e Limites)
  */
-export async function updateEstablishmentPix(
+export async function updateEstablishmentSettings(
   establishmentId: string, 
-  pixData: { pix_key: string; pix_key_type: string; pix_beneficiary_name: string; max_tab_limit?: number }
+  settings: Partial<Establishment>
 ): Promise<boolean> {
   if (!supabase) return false;
 
-  const updatePayload: any = {
-    pix_key: pixData.pix_key.trim(),
-    pix_key_type: pixData.pix_key_type,
-    pix_beneficiary_name: pixData.pix_beneficiary_name.trim(),
-    updated_at: new Date().toISOString()
-  };
-
-  if (typeof pixData.max_tab_limit === 'number') {
-    updatePayload.max_tab_limit = pixData.max_tab_limit;
-  }
-
   const { error } = await supabase
     .from('establishments')
-    .update(updatePayload)
+    .update({
+      ...settings,
+      updated_at: new Date().toISOString()
+    })
     .eq('id', establishmentId);
 
   return !error;
@@ -120,7 +114,49 @@ export async function toggleMenuItemAvailability(itemId: string, isAvailable: bo
 }
 
 /**
- * Consulta de Consentimento Legal +18 por Telefone do Cliente
+ * Consulta perfil e histórico de consumo do cliente
+ */
+export async function getClientProfile(phone: string): Promise<ClientProfile | null> {
+  if (!supabase || !phone) return null;
+
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const { data } = await supabase
+    .from('clients')
+    .select('*')
+    .eq('phone', cleanPhone)
+    .maybeSingle();
+
+  if (!data) return null;
+
+  return {
+    ...data,
+    favorite_items: Array.isArray(data.favorite_items) ? data.favorite_items : []
+  } as ClientProfile;
+}
+
+/**
+ * Atualiza ou cria perfil de cliente
+ */
+export async function upsertClientProfile(phone: string, data: Partial<ClientProfile>): Promise<ClientProfile | null> {
+  if (!supabase || !phone) return null;
+
+  const cleanPhone = phone.replace(/[^0-9]/g, '');
+  const { data: updated, error } = await supabase
+    .from('clients')
+    .upsert({
+      ...data,
+      phone: cleanPhone,
+      updated_at: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  if (error || !updated) return null;
+  return updated as ClientProfile;
+}
+
+/**
+ * Consulta de Consentimento Legal +18
  */
 export async function getClientAgeConsent(phone: string): Promise<ClientAgeConsent | null> {
   if (!supabase || !phone) return null;
@@ -291,6 +327,82 @@ export async function updateOrderStatus(orderId: string, status: Order['status']
 }
 
 /**
+ * Registra Alerta Silencioso Interno de Consumo no Painel do Gerente
+ */
+export async function createInternalConsumptionAlert(params: {
+  establishmentId: string;
+  sessionId: string;
+  tableNumber: string;
+  clientPhone?: string;
+  clientName?: string;
+  currentConsumption: number;
+  averageTicket: number;
+  percentAbove: number;
+}): Promise<InternalConsumptionAlert | null> {
+  if (!supabase) return null;
+
+  // Evita duplicidade de alerta silencioso para a mesma sessão se já houver um não lido
+  const { data: existing } = await supabase
+    .from('internal_consumption_alerts')
+    .select('id')
+    .eq('session_id', params.sessionId)
+    .eq('status', 'unread')
+    .maybeSingle();
+
+  if (existing) return null;
+
+  const { data, error } = await supabase
+    .from('internal_consumption_alerts')
+    .insert({
+      establishment_id: params.establishmentId,
+      session_id: params.sessionId,
+      table_number: params.tableNumber,
+      client_phone: params.clientPhone || null,
+      client_name: params.clientName || 'Cliente Habitual',
+      current_consumption: params.currentConsumption,
+      average_ticket: params.averageTicket,
+      percent_above: params.percentAbove,
+      status: 'unread',
+      created_at: new Date().toISOString()
+    })
+    .select()
+    .single();
+
+  if (error || !data) return null;
+  return data as InternalConsumptionAlert;
+}
+
+/**
+ * Lista alertas silenciosos de consumo internos
+ */
+export async function listInternalConsumptionAlerts(establishmentId: string): Promise<InternalConsumptionAlert[]> {
+  if (!supabase) return [];
+
+  const { data } = await supabase
+    .from('internal_consumption_alerts')
+    .select('*')
+    .eq('establishment_id', establishmentId)
+    .eq('status', 'unread')
+    .order('created_at', { ascending: false });
+
+  return (data as InternalConsumptionAlert[]) || [];
+}
+
+/**
+ * Marca alerta interno de consumo como reconhecido
+ */
+export async function acknowledgeConsumptionAlert(alertId: string): Promise<boolean> {
+  if (!supabase) return false;
+
+  const { error } = await supabase
+    .from('internal_consumption_alerts')
+    .update({ status: 'acknowledged' })
+    .eq('id', alertId);
+
+  return !error;
+}
+
+/**
  * Registra Item Compartilhado para Rateio
  */
 export async function createSharedOrderItem(params: {
@@ -381,11 +493,7 @@ export async function createSafetyAlert(
     .select()
     .single();
 
-  if (error || !data) {
-    console.error('Erro ao registrar alerta de segurança:', error);
-    return null;
-  }
-
+  if (error || !data) return null;
   return data as SafetyAlert;
 }
 
@@ -469,17 +577,19 @@ export async function getSessionSummary(sessionId: string): Promise<{
  */
 export async function requestBill(
   sessionId: string, 
-  paymentMethod: PaymentMethod
+  paymentMethod: PaymentMethod,
+  customAmount?: number
 ): Promise<{ billRequest: BillRequest; totalAmount: number } | null> {
   if (!supabase) return null;
 
   const { total_amount } = await getSessionSummary(sessionId);
+  const finalAmount = customAmount !== undefined ? customAmount : total_amount;
 
   const { data: billReq, error: billErr } = await supabase
     .from('bill_requests')
     .insert({
       session_id: sessionId,
-      total_amount,
+      total_amount: finalAmount,
       payment_method: paymentMethod,
       status: 'pending',
       created_at: new Date().toISOString()
@@ -487,10 +597,7 @@ export async function requestBill(
     .select()
     .single();
 
-  if (billErr || !billReq) {
-    console.error('Erro ao registrar solicitação de conta:', billErr);
-    return null;
-  }
+  if (billErr || !billReq) return null;
 
   await supabase
     .from('table_sessions')
@@ -499,12 +606,12 @@ export async function requestBill(
 
   return {
     billRequest: billReq as BillRequest,
-    totalAmount: total_amount
+    totalAmount: finalAmount
   };
 }
 
 /**
- * Confirma pagamento de uma conta pelo caixa (Pix ou Cartão) e libera a mesa
+ * Confirma pagamento de uma conta pelo caixa e libera a mesa
  */
 export async function confirmBillAndCloseSession(
   sessionId: string, 
@@ -539,7 +646,7 @@ export async function confirmBillAndCloseSession(
 }
 
 /**
- * Lista todas as mesas com detalhes de consumo, limites e itens divididos
+ * Lista todas as mesas com detalhes de consumo, limites, histórico do cliente e alertas silenciosos
  */
 export async function listActiveTablesWithDetails(establishmentId: string): Promise<TableSessionWithOrders[]> {
   if (!supabase) return [];
@@ -562,6 +669,7 @@ export async function listActiveTablesWithDetails(establishmentId: string): Prom
   for (const session of sessions) {
     const summary = await getSessionSummary(session.id);
     const sharedItems = await listSessionSharedItems(session.id);
+    const clientProfile = session.client_phone ? await getClientProfile(session.client_phone) : null;
 
     const { data: billReq } = await supabase
       .from('bill_requests')
@@ -573,6 +681,14 @@ export async function listActiveTablesWithDetails(establishmentId: string): Prom
 
     const isNearLimit = summary.total_amount >= (maxLimit * 0.80);
 
+    // Verifica se há alerta silencioso de +40%
+    const hasSilentAlert = Boolean(
+      establishment?.enable_spending_limits &&
+      clientProfile &&
+      clientProfile.average_ticket > 0 &&
+      summary.total_amount >= (clientProfile.average_ticket * 1.40)
+    );
+
     results.push({
       ...(session as TableSession),
       orders: summary.orders,
@@ -580,7 +696,9 @@ export async function listActiveTablesWithDetails(establishmentId: string): Prom
       total_consumed: summary.total_amount,
       bill_request: (billReq as BillRequest) || null,
       shared_items: sharedItems,
-      is_near_tab_limit: isNearLimit
+      is_near_tab_limit: isNearLimit,
+      client_profile: clientProfile,
+      has_silent_alert: hasSilentAlert
     });
   }
 

@@ -11,7 +11,8 @@ import {
   updateSessionTableNumber,
   createSafetyAlert,
   createSharedOrderItem,
-  respondSharedOrderItem
+  getClientProfile,
+  createInternalConsumptionAlert
 } from '@/lib/services/garcom-service';
 import { generatePixCopyPaste } from '@/lib/services/pix-service';
 import { OrderItem } from '@/lib/types/garcom';
@@ -51,6 +52,9 @@ export async function POST(req: NextRequest) {
     }
 
     const tabLimit = establishment.max_tab_limit || 250.00;
+    const couvertFee = Number(establishment.couvert_fee || 0.00);
+    const serviceFeePercent = Number(establishment.service_fee_percent || 10.00);
+    const serviceFeeEnabled = establishment.service_fee_enabled !== false;
 
     // 2. Obter ou criar a sessão ativa da mesa (Entrada Zero Atrito)
     const session = await getOrCreateActiveSession(establishment.id, table, phone);
@@ -61,16 +65,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // 3. Obter perfil do cliente para hospitalidade e memória
+    const clientProfile = await getClientProfile(phone);
+
     const lowerMsg = message.toLowerCase().trim();
 
     // =========================================================================
-    // REGRA F: PROTOCOLO DE APOIO DISCRETO / SEGURANÇA (NÃO É NÃO / CÓDIGO 180)
+    // REGRA DE SEGURANÇA: PROTOCOLO DE APOIO DISCRETO (NÃO É NÃO / CÓDIGO 180)
     // =========================================================================
     const isSafetyAlertTrigger = 
       /c[oó]digo\s*180|apoio|ajuda\s+discreta|socorro|seguran[cç]a|protocolo\s+n[aã]o\s+[eé]\s+n[aã]o|falar\s+com\s+a\s+ger[eê]ncia/i.test(lowerMsg);
 
     if (isSafetyAlertTrigger) {
-      // Registra silenciosamente no banco para alertar o painel do gerente
       await createSafetyAlert(establishment.id, session.table_number, phone, 'Solicitação de apoio discreto via chat');
 
       return NextResponse.json({
@@ -83,11 +89,10 @@ export async function POST(req: NextRequest) {
     }
 
     // =========================================================================
-    // REGRA A: VERIFICAÇÃO +18 (COMPLIANCE LEGAL NO 1º ACESSO)
+    // REGRA DE MAIORIDADE LEGAL (+18)
     // =========================================================================
     let ageConsent = await getClientAgeConsent(phone);
 
-    // Se o cliente estiver respondendo à pergunta de idade:
     const isAnsweringAge = 
       /^(1|sim|maior|tenho\s*18|sou\s*maior)$/i.test(lowerMsg) ||
       /^(2|n[aã]o|menor|sou\s*menor)$/i.test(lowerMsg);
@@ -104,13 +109,12 @@ export async function POST(req: NextRequest) {
         });
       } else {
         return NextResponse.json({
-          response: `✅ Maioridade confirmada com sucesso! Bem-vindo(a) ao **${establishment.name}** na **Mesa ${session.table_number}**.\n\nCardápio liberado por completo! Pode me pedir pratos, drinks e bebidas a qualquer momento.`,
+          response: `✅ Maioridade confirmada com sucesso! Bem-vindo(a) ao **${establishment.name}** na **Mesa ${session.table_number}**.\n\nCardápio liberado por completo!`,
           action_type: 'menu_display'
         });
       }
     }
 
-    // Se ainda não tem cadastro de idade e enviou uma saudação inicial:
     if (!ageConsent) {
       return NextResponse.json({
         response: `🔞 **Verificação de Idade:**\nAntes de começarmos seu atendimento no **${establishment.name}**: você confirma que é maior de 18 anos?\n\n1️⃣ **Sim, sou maior de 18 anos**\n2️⃣ **Não, sou menor de idade**`,
@@ -119,7 +123,7 @@ export async function POST(req: NextRequest) {
     }
 
     // =========================================================================
-    // REGRA B: CONFIRMAÇÃO DINÂMICA DE MESA
+    // MUDANÇA DINÂMICA DE MESA
     // =========================================================================
     const isChangingTable = lowerMsg.match(/mudei\s*(?:de\s*mesa\s*(?:para\s*a?)?)?\s*(?:mesa)?\s*([0-9a-zA-Z]+)/i);
     if (isChangingTable && isChangingTable[1]) {
@@ -137,25 +141,79 @@ export async function POST(req: NextRequest) {
     }
 
     // =========================================================================
-    // REGRA C: RATEIO DE ITENS COM ALERTA DE RECUSA
+    // TAXA DE SERVIÇO (10% OPCIONAL) - RESPOSTA À PERGUNTA
     // =========================================================================
-    // Aceite de divisão
-    if (/^(aceitar\s+divis[aã]o|aceitar|aceito|1\s+aceitar)$/i.test(lowerMsg)) {
+    const summary = await getSessionSummary(session.id);
+    const subtotal = summary.total_amount;
+    const couvertTotal = couvertFee;
+    const serviceVal = serviceFeeEnabled ? Number(((subtotal + couvertTotal) * (serviceFeePercent / 100)).toFixed(2)) : 0.00;
+    const totalComServico = Number((subtotal + couvertTotal + serviceVal).toFixed(2));
+    const totalSemServico = Number((subtotal + couvertTotal).toFixed(2));
+
+    const isServiceAccepted = /^(1|sim|incluir|com\s*10%|com\s*servi[cç]o|incluir\s*taxa)$/i.test(lowerMsg);
+    const isServiceRejected = /^(2|n[aã]o|apenas\s*consumo|sem\s*10%|sem\s*taxa|n[aã]o\s*incluir)$/i.test(lowerMsg);
+
+    if (session.status === 'bill_requested' && (isServiceAccepted || isServiceRejected)) {
+      const chosenTotal = isServiceAccepted ? totalComServico : totalSemServico;
+      const pixKey = establishment.pix_key || '12345678000190';
+      const beneficiary = establishment.pix_beneficiary_name || establishment.name;
+      const keyType = establishment.pix_key_type || 'Chave Pix';
+
+      const copyPasteCode = generatePixCopyPaste({
+        pixKey,
+        beneficiaryName: beneficiary,
+        amount: chosenTotal,
+        txid: `MESA${session.table_number}`
+      });
+
+      // Atualiza o bill_request com o valor final escolhido
+      await requestBill(session.id, 'pix', chosenTotal);
+
+      const serviceNote = isServiceAccepted 
+        ? `\n💙 **Taxa de serviço inclusa:** R$ ${serviceVal.toFixed(2)} (Agradecemos o reconhecimento da equipe!)`
+        : `\nTaxa de serviço não inclusa.`;
+
+      const responseText = `⚡ **Conta Final — Mesa ${session.table_number}**\n\n` +
+        `• Subtotal de consumo: R$ ${subtotal.toFixed(2)}\n` +
+        (couvertTotal > 0 ? `• Couvert artístico: R$ ${couvertTotal.toFixed(2)}\n` : '') +
+        serviceNote + '\n\n' +
+        `💰 **TOTAL A PAGAR: R$ ${chosenTotal.toFixed(2)}**\n\n` +
+        `🔑 **Chave Pix (${keyType.toUpperCase()}):** \`${pixKey}\`\n` +
+        `👤 **Favorecido:** ${beneficiary}\n\n` +
+        (copyPasteCode ? `📋 **Código Pix Copia-e-Cola:**\n\`${copyPasteCode}\`\n\n` : '') +
+        `👉 Abra seu app do banco e pague no Pix, ou avise caso prefira a maquineta física!`;
+
+      return NextResponse.json({
+        response: responseText,
+        action_type: 'bill_requested_pix',
+        metadata: {
+          total: chosenTotal,
+          subtotal,
+          couvert: couvertTotal,
+          service_fee: isServiceAccepted ? serviceVal : 0,
+          pix_key: pixKey,
+          pix_copy_paste: copyPasteCode
+        }
+      });
+    }
+
+    // =========================================================================
+    // RATEIO DE ITENS
+    // =========================================================================
+    if (/^(aceitar\s+divis[aã]o|aceitar|aceito)$/i.test(lowerMsg)) {
       return NextResponse.json({
         response: `✅ **Divisão Confirmada!** O valor proporcional foi adicionado ao seu consumo com sucesso.`,
         action_type: 'split_requested'
       });
     }
 
-    // Recusa de divisão
-    if (/^(recusar\s+divis[aã]o|recusar|recuso|2\s+recusar)$/i.test(lowerMsg)) {
+    if (/^(recusar\s+divis[aã]o|recusar|recuso)$/i.test(lowerMsg)) {
       return NextResponse.json({
         response: `⚠️ Você optou por não dividir o item. O colega foi notificado com as opções de manter integral ou cancelar o item.`,
         action_type: 'split_rejected_options'
       });
     }
 
-    // Solicitação de divisão de item
     const isSplitRequest = lowerMsg.match(/dividir\s+(?:o|a)?\s*(.*?)\s+com\s+(?:o|a)?\s*([0-9a-zA-Z\s]+)/i);
     if (isSplitRequest) {
       const targetItem = isSplitRequest[1].trim();
@@ -171,66 +229,80 @@ export async function POST(req: NextRequest) {
       });
 
       return NextResponse.json({
-        response: `🤝 **Proposta de Divisão Enviada!**\nVocê marcou o item **"${targetItem}"** para dividir com **${colleague}** (R$ 19,00 para cada).\n\nAssim que ele confirmar na conversa dele, o rateio será concluído. Caso ele recuse, você poderá escolher entre assumir o item integral ou cancelar.`,
+        response: `🤝 **Proposta de Divisão Enviada!**\nVocê marcou o item **"${targetItem}"** para dividir com **${colleague}** (R$ 19,00 para cada).\n\nAssim que ele confirmar na conversa dele, o rateio será concluído!`,
         action_type: 'split_requested',
-        metadata: {
-          split_item: targetItem
-        }
+        metadata: { split_item: targetItem }
       });
     }
 
-    // 3. Obter itens do cardápio e extrato atual de consumo
-    const menuItems = await getMenuItems(establishment.id, true);
-    const summary = await getSessionSummary(session.id);
-
     // =========================================================================
-    // REGRA D: CHECK-IN DE ENTREGA E EXTRATO SIMPÁTICO (ANTI-CONTESTAÇÃO)
+    // RADAR DINÂMICO DE CONSUMO (+40% DA MÉDIA HISTÓRICA)
     // =========================================================================
-    const isCheckinInquiry = /onde\s+est[aá]|cad[eê]\s+o\s+pedido|j[aá]\s+saiu|est[aá]\s+chegando|status\s+do\s+pedido/i.test(lowerMsg);
-    if (isCheckinInquiry) {
-      if (summary.orders.length === 0) {
-        return NextResponse.json({
-          response: `🍽️ Nenhum pedido foi realizado ainda na **Mesa ${session.table_number}**. O que gostaria de pedir hoje?`,
-          action_type: 'menu_display'
+    if (establishment.enable_spending_limits && clientProfile && clientProfile.average_ticket > 0) {
+      const triggerAmount = clientProfile.average_ticket * 1.40;
+      if (summary.total_amount >= triggerAmount) {
+        const percentAbove = Number((((summary.total_amount - clientProfile.average_ticket) / clientProfile.average_ticket) * 100).toFixed(0));
+        await createInternalConsumptionAlert({
+          establishmentId: establishment.id,
+          sessionId: session.id,
+          tableNumber: session.table_number,
+          clientPhone: phone,
+          clientName: clientProfile.name || 'Cliente Habitual',
+          currentConsumption: summary.total_amount,
+          averageTicket: clientProfile.average_ticket,
+          percentAbove
         });
       }
+    }
 
-      const recentItems = summary.items_summary.map((i) => `${i.quantity}x ${i.name}`).join(', ');
+    // =========================================================================
+    // SAUDAÇÃO INICIAL COM MEMÓRIA (RETORNO DO CLIENTE)
+    // =========================================================================
+    const isFirstGreeting = /^(ol[aá]|oi|boa\s*(?:noite|tarde|dia)|card[aá]pio|come[cç]ar|menu)$/i.test(lowerMsg);
+    if (isFirstGreeting && summary.orders.length === 0) {
+      let welcomeText = '';
+      if (clientProfile && clientProfile.visit_count > 1) {
+        welcomeText = `Que bom ter você de volta aqui no **${establishment.name}**, ${clientProfile.name || 'amigo'}! 👋\n\n`;
+        if (clientProfile.last_first_order_item) {
+          welcomeText += `Quer começar com o seu clássico **${clientProfile.last_first_order_item}** como da outra vez, ou prefere olhar as opções?\n\n`;
+        }
+      } else {
+        welcomeText = `Olá! Bem-vindo(a) ao **${establishment.name}** na **Mesa ${session.table_number}**! 👋\n\n`;
+      }
+
+      // Notícia de Programação do Dia
+      if (establishment.daily_event_title) {
+        welcomeText += `🎉 **Hoje temos:** ${establishment.daily_event_title} ${establishment.daily_event_description ? `(${establishment.daily_event_description})` : ''}\n`;
+      }
+
+      // Alerta transparente de Couvert
+      if (couvertFee > 0) {
+        welcomeText += `🎶 _Informamos que hoje temos couvert artístico no valor de **R$ ${couvertFee.toFixed(2)}** por pessoa._\n\n`;
+      }
+
+      welcomeText += `Como posso te ajudar agora? Posso te sugerir os destaques do cardápio ou anotar seu primeiro pedido!`;
+
       return NextResponse.json({
-        response: `🍻 Seu pedido de **${recentItems}** já está em processo de atendimento para a **Mesa ${session.table_number}**!\n\nSó para você acompanhar: seu consumo acumulado até agora é de **R$ ${summary.total_amount.toFixed(2)}**.\nSe precisar de mais alguma coisa, é só chamar!`,
-        action_type: 'bill_preview',
+        response: welcomeText,
+        action_type: 'menu_display',
         metadata: {
-          total: summary.total_amount
+          client_name: clientProfile?.name || undefined,
+          favorite_item: clientProfile?.last_first_order_item || undefined
         }
       });
     }
 
     // =========================================================================
-    // REGRA A2: BLOQUEIO DE ÁLCOOL PARA MENORES
+    // CONSULTA PARCIAL DA CONTA
     // =========================================================================
-    if (ageConsent.is_adult === false) {
-      const isTryingAlcohol = /chopp|cerveja|ipa|heineken|gin|drink|caipirinha|vodka|vinho|whisky|alco[oó]l/i.test(lowerMsg);
-      if (isTryingAlcohol) {
-        return NextResponse.json({
-          response: `⛔ **Atenção:** Em conformidade com a Lei nº 8.069/90 (Estatuto da Criança e do Adolescente), a venda de bebidas alcoólicas é estritamente proibida para menores de 18 anos.\n\nQue tal um dos nossos sucos naturais, mocktails ou refrigerantes gelados?`,
-          action_type: 'menu_display'
-        });
-      }
-    }
-
-    // =========================================================================
-    // INTENÇÕES DE CONTA E FECHAMENTO
-    // =========================================================================
-
-    // A) CONSULTA PARCIAL DA CONTA
     const isPartialBillInquiry = 
-      /parcial|conta|extrato|quanto\s+t[aá]|gasto|saldo|pedidos\s+da\s+mesa|o\s+que\s+pedi/i.test(lowerMsg) &&
+      /parcial|quanto\s+t[aá]|extrato|gasto|saldo|pedidos\s+da\s+mesa|o\s+que\s+pedi/i.test(lowerMsg) &&
       !/fechar|fechamento|encerrar|pagar|feche|fecha|passar\s+a\s+regua/i.test(lowerMsg);
 
     if (isPartialBillInquiry) {
       if (summary.items_summary.length === 0) {
         return NextResponse.json({
-          response: `🍽️ **Mesa ${session.table_number}**\n\nNenhum item foi pedido nesta mesa até o momento.\nO que você gostaria de pedir hoje?`,
+          response: `🍽️ **Mesa ${session.table_number}**\n\nNenhum item foi pedido nesta mesa até o momento. O que você gostaria de pedir hoje?`,
           action_type: 'bill_preview',
           metadata: { total: 0, items: [] }
         });
@@ -240,101 +312,27 @@ export async function POST(req: NextRequest) {
         .map((item) => `• **${item.quantity}x** ${item.name} — R$ ${item.total.toFixed(2)} (R$ ${item.unit_price.toFixed(2)} un)`)
         .join('\n');
 
-      let responseText = `🧾 **Extrato Parcial da Mesa ${session.table_number}**\n\n${itemsList}\n\n💰 **Subtotal Parcial:** R$ ${summary.total_amount.toFixed(2)}\n\n_Quando quiser encerrar a mesa, basta me avisar: "Quero fechar a conta"!_`;
-
-      // REGRA E: AVISO DE LIMITE DE CONSUMO
-      if (summary.total_amount >= (tabLimit * 0.80)) {
-        responseText += `\n\n🔔 **Aviso de Consumo:** Você está se aproximando do limite de consumo da sua comanda (R$ ${summary.total_amount.toFixed(2)} / R$ ${tabLimit.toFixed(2)}). Para continuar pedindo sem pausas, você pode fazer um adiantamento no Pix ou avisar a gerência!`;
+      let responseText = `🧾 **Extrato Parcial da Mesa ${session.table_number}**\n\n${itemsList}\n\n`;
+      responseText += `• Subtotal de produtos: R$ ${subtotal.toFixed(2)}\n`;
+      if (couvertFee > 0) {
+        responseText += `• Couvert artístico: R$ ${couvertFee.toFixed(2)}\n`;
       }
+      responseText += `💰 **Total Parcial:** **R$ ${(subtotal + couvertFee).toFixed(2)}**\n\n`;
+      responseText += `_Quando quiser encerrar, basta dizer: "Quero fechar a conta"!_`;
 
       return NextResponse.json({
         response: responseText,
         action_type: 'bill_preview',
         metadata: {
-          total: summary.total_amount,
+          total: subtotal + couvertFee,
           items: summary.items_summary
         }
       });
     }
 
-    // B) ESCOLHA DIRETA DE PAGAMENTO VIA PIX
-    const isPayPixChoice = 
-      (/pix/i.test(lowerMsg) && /pagar|fechar|quero|chave|1|opção 1|opcao 1|manda/i.test(lowerMsg)) ||
-      (lowerMsg === '1' || lowerMsg === 'pix');
-
-    if (isPayPixChoice) {
-      if (summary.total_amount <= 0) {
-        return NextResponse.json({
-          response: `🍽️ A Mesa ${session.table_number} ainda não possui pedidos em aberto para fechar conta no Pix.`,
-          action_type: 'bill_preview'
-        });
-      }
-
-      await requestBill(session.id, 'pix');
-
-      const pixKey = establishment.pix_key || '12345678000190';
-      const beneficiary = establishment.pix_beneficiary_name || establishment.name;
-      const keyType = establishment.pix_key_type || 'Chave Pix';
-
-      const copyPasteCode = generatePixCopyPaste({
-        pixKey,
-        beneficiaryName: beneficiary,
-        amount: summary.total_amount,
-        txid: `MESA${session.table_number}`
-      });
-
-      const responseText = `⚡ **Fechamento via Pix — Mesa ${session.table_number}**\n\n` +
-        `💵 **Total da Conta:** **R$ ${summary.total_amount.toFixed(2)}**\n` +
-        `👤 **Favorecido:** ${beneficiary}\n` +
-        `🔑 **Chave Pix (${keyType.toUpperCase()}):** \`${pixKey}\`\n\n` +
-        (copyPasteCode ? `📋 **Código Pix Copia-e-Cola:**\n\`${copyPasteCode}\`\n\n` : '') +
-        `👉 Abra o app do seu banco, faça o Pix e a confirmação será feita automaticamente pelo caixa. Obrigado pela preferência!`;
-
-      return NextResponse.json({
-        response: responseText,
-        action_type: 'bill_requested_pix',
-        metadata: {
-          total: summary.total_amount,
-          pix_key: pixKey,
-          pix_key_type: keyType,
-          pix_beneficiary: beneficiary,
-          pix_copy_paste: copyPasteCode
-        }
-      });
-    }
-
-    // C) ESCOLHA DE CARTÃO / MAQUINETA
-    const isPayCardChoice = 
-      (/cart[aã]o|maquineta|maquininha|gar[cç]om|2|opção 2|opcao 2/i.test(lowerMsg) &&
-       /pagar|fechar|chama|trazer|cr[eé]dito|d[eé]bito|maquin/i.test(lowerMsg)) ||
-      (lowerMsg === '2' || lowerMsg === 'cartao' || lowerMsg === 'cartão');
-
-    if (isPayCardChoice) {
-      if (summary.total_amount <= 0) {
-        return NextResponse.json({
-          response: `🍽️ A Mesa ${session.table_number} ainda não possui pedidos em aberto para pagamento.`,
-          action_type: 'bill_preview'
-        });
-      }
-
-      await requestBill(session.id, 'card_machine');
-
-      const responseText = `🛎️ **Garçom Acionado para a Mesa ${session.table_number}!**\n\n` +
-        `💵 **Total Consolidado:** **R$ ${summary.total_amount.toFixed(2)}**\n\n` +
-        `O garçom já recebeu o chamado no painel do salão e está se dirigindo à sua mesa com a **maquineta de cartão** (Crédito, Débito e Refeição).\n` +
-        `Por favor, aguarde alguns instantes!`;
-
-      return NextResponse.json({
-        response: responseText,
-        action_type: 'bill_requested_card',
-        metadata: {
-          total: summary.total_amount,
-          payment_method: 'card_machine'
-        }
-      });
-    }
-
-    // D) PEDIR A CONTA (EXIBIR OPÇÕES)
+    // =========================================================================
+    // FECHAMENTO DE CONTA COM COUVERT E GORJETA (10% OPCIONAL)
+    // =========================================================================
     const isCloseBillRequest = /fechar|fecha|fechamento|encerrar|pedir\s+a\s+conta|trazer\s+a\s+conta|passar\s+a\s+r[eé]gua|a\s+conta\s+por\s+favor/i.test(lowerMsg);
 
     if (isCloseBillRequest) {
@@ -345,30 +343,75 @@ export async function POST(req: NextRequest) {
         });
       }
 
+      // Marca como 'bill_requested'
+      await requestBill(session.id, 'pix', totalComServico);
+
       const itemsList = summary.items_summary
         .map((item) => `• **${item.quantity}x** ${item.name} — R$ ${item.total.toFixed(2)}`)
         .join('\n');
 
-      const responseText = `🧾 **Fechamento de Conta — Mesa ${session.table_number}**\n\n` +
-        `**Extrato Consolidado:**\n${itemsList}\n\n` +
-        `💰 **TOTAL FINAL:** **R$ ${summary.total_amount.toFixed(2)}**\n\n` +
-        `Como prefere realizar o pagamento?\n\n` +
-        `1️⃣ **Pagar com Pix** (Receba a chave Pix e Copia-e-Cola agora no chat)\n` +
-        `2️⃣ **Pagar no Cartão** (Chamar garçom com a maquininha na mesa)\n\n` +
-        `_Responda com **"1"** para Pix ou **"2"** para Cartão._`;
+      let extratoText = `🧾 **Fechamento de Conta — Mesa ${session.table_number}**\n\n` +
+        `**Extrato de Consumo:**\n${itemsList}\n\n` +
+        `--------------------------------\n` +
+        `• Subtotal de produtos: R$ ${subtotal.toFixed(2)}\n`;
+
+      if (couvertFee > 0) {
+        extratoText += `• Couvert artístico: R$ ${couvertFee.toFixed(2)}\n`;
+      }
+
+      if (serviceFeeEnabled) {
+        extratoText += `• Sugestão de serviço (${serviceFeePercent}% opcional): R$ ${serviceVal.toFixed(2)}\n` +
+          `--------------------------------\n\n` +
+          `Gostaria de incluir a taxa de serviço de **${serviceFeePercent}%** para a equipe?\n\n` +
+          `1️⃣ **Sim, incluir** (Total: R$ ${totalComServico})\n` +
+          `2️⃣ **Apenas consumo** (Total: R$ ${totalSemServico})\n\n` +
+          `_Responda com **"1"** para incluir ou **"2"** para pagar apenas o consumo._`;
+
+        return NextResponse.json({
+          response: extratoText,
+          action_type: 'service_fee_prompt',
+          metadata: {
+            subtotal,
+            couvert: couvertFee,
+            service_fee: serviceVal,
+            total: totalComServico
+          }
+        });
+      }
+
+      // Se a casa não sugerir 10%
+      const pixKey = establishment.pix_key || '12345678000190';
+      const beneficiary = establishment.pix_beneficiary_name || establishment.name;
+      const copyPasteCode = generatePixCopyPaste({
+        pixKey,
+        beneficiaryName: beneficiary,
+        amount: totalSemServico,
+        txid: `MESA${session.table_number}`
+      });
+
+      extratoText += `--------------------------------\n` +
+        `💰 **TOTAL FINAL: R$ ${totalSemServico.toFixed(2)}**\n\n` +
+        `🔑 **Chave Pix:** \`${pixKey}\` (${beneficiary})\n\n` +
+        (copyPasteCode ? `📋 **Código Pix Copia-e-Cola:**\n\`${copyPasteCode}\`\n\n` : '') +
+        `👉 Pague no Pix ou solicite a maquineta física ao garçom!`;
 
       return NextResponse.json({
-        response: responseText,
-        action_type: 'bill_preview',
+        response: extratoText,
+        action_type: 'bill_requested_pix',
         metadata: {
-          total: summary.total_amount,
-          items: summary.items_summary
+          total: totalSemServico,
+          pix_key: pixKey,
+          pix_copy_paste: copyPasteCode
         }
       });
     }
 
-    // E) FAZER UM PEDIDO
+    // =========================================================================
+    // FAZER UM PEDIDO
+    // =========================================================================
+    const menuItems = await getMenuItems(establishment.id, true);
     const detectedOrderItems: OrderItem[] = [];
+
     menuItems.forEach((menuItem) => {
       const escapedName = menuItem.name.replace(/[-/\\^$*+?.()|[\]{}]/g, '\\$&');
       const itemRegex = new RegExp(`(\\d+)?\\s*(?:x|de)?\\s*${escapedName}`, 'i');
@@ -404,17 +447,10 @@ export async function POST(req: NextRequest) {
       const totalOrder = detectedOrderItems.reduce((acc, i) => acc + i.total_price, 0);
       const newAccumulated = summary.total_amount + totalOrder;
 
-      // REGRA B: CONFIRMAÇÃO DINÂMICA DE MESA
       const hasPriorOrders = summary.orders.length > 0;
       let tableConfirmationNote = '';
       if (hasPriorOrders) {
         tableConfirmationNote = `\n\n📍 _Anotado! Você continua na **Mesa ${session.table_number}**? (Caso tenha mudado de lugar, me avise: "Mudei para a mesa X")_`;
-      }
-
-      // REGRA E: ALERTA DE LIMITE
-      let tabLimitWarning = '';
-      if (newAccumulated >= (tabLimit * 0.80)) {
-        tabLimitWarning = `\n\n🔔 **Aviso:** Seu consumo acumulado atingiu R$ ${newAccumulated.toFixed(2)} (Limite da comanda: R$ ${tabLimit.toFixed(2)}). Para consumir acima desse valor, basta solicitar à gerência ou antecipar um Pix!`;
       }
 
       const responseText = `✅ **Pedido Confirmado e Enviado para a Cozinha!**\n\n` +
@@ -422,8 +458,7 @@ export async function POST(req: NextRequest) {
         `💵 **Total deste pedido:** R$ ${totalOrder.toFixed(2)}\n` +
         `💰 **Consumo total da mesa:** R$ ${newAccumulated.toFixed(2)}\n` +
         `⏱️ Seus itens já estão em preparo!` +
-        tableConfirmationNote +
-        tabLimitWarning;
+        tableConfirmationNote;
 
       return NextResponse.json({
         response: responseText,
@@ -436,7 +471,9 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // F) RESPOSTA VIA GEMINI AI (COM CARDÁPIO E CONTEXTO COMPLETO)
+    // =========================================================================
+    // RESPOSTA VIA GEMINI AI (COM PRIORIDADE DE ITENS FAVORITOS)
+    // =========================================================================
     const apiKey =
       process.env.GEMINI_API_KEY ||
       process.env.GOOGLE_AI_KEY ||
@@ -452,26 +489,31 @@ export async function POST(req: NextRequest) {
         ? summary.items_summary.map((i) => `${i.quantity}x ${i.name} (R$ ${i.total.toFixed(2)})`).join(', ')
         : 'Nenhum pedido realizado ainda';
 
+      const favoritesContext = clientProfile?.favorite_items?.length
+        ? `ITENS FAVORITOS DO CLIENTE NO HISTÓRICO: ${clientProfile.favorite_items.join(', ')}. Sugira gentilmente esses itens caso ele peça sugestão.`
+        : '';
+
       const systemPrompt = `
 Você é o garçom inteligente e acolhedor do restaurante "${establishment.name}", atendendo os clientes da Mesa ${session.table_number}.
-Seu objetivo é proporcionar um atendimento impecável, rápido e seguro.
+Seu objetivo é proporcionar um atendimento impecável, acolhedor, rápido e com alta hospitalidade.
+
+CLIENTE:
+- Nome: ${clientProfile?.name || 'Cliente'} (Visitas: ${clientProfile?.visit_count || 1})
+${favoritesContext}
 
 DADOS DA MESA:
 - Mesa: ${session.table_number}
-- Status: ${session.status}
 - Consumo Atual: ${sessionContext} (Total: R$ ${summary.total_amount.toFixed(2)})
-- Limite de Comanda: R$ ${tabLimit.toFixed(2)}
-- Cliente Maior de Idade (+18): ${ageConsent.is_adult ? 'SIM' : 'NÃO (Bloqueio total de álcool)'}
+- Programação de Hoje: ${establishment.daily_event_title || 'Nenhuma atração especial'}
+- Couvert Artístico: R$ ${couvertFee.toFixed(2)}
 
-CARDÁPIO DISPONÍVEL:
+CARDÁPIO:
 ${menuContext}
 
 DIRETRIZES:
-1. Seja sempre educado, amigável e prestativo em português do Brasil.
-2. Se o cliente for menor de idade, NÃO ofereça bebidas alcoólicas.
-3. Se perguntar sobre a conta parcial, mostre os valores acumulados.
-4. Se o cliente pedir fechamento de conta, dê as opções 1. Pix e 2. Cartão (chamar garçom).
-5. Mantenha as respostas concisas e use emojis moderados.
+1. Seja sempre educado, acolhedor e prestativo em português do Brasil.
+2. Se o cliente pedir sugestões, dê preferência aos pratos favoritos dele citados acima ("Sua clássica [Item Favorito] está saindo bastante hoje! Vai nele?").
+3. Mantenha as respostas concisas e agradáveis.
 `.trim();
 
       const messagesPayload = [
@@ -514,19 +556,11 @@ DIRETRIZES:
       }
     }
 
-    // FALLBACK HEURÍSTICO CASO GEMINI OFFLINE
-    const categories = Array.from(new Set(menuItems.map((m) => m.category)));
-    const menuSummary = categories
-      .map((cat) => {
-        const items = menuItems.filter((m) => m.category === cat);
-        return `**${cat}:**\n` + items.map((i) => `• ${i.name} — R$ ${i.price.toFixed(2)}`).join('\n');
-      })
-      .join('\n\n');
-
+    // FALLBACK HEURÍSTICO
     return NextResponse.json({
       response: `Olá! Sou o assistente da **Mesa ${session.table_number}** no **${establishment.name}**.\n\n` +
-        `Confira nosso cardápio:\n\n${menuSummary}\n\n` +
-        `Você pode me pedir um item diretamente (ex: *"Quero 1 Burger Artesanal"*), perguntar *"Quanto tá a conta?"* ou dizer *"Quero fechar a conta"* a qualquer momento!`,
+        (clientProfile?.last_first_order_item ? `Quer começar com seu habitual **${clientProfile.last_first_order_item}**?\n\n` : '') +
+        `Você pode me pedir pratos, bebidas, perguntar sobre o cardápio ou dizer *"Quero fechar a conta"* a qualquer momento!`,
       action_type: 'menu_display'
     });
 

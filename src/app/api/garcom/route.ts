@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { 
   getEstablishment, 
-  updateEstablishmentPix, 
+  updateEstablishmentSettings, 
   listActiveTablesWithDetails, 
   confirmBillAndCloseSession, 
   listKitchenOrdersWithSession, 
@@ -10,7 +10,9 @@ import {
   upsertMenuItem, 
   toggleMenuItemAvailability,
   listPendingSafetyAlerts,
-  updateSafetyAlertStatus
+  updateSafetyAlertStatus,
+  listInternalConsumptionAlerts,
+  acknowledgeConsumptionAlert
 } from '@/lib/services/garcom-service';
 
 export async function GET(req: NextRequest) {
@@ -27,7 +29,8 @@ export async function GET(req: NextRequest) {
     if (action === 'tables') {
       const tables = await listActiveTablesWithDetails(establishment.id);
       const safetyAlerts = await listPendingSafetyAlerts(establishment.id);
-      return NextResponse.json({ establishment, tables, safetyAlerts });
+      const internalAlerts = await listInternalConsumptionAlerts(establishment.id);
+      return NextResponse.json({ establishment, tables, safetyAlerts, internalAlerts });
     }
 
     if (action === 'kitchen') {
@@ -60,14 +63,38 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'establishmentId obrigatório' }, { status: 400 });
     }
 
-    // 1. Atualizar Chave Pix e Limite de Comanda
-    if (action === 'update_pix') {
-      const { pix_key, pix_key_type, pix_beneficiary_name, max_tab_limit } = body;
-      const success = await updateEstablishmentPix(establishmentId, {
+    // 1. Atualizar Configurações Gerais da Casa (Pix, Eventos, Couvert, Serviço, Limites)
+    if (action === 'update_settings' || action === 'update_pix') {
+      const { 
+        pix_key, 
+        pix_key_type, 
+        pix_beneficiary_name, 
+        max_tab_limit,
+        daily_event_title,
+        daily_event_description,
+        couvert_fee,
+        couvert_info,
+        service_fee_percent,
+        service_fee_enabled,
+        enable_spending_limits,
+        silent_alert_limit,
+        high_value_limit
+      } = body;
+
+      const success = await updateEstablishmentSettings(establishmentId, {
         pix_key,
         pix_key_type,
         pix_beneficiary_name,
-        max_tab_limit: max_tab_limit ? parseFloat(max_tab_limit) : undefined
+        max_tab_limit: max_tab_limit !== undefined ? parseFloat(max_tab_limit) : undefined,
+        daily_event_title,
+        daily_event_description,
+        couvert_fee: couvert_fee !== undefined ? parseFloat(couvert_fee) : undefined,
+        couvert_info,
+        service_fee_percent: service_fee_percent !== undefined ? parseFloat(service_fee_percent) : undefined,
+        service_fee_enabled,
+        enable_spending_limits,
+        silent_alert_limit: silent_alert_limit !== undefined ? parseFloat(silent_alert_limit) : undefined,
+        high_value_limit: high_value_limit !== undefined ? parseFloat(high_value_limit) : undefined
       });
       return NextResponse.json({ success });
     }
@@ -116,6 +143,16 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'alertId obrigatório' }, { status: 400 });
       }
       const success = await updateSafetyAlertStatus(alertId, 'attended');
+      return NextResponse.json({ success });
+    }
+
+    // 7. Reconhecer Alerta Interno de Consumo
+    if (action === 'acknowledge_consumption_alert') {
+      const { alertId } = body;
+      if (!alertId) {
+        return NextResponse.json({ error: 'alertId obrigatório' }, { status: 400 });
+      }
+      const success = await acknowledgeConsumptionAlert(alertId);
       return NextResponse.json({ success });
     }
 

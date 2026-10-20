@@ -1,8 +1,7 @@
 /**
 -- ==============================================================================
 -- TIPAGEM TYPE-SAFE DO VURIO GARÇOM
--- Modelagem de Atendimento Autônomo, Gestão de Mesas, KDS, Fechamento de Conta,
--- Rateio com Confirmação e Protocolo de Segurança Discreta
+-- Modelagem de Atendimento Autônomo, Hospitalidade, Memória, Couvert e Taxa de Serviço
 -- ==============================================================================
  */
 
@@ -16,6 +15,15 @@ export interface Establishment {
   pix_key_type?: PixKeyType | null;
   pix_beneficiary_name?: string | null;
   max_tab_limit?: number | null;
+  enable_spending_limits?: boolean | null;
+  silent_alert_limit?: number | null;
+  high_value_limit?: number | null;
+  daily_event_title?: string | null;
+  daily_event_description?: string | null;
+  couvert_fee?: number | null;
+  couvert_info?: string | null;
+  service_fee_percent?: number | null;
+  service_fee_enabled?: boolean | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -113,6 +121,32 @@ export interface SafetyAlert {
   attended_at?: string | null;
 }
 
+export interface ClientProfile {
+  id: string;
+  phone: string;
+  name?: string | null;
+  visit_count: number;
+  average_ticket: number;
+  favorite_items: string[];
+  last_first_order_item?: string | null;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface InternalConsumptionAlert {
+  id: string;
+  establishment_id: string;
+  session_id: string;
+  table_number: string;
+  client_phone?: string | null;
+  client_name?: string | null;
+  current_consumption: number;
+  average_ticket: number;
+  percent_above: number;
+  status: 'unread' | 'acknowledged';
+  created_at: string;
+}
+
 export interface ClientAgeConsent {
   id: string;
   client_phone: string;
@@ -132,6 +166,8 @@ export interface TableSessionWithOrders extends TableSession {
   }[];
   shared_items?: SharedOrderItem[];
   is_near_tab_limit?: boolean;
+  client_profile?: ClientProfile | null;
+  has_silent_alert?: boolean;
 }
 
 export interface ChatMessage {
@@ -150,9 +186,14 @@ export interface ChatMessage {
     | 'split_requested'
     | 'split_rejected_options'
     | 'tab_limit_warning'
-    | 'safety_alert_triggered';
+    | 'safety_alert_triggered'
+    | 'service_fee_prompt';
   metadata?: {
     total?: number;
+    subtotal?: number;
+    couvert?: number;
+    service_fee?: number;
+    service_fee_percent?: number;
     pix_key?: string;
     pix_key_type?: string;
     pix_beneficiary?: string;
@@ -163,5 +204,7 @@ export interface ChatMessage {
     table_confirmed?: string;
     split_id?: string;
     split_item?: string;
+    client_name?: string;
+    favorite_item?: string;
   };
 }

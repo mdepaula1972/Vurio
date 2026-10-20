@@ -26,21 +26,28 @@ import {
   AlertTriangle,
   ShieldAlert,
   Users,
-  ShieldCheck
+  ShieldCheck,
+  Music,
+  Sliders,
+  Percent,
+  Calendar,
+  Sparkle
 } from 'lucide-react';
 import { 
   Establishment, 
   TableSessionWithOrders, 
   MenuItem, 
   PixKeyType,
-  SafetyAlert 
+  SafetyAlert,
+  InternalConsumptionAlert 
 } from '@/lib/types/garcom';
 
 export default function AdminPage() {
-  const [activeTab, setActiveTab] = useState<'tables' | 'pix' | 'menu'>('tables');
+  const [activeTab, setActiveTab] = useState<'tables' | 'settings' | 'menu'>('tables');
   const [establishment, setEstablishment] = useState<Establishment | null>(null);
   const [tables, setTables] = useState<TableSessionWithOrders[]>([]);
   const [safetyAlerts, setSafetyAlerts] = useState<SafetyAlert[]>([]);
+  const [internalAlerts, setInternalAlerts] = useState<InternalConsumptionAlert[]>([]);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -49,13 +56,30 @@ export default function AdminPage() {
   // Modal de Detalhes da Mesa
   const [selectedSession, setSelectedSession] = useState<TableSessionWithOrders | null>(null);
 
-  // Estado do Formulário Pix e Limites
+  // Estados do Formulário de Configurações
   const [pixKey, setPixKey] = useState('');
   const [pixKeyType, setPixKeyType] = useState<PixKeyType>('cnpj');
   const [pixBeneficiary, setPixBeneficiary] = useState('');
   const [maxTabLimit, setMaxTabLimit] = useState('250.00');
-  const [savingPix, setSavingPix] = useState(false);
-  const [pixFeedback, setPixFeedback] = useState<string | null>(null);
+  
+  // Programação e Eventos
+  const [dailyEventTitle, setDailyEventTitle] = useState('');
+  const [dailyEventDesc, setDailyEventDesc] = useState('');
+  
+  // Couvert e Taxas
+  const [hasCouvert, setHasCouvert] = useState(false);
+  const [couvertFee, setCouvertFee] = useState('12.00');
+  const [couvertInfo, setCouvertInfo] = useState('Música ao vivo no salão');
+  const [serviceFeeEnabled, setServiceFeeEnabled] = useState(true);
+  const [serviceFeePercent, setServiceFeePercent] = useState('10.00');
+
+  // Gestão de Risco
+  const [enableSpendingLimits, setEnableSpendingLimits] = useState(true);
+  const [silentAlertLimit, setSilentAlertLimit] = useState('120.00');
+  const [highValueLimit, setHighValueLimit] = useState('280.00');
+
+  const [savingSettings, setSavingSettings] = useState(false);
+  const [settingsFeedback, setSettingsFeedback] = useState<string | null>(null);
 
   // Estado do Formulário de Cardápio
   const [showAddMenuModal, setShowAddMenuModal] = useState(false);
@@ -65,7 +89,7 @@ export default function AdminPage() {
   const [newItemDesc, setNewItemDesc] = useState('');
   const [savingMenuItem, setSavingMenuItem] = useState(false);
 
-  // Carrega dados iniciais do estabelecimento, mesas e alertas de segurança
+  // Carrega dados iniciais do estabelecimento, mesas e alertas
   const loadData = useCallback(async (isSilent = false) => {
     if (!isSilent) setRefreshing(true);
     try {
@@ -77,12 +101,25 @@ export default function AdminPage() {
         setPixKeyType(data.establishment.pix_key_type || 'cnpj');
         setPixBeneficiary(data.establishment.pix_beneficiary_name || '');
         setMaxTabLimit(String(data.establishment.max_tab_limit || '250.00'));
+        setDailyEventTitle(data.establishment.daily_event_title || '');
+        setDailyEventDesc(data.establishment.daily_event_description || '');
+        setCouvertFee(String(data.establishment.couvert_fee || '0.00'));
+        setHasCouvert(Number(data.establishment.couvert_fee || 0) > 0);
+        setCouvertInfo(data.establishment.couvert_info || 'Música ao vivo no salão');
+        setServiceFeeEnabled(data.establishment.service_fee_enabled !== false);
+        setServiceFeePercent(String(data.establishment.service_fee_percent || '10.00'));
+        setEnableSpendingLimits(Boolean(data.establishment.enable_spending_limits));
+        setSilentAlertLimit(String(data.establishment.silent_alert_limit || '120.00'));
+        setHighValueLimit(String(data.establishment.high_value_limit || '280.00'));
       }
       if (data.tables) {
         setTables(data.tables);
       }
       if (data.safetyAlerts) {
         setSafetyAlerts(data.safetyAlerts);
+      }
+      if (data.internalAlerts) {
+        setInternalAlerts(data.internalAlerts);
       }
 
       // Cardápio
@@ -107,7 +144,7 @@ export default function AdminPage() {
     return () => clearInterval(interval);
   }, [loadData]);
 
-  // Ação Rápida: Atender Alerta de Apoio Discreto
+  // Ação: Atender Alerta de Apoio Discreto
   const handleAttendAlert = async (alertId: string) => {
     try {
       const res = await fetch('/api/garcom', {
@@ -127,7 +164,25 @@ export default function AdminPage() {
     }
   };
 
-  // Ação Rápida: Confirmar Pagamento Pix ou Baixar Cartão
+  // Ação: Reconhecer Alerta Silencioso de Consumo
+  const handleAcknowledgeInternalAlert = async (alertId: string) => {
+    try {
+      await fetch('/api/garcom', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'acknowledge_consumption_alert',
+          establishmentId: establishment?.id,
+          alertId
+        })
+      });
+      setInternalAlerts((prev) => prev.filter((a) => a.id !== alertId));
+    } catch (err) {
+      console.error('Erro ao dispensar alerta interno:', err);
+    }
+  };
+
+  // Ação: Confirmar Pagamento Pix ou Baixar Cartão
   const handleConfirmBill = async (session: TableSessionWithOrders) => {
     try {
       const res = await fetch('/api/garcom', {
@@ -152,38 +207,47 @@ export default function AdminPage() {
     }
   };
 
-  // Salvar Chave Pix e Limite de Comanda
-  const handleSavePix = async (e: React.FormEvent) => {
+  // Salvar Todas as Configurações da Casa
+  const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!establishment) return;
-    setSavingPix(true);
-    setPixFeedback(null);
+    setSavingSettings(true);
+    setSettingsFeedback(null);
 
     try {
       const res = await fetch('/api/garcom', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'update_pix',
+          action: 'update_settings',
           establishmentId: establishment.id,
           pix_key: pixKey,
           pix_key_type: pixKeyType,
           pix_beneficiary_name: pixBeneficiary,
-          max_tab_limit: maxTabLimit
+          max_tab_limit: maxTabLimit,
+          daily_event_title: dailyEventTitle,
+          daily_event_description: dailyEventDesc,
+          couvert_fee: hasCouvert ? couvertFee : 0,
+          couvert_info: couvertInfo,
+          service_fee_enabled: serviceFeeEnabled,
+          service_fee_percent: serviceFeePercent,
+          enable_spending_limits: enableSpendingLimits,
+          silent_alert_limit: silentAlertLimit,
+          high_value_limit: highValueLimit
         })
       });
 
       if (res.ok) {
-        setPixFeedback('Configurações Pix e Limite de Comanda salvos com sucesso!');
+        setSettingsFeedback('Configurações da casa salvas com sucesso!');
         await loadData(true);
-        setTimeout(() => setPixFeedback(null), 4000);
+        setTimeout(() => setSettingsFeedback(null), 4000);
       } else {
-        setPixFeedback('Erro ao salvar configurações.');
+        setSettingsFeedback('Erro ao salvar configurações.');
       }
     } catch (err) {
-      setPixFeedback('Erro ao conectar ao servidor.');
+      setSettingsFeedback('Erro ao conectar ao servidor.');
     } finally {
-      setSavingPix(false);
+      setSavingSettings(false);
     }
   };
 
@@ -262,7 +326,7 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen text-slate-100 bg-[#040c18] pb-16">
-      {/* BANNER CRÍTICO: PROTOCOLO DE APOIO DISCRETO (NÃO É NÃO) */}
+      {/* 1. BANNER CRÍTICO: PROTOCOLO DE APOIO DISCRETO (NÃO É NÃO) */}
       {safetyAlerts.length > 0 && (
         <div className="bg-gradient-to-r from-rose-900 via-red-800 to-rose-900 border-b-2 border-red-500 text-white px-4 py-3 sticky top-0 z-50 shadow-2xl animate-pulse">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -278,7 +342,7 @@ export default function AdminPage() {
                   </span>
                 </div>
                 <p className="text-xs text-rose-100">
-                  Envie discretamente um colaborador até a <strong>Mesa {safetyAlerts[0].table_number}</strong> com o pretexto de conferir um prato ou atendimento.
+                  Envie discretamente um colaborador até a <strong>Mesa {safetyAlerts[0].table_number}</strong> com o pretexto de atendimento à mesa.
                 </p>
               </div>
             </div>
@@ -294,8 +358,28 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* 2. BANNER INFORMATIVO: RADAR DINÂMICO DE CONSUMO (+40% DA MÉDIA) */}
+      {internalAlerts.length > 0 && (
+        <div className="bg-gradient-to-r from-blue-950 via-[#0a2342] to-blue-950 border-b border-cyan-500/30 text-cyan-200 px-4 py-2.5 z-40">
+          <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div className="flex items-center gap-2 text-xs">
+              <TrendingUp className="w-4 h-4 text-cyan-400" />
+              <span>
+                <strong>Radar de Consumo:</strong> Mesa {internalAlerts[0].table_number} ({internalAlerts[0].client_name}) consumindo <strong>R$ {Number(internalAlerts[0].current_consumption).toFixed(2)}</strong> (+{internalAlerts[0].percent_above}% acima da média histórica).
+              </span>
+            </div>
+            <button
+              onClick={() => handleAcknowledgeInternalAlert(internalAlerts[0].id)}
+              className="text-[11px] font-bold text-cyan-300 hover:text-white underline"
+            >
+              Ciente (Dispensar aviso)
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* HEADER DE COMANDO VURIO */}
-      <header className="bg-[#040c18]/90 backdrop-blur-md border-b border-[#02c1db]/20 px-4 lg:px-8 py-3.5 sticky top-0 z-40">
+      <header className="bg-[#040c18]/90 backdrop-blur-md border-b border-[#02c1db]/20 px-4 lg:px-8 py-3.5 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-tr from-[#0077d1] via-[#02c1db] to-[#25D366] p-0.5 shadow-lg shadow-[#02c1db]/20">
@@ -313,7 +397,7 @@ export default function AdminPage() {
                 </span>
               </div>
               <p className="text-xs text-slate-400">
-                Painel de Gestão, Caixa & Segurança Operacional
+                Painel de Gestão, Caixa & Inteligência de Salão
               </p>
             </div>
           </div>
@@ -350,15 +434,15 @@ export default function AdminPage() {
             </button>
 
             <button
-              onClick={() => setActiveTab('pix')}
+              onClick={() => setActiveTab('settings')}
               className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
-                activeTab === 'pix'
+                activeTab === 'settings'
                   ? 'bg-[#02c1db] text-[#040c18] font-semibold shadow-md shadow-[#02c1db]/30'
                   : 'text-slate-300 hover:text-white hover:bg-white/5'
               }`}
             >
-              <CreditCard className="w-3.5 h-3.5" />
-              <span>Pix & Limites</span>
+              <Sliders className="w-3.5 h-3.5" />
+              <span>Configurações da Casa</span>
             </button>
           </div>
 
@@ -437,19 +521,21 @@ export default function AdminPage() {
                 <div className="text-2xl font-bold text-[#01cf9e]">
                   R$ {totalOpenAmount.toFixed(2)}
                 </div>
-                <div className="text-[11px] text-slate-400 mt-1">Soma dos consumos correntes</div>
+                <div className="text-[11px] text-slate-400 mt-1">Consumo corrente das mesas</div>
               </div>
 
               <div className={`p-4 rounded-xl border backdrop-blur-sm ${
                 nearLimitCount > 0 ? 'bg-amber-950/20 border-amber-500/30' : 'bg-[#082855]/40 border-[#02c1db]/15'
               }`}>
                 <div className="flex items-center justify-between text-slate-400 mb-1">
-                  <span className="text-xs uppercase font-medium tracking-wider">Atenção ao Limite</span>
-                  <AlertTriangle className={`w-4 h-4 ${nearLimitCount > 0 ? 'text-amber-400' : 'text-slate-500'}`} />
+                  <span className="text-xs uppercase font-medium tracking-wider">Radar de Consumo</span>
+                  <TrendingUp className={`w-4 h-4 ${nearLimitCount > 0 ? 'text-amber-400' : 'text-cyan-400'}`} />
                 </div>
-                <div className="text-2xl font-bold text-amber-300">{nearLimitCount}</div>
-                <div className="text-[11px] text-slate-400 mt-1">
-                  Mesas acima de 80% do teto (R$ {parseFloat(maxTabLimit).toFixed(2)})
+                <div className="text-2xl font-bold text-white">
+                  {establishment?.couvert_fee ? `Couvert R$ ${Number(establishment.couvert_fee).toFixed(2)}` : 'Sem Couvert'}
+                </div>
+                <div className="text-[11px] text-slate-400 mt-1 truncate">
+                  Taxa serviço: {establishment?.service_fee_enabled ? `${establishment.service_fee_percent}% ativa` : 'Desativada'}
                 </div>
               </div>
             </div>
@@ -502,6 +588,7 @@ export default function AdminPage() {
                   const isClosed = session.status === 'closed' || session.status === 'paid';
                   const paymentMethod = session.bill_request?.payment_method || 'pix';
                   const isNearLimit = session.is_near_tab_limit;
+                  const hasSilentAlert = session.has_silent_alert;
 
                   return (
                     <div
@@ -509,8 +596,8 @@ export default function AdminPage() {
                       className={`relative rounded-2xl p-5 backdrop-blur-md transition-all flex flex-col justify-between ${
                         isBillRequested
                           ? 'bg-gradient-to-b from-[#2d1b04] to-[#120a02] border-2 border-amber-400/80 shadow-2xl shadow-amber-500/20 scale-[1.01]'
-                          : isNearLimit
-                          ? 'bg-gradient-to-b from-[#241a06] to-[#081729] border border-amber-500/60'
+                          : hasSilentAlert
+                          ? 'bg-gradient-to-b from-[#0b1c3a] to-[#051429] border border-cyan-400/60 shadow-lg shadow-cyan-500/10'
                           : isOpen
                           ? 'bg-[#082855]/40 border border-[#02c1db]/25 hover:border-[#02c1db]/50'
                           : 'bg-[#082855]/15 border border-white/5 opacity-75'
@@ -530,9 +617,16 @@ export default function AdminPage() {
                               {session.table_number}
                             </div>
                             <div>
-                              <h3 className="font-bold text-white text-base leading-tight">
-                                Mesa {session.table_number}
-                              </h3>
+                              <div className="flex items-center gap-1.5">
+                                <h3 className="font-bold text-white text-base leading-tight">
+                                  Mesa {session.table_number}
+                                </h3>
+                                {session.client_profile && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.2 rounded bg-cyan-950/60 text-cyan-300 border border-cyan-500/30">
+                                    ★ {session.client_profile.visit_count}ª visita
+                                  </span>
+                                )}
+                              </div>
                               <div className="flex items-center gap-1.5 text-[11px] text-slate-400 mt-0.5">
                                 <Clock className="w-3 h-3" />
                                 <span>
@@ -550,13 +644,19 @@ export default function AdminPage() {
                                 Conta ({paymentMethod === 'pix' ? 'Pix' : 'Cartão'})
                               </span>
                             )}
-                            {isNearLimit && isOpen && (
+                            {hasSilentAlert && isOpen && (
+                              <span className="px-2 py-0.5 text-[10px] font-bold bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 rounded-full flex items-center gap-1">
+                                <TrendingUp className="w-3 h-3 text-cyan-400" />
+                                Consumo +40%
+                              </span>
+                            )}
+                            {isNearLimit && isOpen && !hasSilentAlert && (
                               <span className="px-2 py-0.5 text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 rounded-full flex items-center gap-1">
                                 <AlertTriangle className="w-3 h-3 text-amber-400" />
                                 Limite 80%+
                               </span>
                             )}
-                            {isOpen && !isBillRequested && !isNearLimit && (
+                            {isOpen && !isBillRequested && !isNearLimit && !hasSilentAlert && (
                               <span className="flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-medium bg-[#01cf9e]/15 text-[#01cf9e] border border-[#01cf9e]/30 rounded-full">
                                 <span className="w-1.5 h-1.5 rounded-full bg-[#01cf9e] animate-ping" />
                                 Em Consumo
@@ -685,120 +785,263 @@ export default function AdminPage() {
         )}
 
         {/* ======================================================== */}
-        {/* ABA 2: CONFIGURAÇÃO PIX E LIMITES DE COMANDA */}
+        {/* ABA 2: CONFIGURAÇÕES DA CASA (EVENTOS, COUVERT, 10% E LIMITES) */}
         {/* ======================================================== */}
-        {activeTab === 'pix' && (
-          <div className="max-w-3xl mx-auto">
+        {activeTab === 'settings' && (
+          <div className="max-w-4xl mx-auto space-y-6">
             <div className="p-6 md:p-8 rounded-2xl bg-[#082855]/30 border border-[#02c1db]/20 backdrop-blur-md">
               <div className="flex items-start gap-4 mb-6">
                 <div className="p-3 rounded-xl bg-[#02c1db]/10 border border-[#02c1db]/30 text-[#02c1db]">
-                  <CreditCard className="w-6 h-6" />
+                  <Sliders className="w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold text-white">Recebimento Pix & Limites de Comanda</h2>
+                  <h2 className="text-xl font-bold text-white">Configurações Operacionais & Hospitalidade</h2>
                   <p className="text-sm text-slate-300 mt-1">
-                    Gestão de chave Pix sem custódia e controle preventivo contra inadimplência no salão.
+                    Defina a programação do dia, cobrança de couvert artístico, taxa de serviço e parâmetros de segurança financeira.
                   </p>
                 </div>
               </div>
 
-              {pixFeedback && (
+              {settingsFeedback && (
                 <div className={`p-4 rounded-xl mb-6 text-sm flex items-center gap-2 ${
-                  pixFeedback.includes('sucesso')
+                  settingsFeedback.includes('sucesso')
                     ? 'bg-emerald-950/60 border border-emerald-500/40 text-emerald-300'
                     : 'bg-rose-950/60 border border-rose-500/40 text-rose-300'
                 }`}>
                   <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
-                  <span>{pixFeedback}</span>
+                  <span>{settingsFeedback}</span>
                 </div>
               )}
 
-              <form onSubmit={handleSavePix} className="space-y-5">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                    Tipo de Chave Pix
-                  </label>
-                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
-                    {(['cnpj', 'cpf', 'email', 'phone', 'random'] as const).map((type) => {
-                      const labels = {
-                        cnpj: 'CNPJ',
-                        cpf: 'CPF',
-                        email: 'E-mail',
-                        phone: 'Celular',
-                        random: 'Aleatória'
-                      };
-                      return (
+              <form onSubmit={handleSaveSettings} className="space-y-8">
+                {/* SEÇÃO 1: PROGRAMAÇÃO & ATRAÇÃO DO DIA */}
+                <div className="p-5 rounded-xl bg-[#040c18] border border-white/10 space-y-4">
+                  <div className="flex items-center gap-2 text-cyan-300 font-bold text-sm">
+                    <Music className="w-4 h-4" />
+                    <span>Programação & Eventos do Dia</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Atração Musical ou Artística de Hoje
+                    </label>
+                    <input
+                      type="text"
+                      value={dailyEventTitle}
+                      onChange={(e) => setDailyEventTitle(e.target.value)}
+                      placeholder="Ex: Show ao vivo com cantor XX / Trio Acústico"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#081a33] border border-white/10 text-white text-sm focus:border-[#02c1db] focus:outline-none"
+                    />
+                    <p className="text-[11px] text-slate-400 mt-1">
+                      A IA anunciará com entusiasmo essa programação aos clientes que abrirem o QR Code da mesa!
+                    </p>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-1">
+                      Detalhes do Show / Horário / Ritmo
+                    </label>
+                    <input
+                      type="text"
+                      value={dailyEventDesc}
+                      onChange={(e) => setDailyEventDesc(e.target.value)}
+                      placeholder="Ex: Ritmo sertanejo / pop a partir das 20h30"
+                      className="w-full px-4 py-2.5 rounded-xl bg-[#081a33] border border-white/10 text-white text-sm focus:border-[#02c1db] focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* SEÇÃO 2: COUVERT ARTÍSTICO E TAXA DE SERVIÇO */}
+                <div className="p-5 rounded-xl bg-[#040c18] border border-white/10 space-y-4">
+                  <div className="flex items-center gap-2 text-emerald-400 font-bold text-sm">
+                    <Percent className="w-4 h-4" />
+                    <span>Couvert Artístico & Taxa de Serviço (10% Opcional)</span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* COUVERT */}
+                    <div className="p-4 rounded-xl bg-[#081a33]/60 border border-white/10 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-white flex items-center gap-2">
+                          <span>Couvert Artístico</span>
+                        </label>
+                        <input
+                          type="checkbox"
+                          checked={hasCouvert}
+                          onChange={(e) => setHasCouvert(e.target.checked)}
+                          className="w-4 h-4 accent-emerald-500 rounded"
+                        />
+                      </div>
+                      {hasCouvert && (
+                        <div className="space-y-2">
+                          <label className="block text-[11px] text-slate-300">Valor por pessoa (R$)</label>
+                          <input
+                            type="number"
+                            step="0.50"
+                            value={couvertFee}
+                            onChange={(e) => setCouvertFee(e.target.value)}
+                            className="w-full px-3 py-2 rounded-lg bg-[#040c18] border border-white/10 text-white text-sm font-mono font-bold"
+                          />
+                          <input
+                            type="text"
+                            value={couvertInfo}
+                            onChange={(e) => setCouvertInfo(e.target.value)}
+                            placeholder="Motivo (ex: Música ao vivo no salão)"
+                            className="w-full px-3 py-1.5 rounded-lg bg-[#040c18] border border-white/10 text-slate-300 text-xs"
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    {/* TAXA DE SERVIÇO */}
+                    <div className="p-4 rounded-xl bg-[#081a33]/60 border border-white/10 space-y-3">
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold text-white flex items-center gap-2">
+                          <span>Sugerir Taxa de Serviço</span>
+                        </label>
+                        <input
+                          type="checkbox"
+                          checked={serviceFeeEnabled}
+                          onChange={(e) => setServiceFeeEnabled(e.target.checked)}
+                          className="w-4 h-4 accent-emerald-500 rounded"
+                        />
+                      </div>
+                      {serviceFeeEnabled && (
+                        <div className="space-y-2">
+                          <label className="block text-[11px] text-slate-300">Percentual sugerido (%)</label>
+                          <input
+                            type="number"
+                            step="1"
+                            value={serviceFeePercent}
+                            onChange={(e) => setServiceFeePercent(e.target.value)}
+                            placeholder="10.00"
+                            className="w-full px-3 py-2 rounded-lg bg-[#040c18] border border-white/10 text-white text-sm font-mono font-bold"
+                          />
+                          <p className="text-[10px] text-slate-400">
+                            Apresentado no fechamento de conta com a opção transparente de incluir ou pagar apenas o consumo.
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* SEÇÃO 3: GESTÃO DE RISCO E MONITORAMENTO DE LIMITES */}
+                <div className="p-5 rounded-xl bg-[#040c18] border border-white/10 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-amber-300 font-bold text-sm">
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Monitoramento de Limites & Radar Dinâmico (+40%)</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={enableSpendingLimits}
+                      onChange={(e) => setEnableSpendingLimits(e.target.checked)}
+                      className="w-4 h-4 accent-amber-500 rounded"
+                    />
+                  </div>
+
+                  {enableSpendingLimits && (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3 pt-2">
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                          Alerta Silencioso Interno (R$)
+                        </label>
+                        <input
+                          type="number"
+                          value={silentAlertLimit}
+                          onChange={(e) => setSilentAlertLimit(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg bg-[#081a33] border border-white/10 text-amber-300 font-mono text-sm"
+                        />
+                        <span className="text-[10px] text-slate-500">Notifica o gerente sem constranger o cliente</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                          Limite da Comanda da Casa (R$)
+                        </label>
+                        <input
+                          type="number"
+                          value={maxTabLimit}
+                          onChange={(e) => setMaxTabLimit(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg bg-[#081a33] border border-white/10 text-white font-mono text-sm"
+                        />
+                        <span className="text-[10px] text-slate-500">Aviso simpático em 80% do valor</span>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-semibold text-slate-300 mb-1">
+                          Teto Crítico da Casa (R$)
+                        </label>
+                        <input
+                          type="number"
+                          value={highValueLimit}
+                          onChange={(e) => setHighValueLimit(e.target.value)}
+                          className="w-full px-3 py-2 rounded-lg bg-[#081a33] border border-white/10 text-rose-300 font-mono text-sm"
+                        />
+                        <span className="text-[10px] text-slate-500">Exige adiantamento Pix para novos pedidos</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* SEÇÃO 4: RECEBIMENTO PIX */}
+                <div className="p-5 rounded-xl bg-[#040c18] border border-white/10 space-y-4">
+                  <div className="flex items-center gap-2 text-cyan-400 font-bold text-sm">
+                    <CreditCard className="w-4 h-4" />
+                    <span>Dados de Recebimento Pix Direto</span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-300 mb-2">Tipo de Chave</label>
+                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+                      {(['cnpj', 'cpf', 'email', 'phone', 'random'] as const).map((type) => (
                         <button
                           key={type}
                           type="button"
                           onClick={() => setPixKeyType(type)}
                           className={`py-2 px-3 rounded-xl text-xs font-bold transition-all ${
                             pixKeyType === type
-                              ? 'bg-[#02c1db] text-[#040c18] shadow-md shadow-[#02c1db]/25'
-                              : 'bg-[#052d6b]/40 text-slate-300 border border-white/5 hover:border-white/20'
+                              ? 'bg-[#02c1db] text-[#040c18]'
+                              : 'bg-[#052d6b]/40 text-slate-300 border border-white/5'
                           }`}
                         >
-                          {labels[type]}
+                          {type.toUpperCase()}
                         </button>
-                      );
-                    })}
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                    Chave Pix Oficial do Estabelecimento
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={pixKey}
-                    onChange={(e) => setPixKey(e.target.value)}
-                    placeholder="Chave Pix"
-                    className="w-full px-4 py-3 rounded-xl bg-[#040c18] border border-white/10 text-white placeholder-slate-500 text-sm font-mono focus:border-[#02c1db] focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-300 mb-2">
-                    Nome Completo do Beneficiário / Razão Social
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={pixBeneficiary}
-                    onChange={(e) => setPixBeneficiary(e.target.value)}
-                    placeholder="Ex: Vurio Restaurante e Bar Ltda"
-                    className="w-full px-4 py-3 rounded-xl bg-[#040c18] border border-white/10 text-white text-sm focus:border-[#02c1db] focus:outline-none"
-                  />
-                </div>
-
-                {/* NOVO CAMPO: LIMITE DE CONSUMO DA CASA */}
-                <div className="p-4 rounded-xl bg-amber-950/20 border border-amber-500/30">
-                  <div className="flex items-center gap-2 mb-2 text-amber-300 font-bold text-xs uppercase">
-                    <ShieldCheck className="w-4 h-4" />
-                    <span>Limite Padrão por Comanda / Mesa (Gestão de Risco)</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Chave Pix</label>
+                      <input
+                        type="text"
+                        required
+                        value={pixKey}
+                        onChange={(e) => setPixKey(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#081a33] border border-white/10 text-white font-mono text-sm"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-300 mb-1">Nome do Beneficiário</label>
+                      <input
+                        type="text"
+                        required
+                        value={pixBeneficiary}
+                        onChange={(e) => setPixBeneficiary(e.target.value)}
+                        className="w-full px-3.5 py-2.5 rounded-xl bg-[#081a33] border border-white/10 text-white text-sm"
+                      />
+                    </div>
                   </div>
-                  <input
-                    type="number"
-                    step="10"
-                    required
-                    value={maxTabLimit}
-                    onChange={(e) => setMaxTabLimit(e.target.value)}
-                    placeholder="250.00"
-                    className="w-full px-4 py-2.5 rounded-xl bg-[#040c18] border border-amber-500/30 text-amber-300 font-mono font-bold text-sm focus:outline-none"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1.5">
-                    Ao atingir 80% deste valor (ex: R$ {(parseFloat(maxTabLimit || '250') * 0.8).toFixed(2)}), o cliente recebe um aviso simpático sugerindo adiantamento no Pix.
-                  </p>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={savingPix}
-                  className="w-full py-3.5 px-6 rounded-xl bg-gradient-to-r from-[#0077d1] to-[#02c1db] text-[#040c18] font-bold text-sm shadow-lg shadow-[#02c1db]/20 flex items-center justify-center gap-2"
+                  disabled={savingSettings}
+                  className="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-[#0077d1] via-[#02c1db] to-[#25D366] text-[#040c18] font-black text-sm uppercase tracking-wider shadow-lg shadow-[#02c1db]/20 flex items-center justify-center gap-2 hover:scale-[1.01] transition-transform"
                 >
-                  {savingPix ? 'Salvando...' : 'Salvar Pix & Limites'}
+                  {savingSettings ? 'Salvando Configurações...' : 'Salvar Todas as Configurações da Casa'}
                 </button>
               </form>
             </div>
@@ -889,7 +1132,14 @@ export default function AdminPage() {
                 {selectedSession.table_number}
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Extrato Consolidado da Mesa {selectedSession.table_number}</h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-lg font-bold text-white">Extrato da Mesa {selectedSession.table_number}</h3>
+                  {selectedSession.client_profile && (
+                    <span className="text-[11px] font-semibold text-cyan-300">
+                      ({selectedSession.client_profile.name})
+                    </span>
+                  )}
+                </div>
                 <p className="text-xs text-slate-400">
                   Aberta em: {new Date(selectedSession.opened_at).toLocaleString('pt-BR')}
                 </p>
@@ -901,7 +1151,7 @@ export default function AdminPage() {
               <div className="mb-3 p-3 rounded-xl bg-[#082855]/70 border border-cyan-500/30">
                 <div className="text-[11px] font-bold text-cyan-300 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
                   <Users className="w-3.5 h-3.5" />
-                  <span>Itens Compartilhados / Rateio nesta mesa:</span>
+                  <span>Itens Compartilhados / Rateio:</span>
                 </div>
                 <div className="space-y-1">
                   {selectedSession.shared_items.map((shared) => (
